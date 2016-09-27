@@ -1,0 +1,16 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "scripts": {
+    "update-modules": "npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/wit-communicator"
+  },
+  "dependencies": {
+    "amazon-product-api": "^0.4.1",
+    "cse498capstonewit": "^1.0.0-beta",
+    "node-fetch": "^1.6.2",
+    "facebook-event-converter": "file:./core/facebook-event-converter",
+    "facebook-message-sender": "file:./core/facebook-message-sender",
+    "wit-communicator": "file:./core/wit-communicator"
+
+  }
+}

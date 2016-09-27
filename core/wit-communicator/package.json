@@ -1,0 +1,15 @@
+{
+  "name": "wit-communicator",
+  "version": "1.0.0",
+  "description": "Module to communicate with wit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cse498capstonewit": "^1.0.0-beta",
+    "facebook-message-sender": "file:../facebook-message-sender"
+  }
+}
