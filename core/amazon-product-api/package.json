@@ -1,0 +1,16 @@
+{
+  "name": "amazon-product-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "es6-promise": "3.0.2",
+    "xml2js": "0.4.5",
+    "request": "2.53.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

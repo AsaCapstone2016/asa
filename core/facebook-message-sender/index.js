@@ -43,12 +43,20 @@ var facebookMessageSender = {
             element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
             element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
                 product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
-            element.buttons = [
-                {
-                    "type": "web_url",
-                    "url": "https://cse.msu.edu",
-                    "title": "Add to Cart"
+            if (product.HasVariations) {
+                element.buttons = [{
+                    type: "web_url",
+                    url: "https://cse.msu.edu",
+                    title: "Has Variations!"
+                }]
+            }
+            else {
+                element.buttons = [{
+                    type: "web_url",
+                    url: product.CartUrl,
+                    title: "Purchase"
                 }];
+            }
 
             elements.push(element);
         });
