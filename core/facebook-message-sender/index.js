@@ -8,13 +8,13 @@ var facebookMessageSender = {
     //          recipientId: ID of person to send message to.
     //          text: message of text
     //        }
-    sendTextMessage: function (message) {
+    sendTextMessage: function (recipient_id, message) {
         var json = {
             recipient: {
-                id: message.recipient_id
+                id: recipient_id
             },
             message: {
-                text: message.text
+                text: message
             }
         };
         return callSendAPI(json);

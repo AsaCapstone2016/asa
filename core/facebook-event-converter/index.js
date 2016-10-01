@@ -8,7 +8,7 @@ var facebookEventConverter = {
      *  used by the system. Currently this is returning the following object:
      *  {
      *    UID: unique user Id
-     *    message:{
+     *    content:{
      *      payload: payload of message (could just be text).
      *      action: action of message(text, postback, etc.).
      *    }
@@ -32,7 +32,7 @@ var facebookEventConverter = {
                 if (messaging.message) {
                     messageObjects.push({
                         UID: messaging.sender.id,
-                        message: {
+                        content: {
                             payload: messaging.message.text,
                             action: "text"
                         }
@@ -43,7 +43,7 @@ var facebookEventConverter = {
                 else if (messaging.postback) {
                     messageObjects.push({
                         UID: messaging.sender.id,
-                        message: {
+                        content: {
                             payload: messaging.postback.payload,
                             action: "postback"
                         }
