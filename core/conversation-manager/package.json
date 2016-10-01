@@ -1,5 +1,5 @@
 {
-  "name": "wit-communicator",
+  "name": "conversation-manager",
   "version": "1.0.0",
   "description": "Module to communicate with wit",
   "main": "index.js",

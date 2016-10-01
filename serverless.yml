@@ -39,7 +39,6 @@ provider:
 # you can add packaging information here
 #package:
   include:
-    - core
     - node_modules
     - functions
     - config.js
@@ -49,10 +48,10 @@ provider:
 
 functions:
   facebookLambda:
-    handler: functions/handler.facebookLambda
+    handler: functions/fb-endpoint.facebookLambda
     events:
-      - http: GET test
-      - http: POST test
+      - http: GET fb-webhook
+      - http: POST fb-webhook
 #    you can add any of the following events
     #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
