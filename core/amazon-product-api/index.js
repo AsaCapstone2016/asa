@@ -72,7 +72,7 @@ var runQuery = function (credentials, method) {
                                     );
                                 }
                             } else if (respObj.Cart && respObj.Cart.length > 0){
-                                //console.log("Cart:", JSON.stringify(respObj.Cart, null, 2));
+                                console.log("Cart:", JSON.stringify(respObj.Cart, null, 2));
                                 if(respObj.Cart[0].Request && respObj.Cart[0].Request.length > 0 && respObj.Cart[0].Request[0].Errors){
                                     failure(respObj.Cart[0].Request[0].Errors);
                                 } else if(respObj.Cart){

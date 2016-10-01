@@ -73,7 +73,7 @@ var facebookMessageSender = {
                 }
             }
         };
-        console.log(json);
+        console.log(JSON.stringify(json));
         return callSendAPI(json);
     }
 };

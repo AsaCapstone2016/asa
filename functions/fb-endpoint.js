@@ -63,7 +63,6 @@ const actions = {
 
                 console.log(`SEARCH QUERY: ${entities.search_query[0].value}`);
                 return amazon.itemSearch(entities.search_query[0].value).then((json)=> {
-                    // Temporarily hard code search response
                     context.items = json;
                     delete context.missing_keywords;
                     return resolve(context);
