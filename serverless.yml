@@ -44,15 +44,15 @@ provider:
     - functions
     - config.js
   exclude:
-    - tests
+    - test
 #  artifact: my-service-code.zip
 
 functions:
   facebookLambda:
     handler: functions/handler.facebookLambda
     events:
-      - http: GET test
-      - http: POST test
+      - http: GET evan
+      - http: POST evan
 #    you can add any of the following events
     #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)

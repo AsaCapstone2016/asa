@@ -7,10 +7,13 @@
   "dependencies": {
     "amazon-product-api": "^0.4.1",
     "cse498capstonewit": "^1.0.0-beta",
-    "node-fetch": "^1.6.2",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
+    "node-fetch": "^1.6.2",
     "wit-communicator": "file:./core/wit-communicator"
-
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.0"
   }
 }
