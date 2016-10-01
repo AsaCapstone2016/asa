@@ -17,15 +17,14 @@ var amazonProduct = {
             return amazon_client.itemSearch({
                 "searchIndex": "All",
                 "keywords": keywords,
-                "responseGroup": "ItemIds"
-            }, function (err, res) {
+                "responseGroup": ["ItemIds", "ItemAttributes", "Images", "OfferSummary"]
+            }).then(function (res, err) {
                 if (err) {
                     console.log("err:", JSON.stringify(err, null, 2));
                 }
-                console.log(JSON.stringify(res));
                 //Only check the first item form the list
                 var promiseArray = [];
-                for (var itemIdx = 0; itemIdx < Math.min(res.length, 5); itemIdx++) {
+                for (var itemIdx = 0; itemIdx < res.length; itemIdx++) {
                     var curItem = res[itemIdx];
                     console.log('on item' + itemIdx);
                     //When item has ParentASIN, which means has options
@@ -37,12 +36,13 @@ var amazonProduct = {
                     else if (curItem["ASIN"] !== undefined && curItem["ASIN"].length > 0) {
                         //Build virtual cart here
                         console.log('item without variation');
-                        promiseArray.push(this.createCart(curItem["ASIN"], 1).then((url) => {
-                            curItem["CartUrl"] = url;
-                        }));
+                        //promiseArray.push(amazonProduct.createCart(curItem["ASIN"], 1).then((url) => {
+                        curItem["CartUrl"] = "https://google.com";
+                        //}));
                     }
                 }
                 return Promise.all(promiseArray).then(()=> {
+                    console.log('done');
                     return res;
                 });
             });
@@ -52,7 +52,7 @@ var amazonProduct = {
             return amazon_client.cartCreate({
                 "Item.1.ASIN": ASIN,
                 "Item.1.Quantity": quantity
-            }, function (err, res) {
+            }).then(function (res, err) {
                 if (err) {
                     console.log("Cart Create Error:", JSON.stringify(err, null, 2));
                 } else if (res.CartItems !== undefined && res.CartItems.length > 0) {

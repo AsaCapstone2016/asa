@@ -55,6 +55,7 @@ const actions = {
     },
     search(request) {
         console.log("BEGIN SEARCH");
+        facebookMessageSender.sendTypingMessage(sessions[request.sessionId].fbid);
         let entities = request.entities;
         let context = request.context;
         return new Promise((resolve, reject) => {
@@ -81,7 +82,7 @@ const actions = {
 const witClient = new Wit({
     accessToken: WIT_TOKEN,
     actions: actions,
-    logger: new log.Logger(log.DEBUG)
+    logger: new log.Logger(log.INFO)
 });
 
 module.exports.facebookLambda = function (event, context, callback) {
