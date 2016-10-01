@@ -10,7 +10,6 @@
     "node-fetch": "^1.6.2",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
-    "wit-communicator": "file:./core/wit-communicator"
-
+    "conversation-manager": "file:./core/conversation-manager"
   }
 }
