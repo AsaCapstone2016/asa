@@ -32,11 +32,22 @@ const findOrCreateSession = (fbid) => {
 const actions = {
     send(request, response) {
         console.log("BEGIN SEND");
+
         const recipientId = sessions[request.sessionId].fbid;
         if (recipientId) {
-            console.log(`SEND "${response.text}" to ${recipientId}`);
-            return facebookMessageSender.sendTextMessage(recipientId, response.text)
-                .then(() => null);
+            const msg = response.text;
+            if (msg === "<send_items>") {
+                // Send back list of items stored in the context
+                console.log(`SEND LIST OF ITEMS`);
+                const items = request.context.items;
+                return facebookMessageSender.sendGenericTemplateMessage(recipientId, items)
+                    .then(() => null);
+            } else {
+                // Send simple text message
+                console.log(`SEND "${msg}" to ${recipientId}`);
+                return facebookMessageSender.sendTextMessage(recipientId, msg)
+                    .then(() => null);
+            }
         } else {
             return Promise.resolve();
         }
@@ -48,7 +59,9 @@ const actions = {
         let context = request.context;
         return new Promise((resolve, reject) => {
             if ('search_query' in entities) {
-                context.items = entities.search_query[0].value;
+                console.log(`SEARCH QUERY: ${entities.search_query[0].value}`);
+                // Temporarily hard code search response
+                context.items = SEARCH_JSON;
                 delete context.missing_keywords;
             } else {
                 context.missing_keywords = true;
@@ -86,12 +99,12 @@ module.exports.facebookLambda = function (event, context, callback) {
             if (message.content.action === "text") {
                 console.log(`BEFORE runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
                 let text = message.content.payload;
-                witClient.runActions(sessionId, text, sessions[sessionId].context)
+                return witClient.runActions(sessionId, text, sessions[sessionId].context)
                     .then( (ctx) => {
                         console.log("waiting for next message from: " + sender);
                         sessions[sessionId].context = ctx;
+                        console.log(`AFTER runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
                     })
-                console.log(`AFTER runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
             } else if (message.content.action === "postback") {
                 console.log("POSTBACK");
             }
