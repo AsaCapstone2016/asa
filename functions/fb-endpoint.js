@@ -2,6 +2,7 @@
 
 var facebookEventConverter = require('facebook-event-converter');
 var facebookMessageSender = require('facebook-message-sender');
+var amazon = require('amazon');
 //var conversation = require('conversation-manager');
 var Wit = require('cse498capstonewit').Wit;
 var log = require('cse498capstonewit').log;
@@ -12,20 +13,20 @@ const WIT_TOKEN = require('./../config').WIT_TOKEN;
 // SESSION MANAGEMENT
 const sessions = {};
 const findOrCreateSession = (fbid) => {
-  let sessionId;
+    let sessionId;
 
-  Object.keys(sessions).forEach((k) => {
-    if (sessions[k].fbid === fbid) {
-      sessionId = k;
+    Object.keys(sessions).forEach((k) => {
+        if (sessions[k].fbid === fbid) {
+            sessionId = k;
+        }
+    });
+
+    if (!sessionId) {
+        sessionId = new Date().toISOString();
+        sessions[sessionId] = {fbid: fbid, context: {}};
     }
-  });
 
-  if (!sessionId) {
-    sessionId = new Date().toISOString();
-    sessions[sessionId] = { fbid: fbid, context: {} };
-  }
-
-  return sessionId;
+    return sessionId;
 };
 
 // BOT ACTIONS
@@ -52,22 +53,27 @@ const actions = {
             return Promise.resolve();
         }
     },
-    // don't know what to call this object, rename it
     search(request) {
         console.log("BEGIN SEARCH");
         let entities = request.entities;
         let context = request.context;
         return new Promise((resolve, reject) => {
             if ('search_query' in entities) {
+
                 console.log(`SEARCH QUERY: ${entities.search_query[0].value}`);
-                // Temporarily hard code search response
-                context.items = SEARCH_JSON;
-                delete context.missing_keywords;
+                return amazon.itemSearch(entities.search_query[0].value).then((json)=> {
+                    // Temporarily hard code search response
+                    context.items = json;
+                    delete context.missing_keywords;
+                    return resolve(context);
+                });
+
             } else {
                 context.missing_keywords = true;
                 delete context.items;
+                return resolve(context);
             }
-            return resolve(context);
+
         });
     }
 };
@@ -86,7 +92,7 @@ module.exports.facebookLambda = function (event, context, callback) {
         let messages = facebookEventConverter.convertEvent(event);
 
         // Send each message in the common event object to the conversation manager
-        messages.forEach( (message) => {
+        messages.forEach((message) => {
             console.log(`message: ${JSON.stringify(message, null, 2)}`);
 
             // Send to conversation manager
@@ -95,12 +101,12 @@ module.exports.facebookLambda = function (event, context, callback) {
             // Begin conversation manager
             let sender = message.UID;
             let sessionId = findOrCreateSession(sender);
-            
+
             if (message.content.action === "text") {
                 console.log(`BEFORE runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
                 let text = message.content.payload;
                 return witClient.runActions(sessionId, text, sessions[sessionId].context)
-                    .then( (ctx) => {
+                    .then((ctx) => {
                         console.log("waiting for next message from: " + sender);
                         sessions[sessionId].context = ctx;
                         console.log(`AFTER runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
