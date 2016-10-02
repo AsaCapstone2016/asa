@@ -29,18 +29,14 @@ var amazonProduct = {
                     console.log('on item' + itemIdx);
                     //When item has ParentASIN, which means has options
                     if (curItem["ParentASIN"] !== undefined && curItem["ParentASIN"].length > 0) {
-                        console.log('Found an item with variations');
                         curItem["HasVariations"] = true;
                     }
                     //When item doesn't have ParentASIN, which means has no options
                     else if (curItem["ASIN"] !== undefined && curItem["ASIN"].length > 0) {
                         //Build virtual cart here
-                        console.log('item without variation');
                         promiseArray.push(amazonProduct.createCart(curItem["ASIN"], 1).then((url) => {
                             //console.log(`cart url: ${url}`);
-                            console.log("CART URL: " + url);
                             if (url === undefined) {
-                                console.log("null cart url");
                                 url = curItem.DetailPageURL[0];
                             }
                             curItem["CartUrl"] = url;
@@ -52,7 +48,7 @@ var amazonProduct = {
                     }
                 }
                 return Promise.all(promiseArray).then(()=> {
-                    console.log('done');
+                    console.log('Done getting/building item search response');
                     //console.log(`response: ${JSON.stringify(res,null,2)}`);
                     return res;
                 });
@@ -72,11 +68,10 @@ var amazonProduct = {
                 }
             },function(err){
                 // *** ERROR *** something bad happend when creating a temp cart... handle this better
-                return 'https://google.com';
+                return 'https://amazon.com';
             });
         }
 
-    }
-    ;
+    };
 
 module.exports = amazonProduct;

@@ -1,6 +1,5 @@
 var fetch = require('node-fetch');
 var config = require('./../../config');
-var PAGE_TOKEN = config.FB_PAGE_TOKEN;
 
 var facebookMessageSender = {
 
@@ -73,14 +72,15 @@ var facebookMessageSender = {
                 }
             }
         };
-        console.log(`Formatted FB Message: ${JSON.stringify(json, null, 2)}`);
+
         return callSendAPI(json);
     }
 };
 
 function callSendAPI(messageData) {
 
-    var qs = 'access_token=' + encodeURIComponent(PAGE_TOKEN);
+    console.log(config.FB_PAGE_TOKEN);
+    var qs = 'access_token=' + encodeURIComponent(config.FB_PAGE_TOKEN);
 
     return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
         method: 'POST',

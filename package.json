@@ -2,7 +2,8 @@
   "name": "application-name",
   "version": "0.0.1",
   "scripts": {
-    "update-modules": "npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon"
+    "update-modules": "npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
+    "deploy": "npm run update-modules && sls deploy"
   },
   "dependencies": {
     "cse498capstonewit": "^1.0.0-beta",

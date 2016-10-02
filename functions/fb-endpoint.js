@@ -7,8 +7,10 @@ var amazon = require('amazon');
 var Wit = require('cse498capstonewit').Wit;
 var log = require('cse498capstonewit').log;
 
-const VERIFY_TOKEN = require('./../config').FB_VERIFY_TOKEN;
-const WIT_TOKEN = require('./../config').WIT_TOKEN;
+var config = require('./../config');
+const VERIFY_TOKEN = config.FB_VERIFY_TOKEN;
+const WIT_TOKEN = config.WIT_TOKEN;
+
 
 // SESSION MANAGEMENT
 const sessions = {};
@@ -86,14 +88,14 @@ const witClient = new Wit({
 
 module.exports.facebookLambda = function (event, context, callback) {
     //console.log(`event: ${JSON.stringify(event, null, 2)}`);
-
+    config.FB_PAGE_TOKEN = event.stageVariables.FB_PAGE_TOKEN;
     if (event.method === "POST") {
         // Convert FB Messenger event object to common event object
         let messages = facebookEventConverter.convertEvent(event);
 
         // Send each message in the common event object to the conversation manager
         messages.forEach((message) => {
-            console.log(`message: ${JSON.stringify(message, null, 2)}`);
+            console.log(`message recevied: ${JSON.stringify(message, null, 2)}`);
 
             // Send to conversation manager
             //conversation.handle(message, facebookMessageSender);
@@ -109,7 +111,6 @@ module.exports.facebookLambda = function (event, context, callback) {
                     .then((ctx) => {
                         console.log("waiting for next message from: " + sender);
                         sessions[sessionId].context = ctx;
-                        console.log(`AFTER runActions context: ${JSON.stringify(sessions[sessionId].context)}`);
                     })
             } else if (message.content.action === "postback") {
                 console.log("POSTBACK");
