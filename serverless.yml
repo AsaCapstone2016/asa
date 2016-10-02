@@ -44,6 +44,7 @@ provider:
     - config.js
   exclude:
     - tests
+    - asa-wit-app.zip
 #  artifact: my-service-code.zip
 
 functions:
