@@ -49,6 +49,7 @@ provider:
 functions:
   facebookLambda:
     handler: functions/fb-endpoint.facebookLambda
+    timeout: 10
     events:
       - http: GET fb-webhook
       - http: POST fb-webhook
