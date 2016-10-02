@@ -22,7 +22,7 @@ var amazonProduct = {
                 if (err) {
                     console.log("err:", JSON.stringify(err, null, 2));
                 }
-                //Only check the first item form the list
+                
                 var promiseArray = [];
                 for (var itemIdx = 0; itemIdx < res.length; itemIdx++) {
                     let curItem = res[itemIdx];
@@ -37,14 +37,23 @@ var amazonProduct = {
                         //Build virtual cart here
                         console.log('item without variation');
                         promiseArray.push(amazonProduct.createCart(curItem["ASIN"], 1).then((url) => {
-                            console.log(`cart url: ${url}`);
+                            //console.log(`cart url: ${url}`);
+                            console.log("CART URL: " + url);
+                            if (url === undefined) {
+                                console.log("null cart url");
+                                url = curItem.DetailPageURL[0];
+                            }
                             curItem["CartUrl"] = url;
                         }));
+                    }
+                    else {
+                        // *** ERROR *** no ASIN or something
+                        curItem["CartUrl"] = "https://amazon.com";
                     }
                 }
                 return Promise.all(promiseArray).then(()=> {
                     console.log('done');
-                    console.log(res);
+                    //console.log(`response: ${JSON.stringify(res,null,2)}`);
                     return res;
                 });
             });
@@ -57,10 +66,12 @@ var amazonProduct = {
                 "Item.1.Quantity": quantity
             }).then(function (res) {
                 if (res.CartItems !== undefined && res.CartItems.length > 0) {
-
-                    return res.PurchaseURL[0];
+                    if (res.PurchaseURL !== undefined) {
+                        return res.PurchaseURL[0];
+                    }
                 }
             },function(err){
+                // *** ERROR *** something bad happend when creating a temp cart... handle this better
                 return 'https://google.com';
             });
         }

@@ -47,7 +47,7 @@ var facebookMessageSender = {
                 element.buttons = [{
                     type: "web_url",
                     url: "https://cse.msu.edu",
-                    title: "Has Variations!"
+                    title: "Select Options"
                 }]
             }
             else {
@@ -73,7 +73,7 @@ var facebookMessageSender = {
                 }
             }
         };
-        console.log(JSON.stringify(json));
+        console.log(`Formatted FB Message: ${JSON.stringify(json, null, 2)}`);
         return callSendAPI(json);
     }
 };
