@@ -7,7 +7,6 @@
   },
   "dependencies": {
     "cse498capstonewit": "^1.0.0-beta",
-    "node-fetch": "^1.6.2",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
     "conversation-manager": "file:./core/conversation-manager",

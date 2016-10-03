@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+- '4.3'
+env:  
+  global:
+    - AWS_REGION=us-east-1
+    - SLS_DEBUG=true 
+before_install:
+  - npm i -g serverless
+script: ./deploy.sh

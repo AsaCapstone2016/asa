@@ -4,12 +4,13 @@
 global.process.env = {
     FB_PAGE_TOKEN: "EAAZAnfcKVNkQBAAchm4tB9PLBTZAFWkDpSBmfRav1ZBkZAri6MJT8evLkUKJ4TZAxtmzTIO6HHqfHDA769hmZB7IJOrqYmnc3TbRS5S5uFER0E8nZCOGM6Kml47VzbGQZApLRh6qVQa5do4d6M7sUt8mX6zfEWpZATuDLYO7tpnhQogZDZD"
 };
-var facebookMessageSender = require('../modules/facebook-message-sender/index');
+
+var facebookMessageSender = require('facebook-message-sender');
 var expect = require('chai').expect;
 
 describe('Facebook Messege Sender', function () {
 
-    describe('convertEvent', function () {
+    describe('sendTextMessage', function () {
         it('returns correct object for given facebook message event', function () {
 
 
@@ -19,8 +20,11 @@ describe('Facebook Messege Sender', function () {
                 text: "Hey!!!"
             };
 
-            facebookMessageSender.sendTextMessage(message).then(function(json){
-                console.log(json);
+
+
+            facebookMessageSender.sendTextMessage(message).then(function(response){
+                console.log('here');
+                expect(response).to.equal(true);
             });
 
         });
