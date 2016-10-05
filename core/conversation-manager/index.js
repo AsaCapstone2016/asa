@@ -37,7 +37,7 @@ const actions = {
       const msg = response.text;
       console.log(msg);
       if (msg === '<send_items>') {
-        console.log(`SEND LIST OF ITEMS`);
+        // console.log(`SEND LIST OF ITEMS`);
         const items = request.context.items;
         return messageSender.sendGenericTemplateMessage(recipientId, items)
           .then(() => null);
