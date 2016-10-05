@@ -2,6 +2,7 @@
 
 var facebookEventConverter = require('facebook-event-converter');
 var conversation = require('conversation-manager');
+let facebookMessageSender = require('facebook-message-sender');
 
 var config = require('./../config');
 const VERIFY_TOKEN = config.FB_VERIFY_TOKEN;
@@ -18,7 +19,7 @@ module.exports.facebookLambda = function (event, context, callback) {
         // Send each message in the common event object to the conversation manager
         messages.forEach((message) => {
             console.log(`message recevied: ${JSON.stringify(message, null, 2)}`);
-            return conversation.handler(message, message.UID);
+            return conversation.handler(message, message.UID, facebookMessageSender);
         });
     } else if (event.method === "GET") {
         let params = event.query;

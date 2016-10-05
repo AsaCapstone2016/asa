@@ -1,6 +1,5 @@
 'use strict';
 
-let facebookMessageSender = require('facebook-message-sender');
 let amazon = require('amazon');
 let Wit = require('cse498capstonewit').Wit;
 let log = require('cse498capstonewit').log;
@@ -9,6 +8,7 @@ const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
 
 const sessions = {};
+let messageSender
 
 let findOrCreateSession = (fbid) => {
   let sessionId;
@@ -39,17 +39,17 @@ const actions = {
       if (msg === '<send_items>') {
         console.log(`SEND LIST OF ITEMS`);
         const items = request.context.items;
-        return facebookMessageSender.sendGenericTemplateMessage(recipientId, items)
+        return messageSender.sendGenericTemplateMessage(recipientId, items)
           .then(() => null);
       } else {
         console.log(`SEND "${msg}" to ${recipientId}`);
-        return facebookMessageSender.sendTextMessage(recipientId, msg)
+        return messageSender.sendTextMessage(recipientId, msg)
           .then(() => null);
       }
     }
   },
   search(request) {
-    facebookMessageSender.sendTypingMessage(sessions[request.sessionId].fbid);
+    messageSender.sendTypingMessage(sessions[request.sessionId].fbid);
     let entities = request.entities;
     let context = request.context;
     return new Promise((resolve, reject) => {
@@ -74,8 +74,9 @@ const witClient = new Wit({
   logger: new log.Logger(log.INFO)
 });
 
-module.exports.handler = (message, sender) => {
+module.exports.handler = (message, sender, msgSender) => {
   let sessionId = findOrCreateSession(sender);
+  messageSender = msgSender;
 
   if (message.content.action === 'text') {
     let text = message.content.payload;
