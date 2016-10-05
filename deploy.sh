@@ -3,8 +3,10 @@ set -e
 BRANCH=${TRAVIS_BRANCH:-$(git rev-parse --abbrev-ref HEAD)} 
 if [[ $BRANCH == 'master' ]]; then
   STAGE="prod"
+  node make-config.js --prod
 elif [[ $BRANCH == 'develop' ]]; then
   STAGE="dev"
+  node make-config.js --dev
 fi
 if [ -z ${STAGE+x} ]; then
   echo "Not deploying changes";

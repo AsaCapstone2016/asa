@@ -7,4 +7,9 @@ env:
     - SLS_DEBUG=true 
 before_install:
   - npm i -g serverless
+  - npm i jsonfile
+branches:
+  only:
+  - master
+  - develop
 script: ./deploy.sh

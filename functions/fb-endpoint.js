@@ -10,8 +10,6 @@ const WIT_TOKEN = config.WIT_TOKEN;
 
 module.exports.facebookLambda = function (event, context, callback) {
     //console.log(`event: ${JSON.stringify(event, null, 2)}`);
-    if (event.stageVariables.FB_PAGE_TOKEN)
-        config.FB_PAGE_TOKEN = event.stageVariables.FB_PAGE_TOKEN;
     if (event.method === "POST") {
         // Convert FB Messenger event object to common event object
         let messages = facebookEventConverter.convertEvent(event);

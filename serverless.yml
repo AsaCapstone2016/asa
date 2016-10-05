@@ -41,7 +41,7 @@ provider:
   include:
     - node_modules
     - functions
-    - config.js
+    - config.json
   exclude:
     - tests
     - asa-wit-app.zip
