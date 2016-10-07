@@ -45,7 +45,7 @@ var amazonProduct = {
                 } else {
                     // *** ERROR *** no ASIN or something
                     console.log("THIS ITEM HAS NO ASIN!!");
-                    cossole.log("THE ITEM IS:", JSON.stringify(curItem, null, 2));
+                    console.log("THE ITEM IS:", JSON.stringify(curItem, null, 2));
                     curItem["CartUrl"] = "https://amazon.com";
                 }
             }
