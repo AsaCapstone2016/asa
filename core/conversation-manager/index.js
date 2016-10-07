@@ -120,20 +120,31 @@ const actions = {
         if (recipientId) {
           const msg = response.text;
           console.log(msg);
-          if (msg === '<send_items>') {
-            console.log(`SEND LIST OF ITEMS`);
-            const items = request.context.items;
-            return messageSender.sendGenericTemplateMessage(recipientId, items)
-              .then(() => null);
-          } else {
-            console.log(`SEND "${msg}" to ${recipientId}`);
-            return messageSender.sendTextMessage(recipientId, msg)
-              .then(() => null);
-          }
+          console.log(`SEND "${msg}" to ${recipientId}`);
+          return messageSender.sendTextMessage(recipientId, msg)
+            .then(() => null);
         }
 
       }, (error) => {
         console.log(`error in send action: ${error}`);
+      });
+  },
+  sendHelpMessage(request) {
+    return getUserIdFromSessionId(request.sessionId)
+      .then((recipientId) => {
+        if (recipientId) {
+          let msg = "Hey, think of me as your personal shopping assistant.";
+          msg += " I can help you discover and purchase items on Amazon.";
+          msg += " You could ask me...\n\n";
+          msg += "  - I'm looking for an xbox\n";
+          msg += "  - Can you search for rainboots?\n";
+          msg += "  - I want to buy something";
+          console.log(`SEND HELP MESSAGE`);
+          return messageSender.sendTextMessage(recipientId, msg)
+            .then(() => null);
+        }
+      }, (error) => {
+        console.log(`error in sendHelpMessage: ${error}`);
       });
   },
   search(request) {
@@ -159,6 +170,22 @@ const actions = {
         });
       }, (error) => {
         console.log(`error in search action: ${error}`);
+      });
+  },
+  sendSearchResults(request) {
+    return getUserIdFromSessionId(request.sessionId)
+      .then((recipientId) => {
+        console.log(`sendSearchResults() recipientId: ${recipientId}`);
+
+        if (recipientId) {
+          console.log(`SEND LIST OF ITEMS`);
+          const items = request.context.items;
+          return messageSender.sendSearchResults(recipientId, items)
+            .then(() => null);
+        }
+
+      }, (error) => {
+        console.log(`error in sendSearchResults action: ${error}`);
       });
   }
 };
