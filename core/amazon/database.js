@@ -2,7 +2,7 @@ const aws = require('aws-sdk');
 aws.config.update({ region: 'us-east-1' });
 
 let docClient = new aws.DynamoDB.DocumentClient();
-const tableName = "ItemVariations";
+const tableName = 'ItemVariations';
 
 module.exports.itemVariationsDAO = {
 	addItemVariation: (asin, variations) => {
@@ -34,8 +34,10 @@ module.exports.itemVariationsDAO = {
 		return docClient.get(params).promise()
 			.then((data) => {
 				if (Object.keys(data).length != 0) {
+					console.log(`successfully retrieved asin ${asin} from ItemVariations`);
 					return data.Item;
 				} else {
+					console.log(`did not find asin ${asin} in ItemVariations`);
 					return null;
 				}
 			}, (error) => {
