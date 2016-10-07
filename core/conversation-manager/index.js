@@ -80,6 +80,36 @@ let getUserIdFromSessionId = (sessionId) => {
     });
 };
 
+/**
+ * Update context in database given user id
+ * uid: user id of the user whose context we want to update
+ * ctx: new user context
+ */
+let updateContext = (uid, ctx) => {
+  let docClient = new aws.DynamoDB.DocumentClient();
+  let table = 'Sessions';
+
+  let params = {
+    TableName: 'Sessions',
+    Key: {
+      uid: uid
+    },
+    UpdateExpression: 'set context = :ctx',
+    ExpressionAttributeValues: {
+      ':ctx': ctx
+    },
+    ReturnValues: 'UPDATED_NEW'
+  };
+
+  console.log(`updating context for ${uid} to ${JSON.stringify(ctx)}`);
+  return docClient.update(params).promise()
+    .then((success) => {
+      console.log(`successfully updated context for user ${uid}`);
+    }, (error) => {
+      console.log(`error updating context: ${error}`);
+    });
+};
+
 // todo: split this out into different actions
 const actions = {
   send(request, response) {
@@ -166,30 +196,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
         return witClient.runActions(sessionId, text, context)
           .then((ctx) => {
-
-            console.log(`update context to: ${JSON.stringify(ctx)}`);
-
-            let params = {
-              TableName: 'Sessions',
-              Key: {
-                uid: uid
-              },
-              UpdateExpression: 'set context = :ctx',
-              ExpressionAttributeValues: {
-                ':ctx': ctx
-              },
-              ReturnValues: 'UPDATED_NEW'
-            };
-
-            // updates context in database
-            // need to strip this out eventually
-            console.log(`updating context for ${uid} to ${JSON.stringify(ctx)}`);
-            return docClient.update(params).promise()
-              .then((success) => {
-                console.log(`successfully updated context for user ${uid}`);
-              }, (error) => {
-                console.log(`error updating context: ${error}`);
-              });
+            return updateContext(uid, ctx);
           }, (error) => {
             console.log(`error running actions: ${error}`);
           });
