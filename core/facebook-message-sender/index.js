@@ -33,21 +33,79 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
+     * @param api_results_json this is the results object taken from product api
+     */
+    sendSearchResults: function (recipient_id, api_results_json) {
+
+        var elements = [];
+
+        // For now we are returning 10 products, can change this to limit min {max_items, 5}
+        api_results_json.forEach(function (product) {
+            var element = {};
+            element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
+            element.item_url = product && product.DetailPageURL[0];
+            element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
+            element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
+                product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
+            if (product.HasVariations) {
+                element.buttons = [{
+                    type: 'postback',
+                    title: "Select Options",
+                    payload: {
+                        METHOD: "SELECT_VARTIONS",
+                        ASIN: product.ParentASIN
+                    }
+                }]
+            }
+            else {
+                element.buttons = [{
+                    type: "web_url",
+                    url: product.CartUrl,
+                    title: "Purchase"
+                }];
+            }
+
+            elements.push(element);
+        });
+
+        var json = {
+            recipient: {id: recipient_id},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "generic",
+                        elements: elements
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    /**
+     *
+     * @param recipient_id
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
-    sendVariationSelectionPrompt: function (recipient_id, text_message, variation_array) {
+    sendVariationSelectionPrompt: function (recipient_id, variation_results) {
+        if (variation_results.lastVariation) {
+            return sendLastVariationSelectionPrompt(recipient_id, variation_results);
+        }
+
         let quick_replies = [];
 
-        variation_array.forEach((variation)=> {
+        variation_results.variationOptions.forEach((variation)=> {
             let payload = {
                 METHOD: "VARIATION_PICK",
-                ASIN: variation.ASIN,
-                VARIATION_VALUE: variation.title
+                ASIN: variation_results.ASIN,
+                VARIATION_VALUE: variation
             };
 
             let reply = {
                 content_type: 'text',
-                title: variation.title,
+                title: variation,
                 payload: payload
             };
 
@@ -57,7 +115,7 @@ var facebookMessageSender = {
         let json = {
             recipient: {id: recipient_id},
             message: {
-                text: text_message,
+                text: `Select a ${variation_results.variationKey}`,
                 quick_replies: quick_replies
             }
         };
@@ -74,14 +132,14 @@ var facebookMessageSender = {
         let elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
-        variation_results.forEach(function (product) {
+        variation_results.variationOptions.forEach(function (variation,product) {
             let payload = {
                 METHOD: "ITEM_DETAILS",
                 ASIN: product.ASIN
             };
 
             var element = {};
-            element.title = product.title;
+            element.title = variation;
             element.item_url = product.image_url;
             element.subtitle = product.price;
             element.buttons = [{
@@ -139,60 +197,6 @@ var facebookMessageSender = {
 
 
         elements.push(element);
-
-        var json = {
-            recipient: {id: recipient_id},
-            message: {
-                attachment: {
-                    type: "template",
-                    payload: {
-                        template_type: "generic",
-                        elements: elements
-                    }
-                }
-            }
-        };
-
-        return callSendAPI(json);
-    },
-
-    /**
-     *
-     * @param recipient_id
-     * @param api_results_json this is the results object taken from product api
-     */
-    sendSearchResults: function (recipient_id, api_results_json) {
-
-        var elements = [];
-
-        // For now we are returning 10 products, can change this to limit min {max_items, 5}
-        api_results_json.forEach(function (product) {
-            var element = {};
-            element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
-            element.item_url = product && product.DetailPageURL[0];
-            element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
-            element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
-                product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
-            if (product.HasVariations) {
-                element.buttons = [{
-                    type: 'postback',
-                    title: "Select Options",
-                    payload: {
-                        METHOD: "SELECT_VARTIONS",
-                        ASIN: product.ParentASIN
-                    }
-                }]
-            }
-            else {
-                element.buttons = [{
-                    type: "web_url",
-                    url: product.CartUrl,
-                    title: "Purchase"
-                }];
-            }
-
-            elements.push(element);
-        });
 
         var json = {
             recipient: {id: recipient_id},
