@@ -59,4 +59,3 @@ var facebookEventConverter = {
 };
 
 module.exports = facebookEventConverter;
-
