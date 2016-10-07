@@ -68,22 +68,26 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param api_results_json [{title, image_url, price, cart_url},{},..]
+     * @param api_results_json [{title, image_url, price, ASIN},{},..]
      */
-    sendLastVariationSelectionPrompt: function (recipient_id, api_results_json) {
+    sendLastVariationSelectionPrompt: function (recipient_id, variation_results) {
         let elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
-        api_results_json.forEach(function (product) {
+        variation_results.forEach(function (product) {
+            let payload = {
+                METHOD: "ITEM_DETAILS",
+                ASIN: product.ASIN
+            };
+
             var element = {};
-            element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
-            element.item_url = product && product.DetailPageURL[0];
-            element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
-                product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
+            element.title = product.title;
+            element.item_url = product.image_url;
+            element.subtitle = product.price;
             element.buttons = [{
-                type: "web_url",
-                url: product.CartUrl,
-                title: "Purchase"
+                type: "postback",
+                title: "Select",
+                payload: payload
             }];
 
             elements.push(element);
@@ -109,9 +113,8 @@ var facebookMessageSender = {
      *
      * @param recipient_id
      * @param product_json
-     * @param variation_obj
      */
-    sendVariationSummary: function (recipient_id, product_json, variation_obj) {
+    sendVariationSummary: function (recipient_id, ) {
         var elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
@@ -154,7 +157,12 @@ var facebookMessageSender = {
         return callSendAPI(json);
     },
 
-    sendGenericTemplateMessage: function (recipient_id, api_results_json) {
+    /**
+     *
+     * @param recipient_id
+     * @param api_results_json
+     */
+    sendSearchResults: function (recipient_id, api_results_json) {
 
         var elements = [];
 
@@ -168,9 +176,12 @@ var facebookMessageSender = {
                 product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
             if (product.HasVariations) {
                 element.buttons = [{
-                    type: "web_url",
-                    url: "https://cse.msu.edu",
-                    title: "Select Options"
+                    type: 'postback',
+                    title: "Select Options",
+                    payload: {
+                        METHOD: "SELECT_VARTIONS",
+                        ASIN: product.ParentASIN;
+                    }
                 }]
             }
             else {
