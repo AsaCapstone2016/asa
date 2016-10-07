@@ -73,59 +73,78 @@ var amazonProduct = {
         });
     },
 
-    variationPick: function(ASIN, variationValues){
+    variationPick: function(ASIN, variationValues, variationMap){
         var message = {
             text: "Pick a ",
             quick_replies: []
         };
 
         return new Promise(function(resolve, reject){
-            variationFind(ASIN).then(
-                function(json){
-                    var variationKeys = json.variationKeys;
-                    var map = json.map
-                    console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
-                    console.log("resolve map:", JSON.stringify(map, null, 2));
-
-
-                    for (var i = 0; i < variationValues.length; i++) {
-                            map = map[variationValues[i]];
+            return new Promise(function(inResolve, inReject){
+                if(variationMap === null){
+                    variationFind(ASIN).then(
+                        function(res){
+                            inResolve(res);
+                        },function(err){
+                            inReject(err);
                         }
-                        if (variationValues.length == variationKeys.length) {
-                            if (map.ASIN !== undefined) {
-                                //GET INTO LAST LEVEL
-                                //itemDetail(ASIN, recipientId, callback);
-                            }
-                        } else {
-                            var curVariation = variationKeys[variationValues.length];
-                            if(Object.keys(map).length >= 10){
-                                resolve({
-                                    text: "Too Much options"
+                    );
+                }else{
+                    inResolve(variationMap);
+                }
+            }).then(function(json){
+                console.log("JSON:", JSON.stringify(json, null, 2));
+                var variationKeys = json.variationKeys;
+                var map = json.map
+                //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
+                //console.log("resolve map:", JSON.stringify(map, null, 2));
+                for (var i = 0; i < variationValues.length; i++) {
+                        map = map[variationValues[i]];
+                    }
+                    if (variationValues.length === variationKeys.length) {
+                        if (map.ASIN !== undefined) {
+                            //GET INTO LAST LEVEL
+                            //CALL VARIATION DETEAIL FOR MORE DATA
+                            //itemDetail(ASIN, recipientId, callback);
+                        }else{
+                            rejct("ITEM WITHOUT ASIN");
+                        }
+                    } else {
+                        // resolve({
+                        //     ASIN: ASIN,
+                        //     variationKey: variationKeys[variationValues.length],
+                        //     variationOptions: Object.keys(map)
+                        // });
+                        var curVariation = variationKeys[variationValues.length];
+                        if(Object.keys(map).length >= 10){
+                            resolve({
+                                text: "Too Much options"
+                            });
+                        }else{
+                            message.text += curVariation;
+
+                            var payload = {
+                                "METHOD": "VARIATION_PICK",
+                                "ASIN": ASIN,
+                                "VARIATION_VALUE": variationValues
+                            };
+
+                            for (var key of Object.keys(map)) {
+                                payload.VARIATION_VALUE.push(key);
+                                message.quick_replies.push({
+                                    "content_type": "text",
+                                    //"content-type": "postback",
+                                    "title": key,
+                                    "payload": JSON.stringify(payload)
                                 });
-                            }else{
-                                message.text += curVariation;
-
-                                var payload = {
-                                    "METHOD": "VARIATION_PICK",
-                                    "ASIN": ASIN,
-                                    "VARIATION_VALUE": variationValues
-                                };
-
-                                for (var key of Object.keys(map)) {
-                                    payload.VARIATION_VALUE.push(key);
-                                    message.quick_replies.push({
-                                        "content_type": "text",
-                                        //"content-type": "text",
-                                        "title": key,
-                                        "payload": JSON.stringify(payload)
-                                    });
-                                    payload.VARIATION_VALUE.pop();
-                                }
-                                resolve(message);
+                                payload.VARIATION_VALUE.pop();
                             }
+                            resolve(message);
                         }
-                }, function(err){}
-            );
+                    }
+            }, function(err){
+                reject(err);
+            });
         });
     }
 };
@@ -138,7 +157,7 @@ function variationFind(ASIN) {
             "IdType": "ASIN",
             "ResponseGroup": "Variations"
         }).then(function(res) {
-            //console.log("VARIATION_FIND:", JSON.stringify(res, null, 2));
+            console.log("VARIATION_FIND:", JSON.stringify(res, null, 2));
             if (res[0]["Variations"] !== undefined && res[0]["Variations"].length > 0 &&
                 res[0]["Variations"][0]["VariationDimensions"] !== undefined &&
                 res[0]["Variations"][0]["VariationDimensions"].length > 0 &&
