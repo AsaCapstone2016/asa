@@ -18,8 +18,28 @@ module.exports.itemVariationsDAO = {
 		return docClient.put(params).promise()
 			.then((success) => {
 				console.log(`successfully added asin ${asin} to ItemVariations`);
+				return asin;
 			}, (error) => {
 				console.log(`error adding asin ${asin} to ItemVariations: ${error}`);
+			});
+	},
+	getItemVariation: (asin) => {
+		let params = {
+			TableName: tableName,
+			Key: {
+				asin: asin
+			}
+		};
+
+		return docClient.get(params).promise()
+			.then((data) => {
+				if (Object.keys(data).length != 0) {
+					return data.Item;
+				} else {
+					return null;
+				}
+			}, (error) => {
+				console.log(`error getting item from ItemVariations: ${error}`);
 			});
 	}
 }
