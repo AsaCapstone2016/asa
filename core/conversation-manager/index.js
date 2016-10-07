@@ -56,7 +56,7 @@ let getSessionIdFromUserId = (uid) => {
  * Retrieve user id from session id
  * sessionId: session id, primary key for sessionId index
  */
-let getUserIdFromSessionId = (sessionId) => {
+let getSessionFromSessionId = (sessionId) => {
   let docClient = new aws.DynamoDB.DocumentClient();
   let table = 'Sessions';
   let index = 'sessionId-index';
@@ -67,14 +67,13 @@ let getUserIdFromSessionId = (sessionId) => {
     KeyConditionExpression: 'sessionId = :sessionId',
     ExpressionAttributeValues: {
       ':sessionId': sessionId
-    },
-    ProjectionExpression: 'uid'
+    }
   };
 
   return docClient.query(params).promise()
     .then((data) => {
       console.log(`successfully got uid from index: ${JSON.stringify(data)}`);
-      return data.Items[0].uid; // this seems to potentially be able to return more than one item, should we just always return the first? 
+      return data.Items[0]; // this seems to potentially be able to return more than one item, should we just always return the first? 
     }, (error) => {
       console.log(`error using index ${error}`);
     });
@@ -113,8 +112,9 @@ let updateContext = (uid, ctx) => {
 // todo: split this out into different actions
 const actions = {
   send(request, response) {
-    return getUserIdFromSessionId(request.sessionId)
-      .then((recipientId) => {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
         console.log(`send() recipientId: ${recipientId}`);
 
         if (recipientId) {
@@ -130,8 +130,9 @@ const actions = {
       });
   },
   sendHelpMessage(request) {
-    return getUserIdFromSessionId(request.sessionId)
-      .then((recipientId) => {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
         if (recipientId) {
           let msg = "Hey, think of me as your personal shopping assistant.";
           msg += " I can help you discover and purchase items on Amazon.";
@@ -148,8 +149,9 @@ const actions = {
       });
   },
   search(request) {
-    return getUserIdFromSessionId(request.sessionId)
-      .then((recipientId) => {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
         console.log(`search() recipientId: ${recipientId}`);
 
         messageSender.sendTypingMessage(recipientId);
@@ -173,8 +175,9 @@ const actions = {
       });
   },
   sendSearchResults(request) {
-    return getUserIdFromSessionId(request.sessionId)
-      .then((recipientId) => {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
         console.log(`sendSearchResults() recipientId: ${recipientId}`);
 
         if (recipientId) {
@@ -187,6 +190,26 @@ const actions = {
       }, (error) => {
         console.log(`error in sendSearchResults action: ${error}`);
       });
+  },
+  stopSelectingVariations(request) {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let context = session.context;
+        delete context.selectedVariations;
+        return updateContext(session.uid, context);
+      }, (error) => {
+        console.log(`ERROR in stopSelectingVariations: ${error}`);
+      })
+  },
+  resetVariations(request) {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let context = session.context;
+        context.selectedVariations = [];
+        return updateContext(session.uid, context);
+      }, (error) => {
+        console.log(`ERROR in resetVariations: ${error}`);
+      })
   }
 };
 
