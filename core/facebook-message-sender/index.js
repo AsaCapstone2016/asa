@@ -112,32 +112,31 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param product_json
+     * @param product the single result that we are looking up. { title, image_url (LARGE), variation_arry,cart_url, price }
      */
-    sendVariationSummary: function (recipient_id, ) {
+    sendVariationSummary: function (recipient_id, product) {
         var elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
         var element = {};
-        element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
-        element.item_url = product && product.DetailPageURL[0];
-        element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
-        element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
-            product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
-        if (product.HasVariations) {
-            element.buttons = [{
-                type: "web_url",
-                url: "https://cse.msu.edu",
-                title: "Select Options"
-            }]
-        }
-        else {
-            element.buttons = [{
-                type: "web_url",
-                url: product.CartUrl,
-                title: "Purchase"
-            }];
-        }
+        element.title = product.title;
+        element.item_url = product.cart_url;
+        element.image_url = product.cart_url;
+        element.subtitle = product.price;
+
+        element.buttons = [{
+            type: "web_url",
+            url: product.cart_url,
+            title: "Purchase"
+        }, {
+            type: 'postback',
+            title: 'ReSelect',
+            payload: {
+                METHOD: 'RESELECT',
+                ASIN: 'test' //put parent asin here?
+            }
+        }];
+
 
         elements.push(element);
 
@@ -160,7 +159,7 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param api_results_json
+     * @param api_results_json this is the results object taken from product api
      */
     sendSearchResults: function (recipient_id, api_results_json) {
 
@@ -180,7 +179,7 @@ var facebookMessageSender = {
                     title: "Select Options",
                     payload: {
                         METHOD: "SELECT_VARTIONS",
-                        ASIN: product.ParentASIN;
+                        ASIN: product.ParentASIN
                     }
                 }]
             }
