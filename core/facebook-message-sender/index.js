@@ -33,15 +33,22 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param variation_array [{ title:'sfsd', payload: 'sadfsdaf'}]
+     * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
     sendVariationSelectionPrompt: function (recipient_id, text_message, variation_array) {
         let quick_replies = [];
+
         variation_array.forEach((variation)=> {
+            let payload = {
+                METHOD: "VARIATION_PICK",
+                ASIN: variation.ASIN,
+                VARIATION_VALUE: variation.title
+            };
+
             let reply = {
                 content_type: 'text',
                 title: variation.title,
-                payload: variation.payload
+                payload: payload
             };
 
             quick_replies.push(reply);
@@ -50,7 +57,7 @@ var facebookMessageSender = {
         let json = {
             recipient: {id: recipient_id},
             message: {
-                text: text_message, //Possibly customize this later..?
+                text: text_message,
                 quick_replies: quick_replies
             }
         };
