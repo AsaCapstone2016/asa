@@ -73,121 +73,150 @@ var amazonProduct = {
         });
     },
 
-    variationPick: function(ASIN, variationValues){
+    variationPick: function(ASIN, variationValues, variationMap){
         var message = {
             text: "Pick a ",
             quick_replies: []
         };
 
         return new Promise(function(resolve, reject){
-            variationFind(ASIN).then(
-                function(json){
-                    var variationKeys = json.variationKeys;
-                    var map = json.map
-                    console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
-                    console.log("resolve map:", JSON.stringify(map, null, 2));
-
-
-                    for (var i = 0; i < variationValues.length; i++) {
-                            map = map[variationValues[i]];
+            return new Promise(function(inResolve, inReject){
+                if(variationMap === null){
+                    variationFind(ASIN).then(
+                        function(res){
+                            inResolve(res);
+                        },function(err){
+                            inReject(err);
                         }
-                        if (variationValues.length == variationKeys.length) {
-                            if (map.ASIN !== undefined) {
-                                //GET INTO LAST LEVEL
-                                //itemDetail(ASIN, recipientId, callback);
-                            }
-                        } else {
-                            var curVariation = variationKeys[variationValues.length];
-                            if(Object.keys(map).length >= 10){
-                                resolve({
-                                    text: "Too Much options"
-                                });
-                            }else{
-                                message.text += curVariation;
-
-                                var payload = {
-                                    "METHOD": "VARIATION_PICK",
-                                    "ASIN": ASIN,
-                                    "VARIATION_VALUE": variationValues
-                                };
-
-                                for (var key of Object.keys(map)) {
-                                    payload.VARIATION_VALUE.push(key);
-                                    message.quick_replies.push({
-                                        "content_type": "text",
-                                        //"content-type": "text",
-                                        "title": key,
-                                        "payload": JSON.stringify(payload)
-                                    });
-                                    payload.VARIATION_VALUE.pop();
-                                }
-                                resolve(message);
-                            }
+                    );
+                }else{
+                    inResolve(variationMap);
+                }
+            }).then(function(json){
+                console.log("JSON:", JSON.stringify(json, null, 2));
+                var variationKeys = json.variationKeys;
+                var map = json.map
+                //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
+                //console.log("resolve map:", JSON.stringify(map, null, 2));
+                for (var i = 0; i < variationValues.length; i++) {
+                        map = map[variationValues[i]];
+                    }
+                    if (variationValues.length === variationKeys.length) {
+                        if (map.ASIN !== undefined) {
+                            //GET INTO LAST LEVEL
+                            //CALL VARIATION DETEAIL FOR MORE DATA
+                            //itemDetail(ASIN, recipientId, callback);
+                        }else{
+                            rejct("ITEM WITHOUT ASIN");
                         }
-                }, function(err){}
-            );
+                    } else {
+                        resolve({
+                            ASIN : ASIN,
+                            variationKey : variationKeys[variationValues.length],
+                            variationOptions : variationValues.length+1 == variationKeys.length ? map : Object.keys(map),
+                            lastVariation : variationValues.length+1 == variationKeys.length ? true : false
+                        });
+                        // var curVariation = variationKeys[variationValues.length];
+                        // if(Object.keys(map).length >= 10){
+                        //     resolve({
+                        //         text: "Too Much options"
+                        //     });
+                        // }else{
+                        //     message.text += curVariation;
+                        //
+                        //     var payload = {
+                        //         "METHOD": "VARIATION_PICK",
+                        //         "ASIN": ASIN,
+                        //         "VARIATION_VALUE": variationValues
+                        //     };
+                        //
+                        //     for (var key of Object.keys(map)) {
+                        //         payload.VARIATION_VALUE.push(key);
+                        //         message.quick_replies.push({
+                        //             "content_type": "text",
+                        //             //"content-type": "postback",
+                        //             "title": key,
+                        //             "payload": JSON.stringify(payload)
+                        //         });
+                        //         payload.VARIATION_VALUE.pop();
+                        //     }
+                        //     resolve(message);
+                        // }
+                    }
+            }, function(err){
+                reject(err);
+            });
         });
+    },
+
+    variationFind : function(ASIN) {
+        return new Promise(function(resolve, reject){
+            amazon_client.itemLookup({
+                "ItemId": ASIN,
+                "IdType": "ASIN",
+                "ResponseGroup": ["Variations","VariationOffers"]
+            }).then(function(res) {
+                console.log("VARIATION_FIND:", JSON.stringify(res, null, 2));
+                if (res[0]["Variations"] !== undefined && res[0]["Variations"].length > 0 &&
+                    res[0]["Variations"][0]["VariationDimensions"] !== undefined &&
+                    res[0]["Variations"][0]["VariationDimensions"].length > 0 &&
+                    res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"] != undefined &&
+                    res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"].length > 0) {
+
+                    var map = {};
+                    var variationKeys = res[0].Variations[0].VariationDimensions[0].VariationDimension;
+
+                    if (res[0].Variations[0].Item !== undefined && res[0].Variations[0].Item.length > 0) {
+                        var items = res[0].Variations[0].Item;
+                        for (var idx = 0; idx < items.length; ++idx) {
+                            var item = items[idx];
+                            var ref = map;
+                            if (item["ItemAttributes"] !== undefined && item["ItemAttributes"].length > 0) {
+                                var itemAttributes = item["ItemAttributes"][0];
+                                for (var variationIdx in variationKeys) {
+                                    var variation = variationKeys[variationIdx];
+                                    var value = itemAttributes[variation][0];
+                                    if (!(value in ref)) {
+                                        if (variationIdx == variationKeys.length - 1) {
+                                            ref[value] = {
+                                                "ASIN": item.ASIN[0],
+                                                "Image:": item.LargeImage[0].URL[0],
+                                                "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                                && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
+                                                && item.Offers[0].Offer[0].OfferListing[0]
+                                                && item.Offers[0].Offer[0].OfferListing[0].Price
+                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0]
+                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]
+                                            }
+                                        } else {
+                                            ref[value] = {};
+                                            ref = ref[value];
+                                        }
+                                    } else {
+                                        ref = ref[value];
+                                    }
+                                }
+                            }
+                        }
+                        resolve({
+                            variationKeys: variationKeys,
+                            map: map
+                        });
+                    } else {
+                        console.log("This item no Variatios item is empty")
+                    }
+                } else {
+                    console.log("This item no Variatios")
+                }
+            }, function(err) {
+                console.log("Variation Find Error:", JSON.stringify(err, null, 2));
+            });
+        })
     }
 };
 
 
-function variationFind(ASIN) {
-    return new Promise(function(resolve, reject){
-        amazon_client.itemLookup({
-            "ItemId": ASIN,
-            "IdType": "ASIN",
-            "ResponseGroup": "Variations"
-        }).then(function(res) {
-            //console.log("VARIATION_FIND:", JSON.stringify(res, null, 2));
-            if (res[0]["Variations"] !== undefined && res[0]["Variations"].length > 0 &&
-                res[0]["Variations"][0]["VariationDimensions"] !== undefined &&
-                res[0]["Variations"][0]["VariationDimensions"].length > 0 &&
-                res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"] != undefined &&
-                res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"].length > 0) {
 
-                var map = {};
-                var variationKeys = res[0].Variations[0].VariationDimensions[0].VariationDimension;
-
-                if (res[0].Variations[0].Item !== undefined && res[0].Variations[0].Item.length > 0) {
-                    var items = res[0].Variations[0].Item;
-                    for (var idx = 0; idx < items.length; ++idx) {
-                        var item = items[idx];
-                        var ref = map;
-                        if (item["ItemAttributes"] !== undefined && item["ItemAttributes"].length > 0) {
-                            var itemAttributes = item["ItemAttributes"][0];
-                            for (var variationIdx in variationKeys) {
-                                var variation = variationKeys[variationIdx];
-                                var value = itemAttributes[variation][0];
-                                if (!(value in ref)) {
-                                    if (variationIdx == variationKeys.length - 1) {
-                                        ref[value] = {
-                                            "ASIN": item.ASIN[0],
-                                            "Image:": item.LargeImage[0].URL[0]
-                                        }
-                                    } else {
-                                        ref[value] = {};
-                                        ref = ref[value];
-                                    }
-                                } else {
-                                    ref = ref[value];
-                                }
-                            }
-                        }
-                    }
-                    resolve({
-                        variationKeys: variationKeys,
-                        map: map
-                    });
-                } else {
-                    console.log("This item no Variatios item is empty")
-                }
-            } else {
-                console.log("This item no Variatios")
-            }
-        }, function(err) {
-            console.log("Variation Find Error:", JSON.stringify(err, null, 2));
-        });
-    })
-}
 
 module.exports = amazonProduct;
