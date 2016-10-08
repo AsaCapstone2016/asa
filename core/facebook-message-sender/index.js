@@ -53,10 +53,10 @@ var facebookMessageSender = {
                 element.buttons = [{
                     type: 'postback',
                     title: "Select Options",
-                    payload: {
+                    payload: JSON.stringify({
                         METHOD: "SELECT_VARTIONS",
                         ASIN: product.ParentASIN
-                    }
+                    })
                 }]
             }
             else {
@@ -108,7 +108,7 @@ var facebookMessageSender = {
             let reply = {
                 content_type: 'text',
                 title: variation,
-                payload: payload
+                payload: JSON.stringify(payload)
             };
 
             quick_replies.push(reply);
@@ -147,7 +147,7 @@ var facebookMessageSender = {
             element.buttons = [{
                 type: "postback",
                 title: "Select",
-                payload: payload
+                payload: JSON.stringify(payload)
             }];
 
             elements.push(element);
