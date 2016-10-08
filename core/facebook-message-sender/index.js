@@ -54,7 +54,7 @@ var facebookMessageSender = {
                     type: 'postback',
                     title: "Select Options",
                     payload: JSON.stringify({
-                        METHOD: "SELECT_VARTIONS",
+                        METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN
                     })
                 }]
@@ -92,8 +92,9 @@ var facebookMessageSender = {
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
     sendVariationSelectionPrompt: function (recipient_id, variation_results) {
+        console.log(`SEND variation prompt: ${JSON.stringify(variation_results)}`);
         if (variation_results.lastVariation) {
-            return sendLastVariationSelectionPrompt(recipient_id, variation_results);
+            return facebookMessageSender.sendLastVariationSelectionPrompt(recipient_id, variation_results);
         }
 
         let quick_replies = [];
@@ -104,15 +105,19 @@ var facebookMessageSender = {
                 ASIN: variation_results.ASIN,
                 VARIATION_VALUE: variation
             };
-
+            let text = variation.length <= 20 ? variation : variation.substring(0,20);
             let reply = {
                 content_type: 'text',
-                title: variation,
+                title: text,
                 payload: JSON.stringify(payload)
             };
 
             quick_replies.push(reply);
         });
+
+        if (quick_replies.length > 9) {
+            quick_replies = quick_replies.slice(0,9);
+        }
 
         let json = {
             recipient: {id: recipient_id},
@@ -134,16 +139,18 @@ var facebookMessageSender = {
         let elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
-        variation_results.variationOptions.forEach(function (variation,product) {
+        let variations = variation_results.variationOptions;
+        Object.keys(variations).forEach(function (option) {
+            let product = variations[option]
             let payload = {
                 METHOD: "ITEM_DETAILS",
                 ASIN: product.ASIN
             };
 
             var element = {};
-            element.title = variation;
-            element.item_url = product.image_url;
-            element.subtitle = product.price;
+            element.title = option;
+            element.image_url = product.Image;
+            element.subtitle = product.Price;
             element.buttons = [{
                 type: "postback",
                 title: "Select",
@@ -172,12 +179,11 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param product the single result that we are looking up. { title, image_url (LARGE), variation_arry,cart_url, price }
+     * @param product the single result that we are looking up. { title, image_url (LARGE), variation_arry, cart_url, price }
      */
     sendVariationSummary: function (recipient_id, product) {
         var elements = [];
 
-        // For now we are returning 10 products, can change this to limit min {max_items, 5}
         var element = {};
         element.title = product.title;
         element.item_url = product.cart_url;
@@ -193,7 +199,7 @@ var facebookMessageSender = {
             title: 'ReSelect',
             payload: {
                 METHOD: 'RESELECT',
-                ASIN: 'test' //put parent asin here?
+                ASIN: product.ParentASIN
             }
         }];
 
@@ -218,6 +224,7 @@ var facebookMessageSender = {
 };
 
 function callSendAPI(messageData) {
+    console.log(`messageData: ${JSON.stringify(messageData)}`);
 
     var qs = 'access_token=' + encodeURIComponent(config.FB_PAGE_TOKEN);
 
