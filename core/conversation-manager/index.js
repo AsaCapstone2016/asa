@@ -136,9 +136,9 @@ const actions = {
           let msg = "Hey, think of me as your personal shopping assistant.";
           msg += " I can help you discover and purchase items on Amazon.";
           msg += " You could ask me...\n\n";
-          msg += "  - I'm looking for an xbox\n";
-          msg += "  - Can you search for rainboots?\n";
-          msg += "  - I want to buy something";
+          msg += " - I'm looking for an xbox\n";
+          msg += " - Can you find rainboots?\n";
+          msg += " - I want to buy something";
           console.log(`SEND help message to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
             .then(() => null);
@@ -160,11 +160,12 @@ const actions = {
         return new Promise((resolve, reject) => {
           if ('search_query' in entities) {
             console.log(`SEARCH: ${entities.search_query[0].value}`);
-            return amazon.itemSearch(entities.search_query[0].value).then((json) => {
-              context.items = json;
-              delete context.missing_keywords;
-              return resolve(context);
-            });
+            return amazon.itemSearch(entities.search_query[0].value)
+              .then((json) => {
+                context.items = json;
+                delete context.missing_keywords;
+                return resolve(context);
+              });
           } else {
             context.missing_keywords = true;
             delete context.items;
@@ -200,7 +201,7 @@ const actions = {
         return updateContext(session.uid, context);
       }, (error) => {
         console.log(`ERROR in stopSelectingVariations: ${error}`);
-      })
+      });
   },
   resetVariations(request) {
     return getSessionFromSessionId(request.sessionId)
@@ -210,7 +211,7 @@ const actions = {
         return updateContext(session.uid, context);
       }, (error) => {
         console.log(`ERROR in resetVariations: ${error}`);
-      })
+      });
   }
 };
 
@@ -239,6 +240,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
       if (message.content.action === 'text') {
 
+        // Handle text messages from the user
         let text = message.content.payload;
         console.log(`user sent a text message: ${text}`);
         return witClient.runActions(sessionId, text, context)
@@ -247,27 +249,61 @@ module.exports.handler = (message, sender, msgSender) => {
           }, (error) => {
             console.log(`ERROR during runActions: ${error}`);
           });
+
       } else if (message.content.action === 'postback') {
-        let payload = message.content.payload;
-        console.log(`POSTBACK: ${payload}`);
-        // if (payload.METHOD === "SELECT_VARIATIONS") {
-        //   return amazon.variationPick(payload.ASIN, [], null)
-        //     .then((result) => {
-        //       return messageSender.sendVariationSelectionPrompt(sender, result);
-        //     })
-        // } else if (payload.METHOD === "VARIATION_PICK") {
-        //   if (payload.VARIATION_VALUE === "Nevermind") {
-        //     return actions.stopSelectingVariations(session)
-        //       .catch((error))
-        //   } else {
 
-        //   }
-        // } else if (payload.METHOD === "ITEM_DETAILS") {
+        // Handle button presses and quick replies
+        let payload = JSON.parse(message.content.payload);
+        console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
-        // } else if (payload.METHOD === "RESELECT") {
+        if (payload.METHOD === "SELECT_VARIATIONS") {
+          console.log("select variations");
+          return amazon.variationPick(payload.ASIN, [], null)
+            .then((result) => {
+              return messageSender.sendVariationSelectionPrompt(sender, result);
+            }, (error => {
+              console.log(`ERROR sending variation prompt: ${error}`);
+            }));
 
-        // }
+        } else if (payload.METHOD === "VARIATION_PICK") {
+          console.log("pick variation");
+          if (payload.VARIATION_VALUE === "Nevermind") {
+            return actions.stopSelectingVariations(session)
+              .catch((error) => {
+                console.log(`ERROR quitting variation selection: ${error}`);
+              });
+          } else {
+            context.selectedVariations.push(payload.VARIATION_VALUE);
+            return updateContext(session.uid, context)
+              .then(() => {
+                return amazon.variationPick(payload.ASIN, context, null)
+                  .then((result) => {
+                    return messageSender.sendVariationSelectionPrompt(sender, result);
+                  }, (error) => {
+                    console.log(`ERROR sending next variation prompt: ${error}`);
+                  });
+              }, (error) => {
+                console.log(`ERROR selecting variation: ${error}`);
+              });
+          }
+
+        } else if (payload.METHOD === "ITEM_DETAILS") {
+          console.log("item details");
+          console.log(`Print summary for item ${payload.ASIN}`);
+
+        } else if (payload.METHOD === "RESELECT") {
+          console.log("reselect variations");
+          return actions.resetVariations(session)
+            .catch((error) => {
+              console.log(`ERROR resetting selected variations: ${error}`);
+            });
+
+        } else {
+          console.log("Unsupported postback method");
+        }
+
       }
+
     }, (error) => {
       console.log(`ERROR retrieving session from database: ${error}`);
     });
