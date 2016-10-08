@@ -11,6 +11,7 @@ const WIT_TOKEN = config.WIT_TOKEN;
 let aws = require('aws-sdk');
 aws.config.update({ region: 'us-east-1' });
 
+// Store messageSender in a variable accessible by the Wit actions
 let messageSender;
 
 /**
@@ -33,11 +34,11 @@ let getSessionIdFromUserId = (uid) => {
     .then((data) => {
       if (Object.keys(data).length != 0) {
         // if session exists, grab it
-        console.log('session exists!');
+        console.log('SESSION exists!');
         return data.Item;
       } else {
         // if session does not exist, create it
-        console.log('session does not exist!');
+        console.log('SESSION does not exist!');
         let params = {
           TableName: table,
           Item: {
@@ -72,10 +73,10 @@ let getSessionFromSessionId = (sessionId) => {
 
   return docClient.query(params).promise()
     .then((data) => {
-      console.log(`successfully got uid from index: ${JSON.stringify(data)}`);
-      return data.Items[0]; // this seems to potentially be able to return more than one item, should we just always return the first? 
+      // We should only ever have one session so just return the first item
+      return data.Items[0];
     }, (error) => {
-      console.log(`error using index ${error}`);
+      console.log(`ERROR retrieving session: ${error}`);
     });
 };
 
@@ -100,12 +101,11 @@ let updateContext = (uid, ctx) => {
     ReturnValues: 'UPDATED_NEW'
   };
 
-  console.log(`updating context for ${uid} to ${JSON.stringify(ctx)}`);
   return docClient.update(params).promise()
     .then((success) => {
-      console.log(`successfully updated context for user ${uid}`);
+      console.log(`Updated context for ${uid} to ${JSON.stringify(ctx)}`);
     }, (error) => {
-      console.log(`error updating context: ${error}`);
+      console.log(`ERROR updating context: ${error}`);
     });
 };
 
@@ -115,24 +115,23 @@ const actions = {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
         let recipientId = session.uid;
-        console.log(`send() recipientId: ${recipientId}`);
 
         if (recipientId) {
           const msg = response.text;
-          console.log(msg);
           console.log(`SEND "${msg}" to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
             .then(() => null);
         }
 
       }, (error) => {
-        console.log(`error in send action: ${error}`);
+        console.log(`ERROR in send action: ${error}`);
       });
   },
   sendHelpMessage(request) {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
         let recipientId = session.uid;
+
         if (recipientId) {
           let msg = "Hey, think of me as your personal shopping assistant.";
           msg += " I can help you discover and purchase items on Amazon.";
@@ -140,25 +139,27 @@ const actions = {
           msg += "  - I'm looking for an xbox\n";
           msg += "  - Can you search for rainboots?\n";
           msg += "  - I want to buy something";
-          console.log(`SEND HELP MESSAGE`);
+          console.log(`SEND help message to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
             .then(() => null);
         }
+
       }, (error) => {
-        console.log(`error in sendHelpMessage: ${error}`);
+        console.log(`ERROR in sendHelpMessage: ${error}`);
       });
   },
   search(request) {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
         let recipientId = session.uid;
-        console.log(`search() recipientId: ${recipientId}`);
 
         messageSender.sendTypingMessage(recipientId);
+
         let entities = request.entities;
         let context = request.context;
         return new Promise((resolve, reject) => {
           if ('search_query' in entities) {
+            console.log(`SEARCH: ${entities.search_query[0].value}`);
             return amazon.itemSearch(entities.search_query[0].value).then((json)=> {
               context.items = json;
               delete context.missing_keywords;
@@ -170,15 +171,15 @@ const actions = {
             return resolve(context);
           }
         });
+
       }, (error) => {
-        console.log(`error in search action: ${error}`);
+        console.log(`ERROR in search action: ${error}`);
       });
   },
   sendSearchResults(request) {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
         let recipientId = session.uid;
-        console.log(`sendSearchResults() recipientId: ${recipientId}`);
 
         if (recipientId) {
           console.log(`SEND LIST OF ITEMS`);
@@ -188,7 +189,7 @@ const actions = {
         }
 
       }, (error) => {
-        console.log(`error in sendSearchResults action: ${error}`);
+        console.log(`ERROR in sendSearchResults action: ${error}`);
       });
   },
   stopSelectingVariations(request) {
@@ -228,7 +229,7 @@ module.exports.handler = (message, sender, msgSender) => {
   return getSessionIdFromUserId(sender)
     .then((session) => {
 
-      console.log(`session retrieved from database: ${JSON.stringify(session)}`);
+      console.log(`SESSION: ${JSON.stringify(session)}`);
 
       messageSender = msgSender;
 
@@ -236,25 +237,38 @@ module.exports.handler = (message, sender, msgSender) => {
       let sessionId = session.sessionId;
       let context = session.context;
 
-      console.log(`session: ${JSON.stringify(session)}`);
-
       if (message.content.action === 'text') {
-        console.log(`user sent a text message`);
+
         let text = message.content.payload;
-
-        console.log(`sent to runActions: ${sessionId}, ${text}, ${JSON.stringify(context)}`);
-
+        console.log(`user sent a text message: ${text}`);
         return witClient.runActions(sessionId, text, context)
           .then((ctx) => {
             return updateContext(uid, ctx);
           }, (error) => {
-            console.log(`error running actions: ${error}`);
+            console.log(`ERROR during runActions: ${error}`);
           });
       } else if (message.content.action === 'postback') {
-        // yiming will be putting stuff here
-        console.log('postback');
+        let payload = message.content.payload;
+        console.log(`POSTBACK: ${payload}`);
+        // if (payload.METHOD === "SELECT_VARIATIONS") {
+        //   return amazon.variationPick(payload.ASIN, [], null)
+        //     .then((result) => {
+        //       return messageSender.sendVariationSelectionPrompt(sender, result);
+        //     })
+        // } else if (payload.METHOD === "VARIATION_PICK") {
+        //   if (payload.VARIATION_VALUE === "Nevermind") {
+        //     return actions.stopSelectingVariations(session)
+        //       .catch((error))
+        //   } else {
+
+        //   }
+        // } else if (payload.METHOD === "ITEM_DETAILS") {
+
+        // } else if (payload.METHOD === "RESELECT") {
+
+        // }
       }
     }, (error) => {
-      console.log(`error retrieving session from database: ${error}`);
+      console.log(`ERROR retrieving session from database: ${error}`);
     });
 }

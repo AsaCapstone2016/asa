@@ -1,3 +1,5 @@
+'use strict';
+
 var fetch = require('node-fetch');
 var config = require('./../../config');
 
@@ -217,7 +219,6 @@ var facebookMessageSender = {
 
 function callSendAPI(messageData) {
 
-    console.log(config.FB_PAGE_TOKEN);
     var qs = 'access_token=' + encodeURIComponent(config.FB_PAGE_TOKEN);
 
     return fetch('https://graph.facebook.com/v2.6/me/messages?' + qs, {
@@ -232,7 +233,7 @@ function callSendAPI(messageData) {
             if (json.error && json.error.message) {
                 throw new Error(json.error.message);
             }
-            console.log(json);
+            //console.log(json);
         });
 }
 

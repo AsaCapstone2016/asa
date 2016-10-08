@@ -17,10 +17,10 @@ module.exports.itemVariationsDAO = {
 
 		return docClient.put(params).promise()
 			.then((success) => {
-				console.log(`successfully added asin ${asin} to ItemVariations`);
+				console.log(`Successfully added ASIN ${asin} to ItemVariations`);
 				return asin;
 			}, (error) => {
-				console.log(`error adding asin ${asin} to ItemVariations: ${error}`);
+				console.log(`ERROR adding asin ${asin} to ItemVariations: ${error}`);
 			});
 	},
 	getItemVariation: (asin) => {
@@ -34,14 +34,14 @@ module.exports.itemVariationsDAO = {
 		return docClient.get(params).promise()
 			.then((data) => {
 				if (Object.keys(data).length != 0) {
-					console.log(`successfully retrieved asin ${asin} from ItemVariations`);
+					console.log(`Successfully retrieved ASIN ${asin} from ItemVariations`);
 					return data.Item;
 				} else {
-					console.log(`did not find asin ${asin} in ItemVariations`);
+					console.log(`Did not find ASIN ${asin} in ItemVariations`);
 					return null;
 				}
 			}, (error) => {
-				console.log(`error getting item from ItemVariations: ${error}`);
+				console.log(`ERROR getting item from ItemVariations: ${error}`);
 			});
 	}
 }
