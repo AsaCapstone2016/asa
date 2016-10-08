@@ -18,39 +18,38 @@ var amazonProduct = {
             "keywords": keywords,
             "responseGroup": ["ItemIds", "ItemAttributes", "Images", "OfferSummary"]
         }).then((result) => {
-
             var promiseArray = [];
-            for (var itemIdx = 0; itemIdx < res.length; itemIdx++) {
-                let curItem = res[itemIdx];
+            for (var itemIdx = 0; itemIdx < result.length; itemIdx++) {
+                let curItem = result[itemIdx];
                 //When item has ParentASIN and ParentASIN not same as ASIN, which means has options
-                if (curItem["ParentASIN"] !== undefined &&
-                    curItem["ParentASIN"].length > 0 &&
-                    curItem["ASIN"] !== undefined &&
-                    curItem["ASIN"] != curItem["ParentASIN"]) {
+                if (curItem.ParentASIN !== undefined &&
+                    curItem.ParentASIN.length > 0 &&
+                    curItem.ASIN !== undefined &&
+                    curItem.ASIN != curItem.ParentASIN) {
                     
                     console.log(`Item #${itemIdx}:${curItem.ASIN} has variations`);
-                    curItem["HasVariations"] = true;
+                    curItem.HasVariations = true;
                 }
                 //When item doesn't have ParentASIN, which means has no options
-                else if (curItem["ASIN"] !== undefined && curItem["ASIN"].length > 0) {
+                else if (curItem.ASIN !== undefined && curItem.ASIN.length > 0) {
                     console.log(`Item #${itemIdx}:${curItem.ASIN} has no variations`);
                     //Build virtual cart here
-                    promiseArray.push(amazonProduct.createCart(curItem["ASIN"], 1)
+                    promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
                         .then((url) => {
                             if (url === undefined) {
                                 url = curItem.DetailPageURL[0];
                             }
-                            curItem["CartUrl"] = url;
+                            curItem.CartUrl = url;
                         }));
                 } else {
                     // *** ERROR *** no ASIN
                     console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
-                    curItem["CartUrl"] = "https://amazon.com";
+                    curItem.CartUrl = "https://amazon.com";
                 }
             }
             return Promise.all(promiseArray).then(() => {
                 console.log('Done getting/building item search response');
-                return res;
+                return result;
             });
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
@@ -61,11 +60,11 @@ var amazonProduct = {
         return amazon_client.cartCreate({
             "Item.1.ASIN": ASIN,
             "Item.1.Quantity": quantity
-        }).then(function(res) {
-            if (res.CartItems !== undefined && res.CartItems.length > 0) {
-                if (res.PurchaseURL !== undefined) {
-                    console.log(`${ASIN} cart url: ${res.PurchaseURL[0]}`);
-                    return res.PurchaseURL[0];
+        }).then(function(result) {
+            if (result.CartItems !== undefined && result.CartItems.length > 0) {
+                if (result.PurchaseURL !== undefined) {
+                    console.log(`${ASIN} cart url: ${result.PurchaseURL[0]}`);
+                    return result.PurchaseURL[0];
                 }
             }
         }, function(err) {
@@ -85,8 +84,8 @@ var amazonProduct = {
             return new Promise(function(inResolve, inReject){
                 if(variationMap === null){
                     variationFind(ASIN).then(
-                        function(res){
-                            inResolve(res);
+                        function(result){
+                            inResolve(result);
                         },function(err){
                             inReject(err);
                         }
@@ -157,24 +156,24 @@ var amazonProduct = {
                 "ItemId": ASIN,
                 "IdType": "ASIN",
                 "ResponseGroup": ["Variations","VariationOffers"]
-            }).then(function(res) {
-                //console.log("VARIATION_FIND:", JSON.stringify(res, null, 2));
-                if (res[0]["Variations"] !== undefined && res[0]["Variations"].length > 0 &&
-                    res[0]["Variations"][0]["VariationDimensions"] !== undefined &&
-                    res[0]["Variations"][0]["VariationDimensions"].length > 0 &&
-                    res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"] != undefined &&
-                    res[0]["Variations"][0]["VariationDimensions"][0]["VariationDimension"].length > 0) {
+            }).then(function(result) {
+                //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
+                if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
+                    result[0].Variations[0].VariationDimensions !== undefined &&
+                    result[0].Variations[0].VariationDimensions.length > 0 &&
+                    result[0].Variations[0].VariationDimensions[0].VariationDimension != undefined &&
+                    result[0].Variations[0].VariationDimensions[0].VariationDimension.length > 0) {
 
                     var map = {};
-                    var variationKeys = res[0].Variations[0].VariationDimensions[0].VariationDimension;
+                    var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
 
-                    if (res[0].Variations[0].Item !== undefined && res[0].Variations[0].Item.length > 0) {
-                        var items = res[0].Variations[0].Item;
+                    if (result[0].Variations[0].Item !== undefined && result[0].Variations[0].Item.length > 0) {
+                        var items = result[0].Variations[0].Item;
                         for (var idx = 0; idx < items.length; ++idx) {
                             var item = items[idx];
                             var ref = map;
-                            if (item["ItemAttributes"] !== undefined && item["ItemAttributes"].length > 0) {
-                                var itemAttributes = item["ItemAttributes"][0];
+                            if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
+                                var itemAttributes = item.ItemAttributes[0];
                                 for (var variationIdx in variationKeys) {
                                     var variation = variationKeys[variationIdx];
                                     var value = itemAttributes[variation][0];

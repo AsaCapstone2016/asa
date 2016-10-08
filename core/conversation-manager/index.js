@@ -160,7 +160,7 @@ const actions = {
         return new Promise((resolve, reject) => {
           if ('search_query' in entities) {
             console.log(`SEARCH: ${entities.search_query[0].value}`);
-            return amazon.itemSearch(entities.search_query[0].value).then((json)=> {
+            return amazon.itemSearch(entities.search_query[0].value).then((json) => {
               context.items = json;
               delete context.missing_keywords;
               return resolve(context);
