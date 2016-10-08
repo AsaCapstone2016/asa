@@ -75,22 +75,19 @@ var amazonProduct = {
     },
 
     variationPick: function(ASIN, variationValues, variationMap){
-        var message = {
-            text: "Pick a ",
-            quick_replies: []
-        };
-
         return new Promise(function(resolve, reject){
             return new Promise(function(inResolve, inReject){
-                if(variationMap === null){
-                    variationFind(ASIN).then(
-                        function(result){
+                if (variationMap === null) {
+                    amazonProduct.variationFind(ASIN)
+                        .then(function(result) {
+                            console.log(`got variations map: ${JSON.stringify(result)}`);
                             inResolve(result);
-                        },function(err){
+                        }, function(err) {
+                            console.log("didn't get variation map...");
                             inReject(err);
-                        }
-                    );
-                }else{
+                        });
+                } else {
+                    console.log(`Already have variation map for ${ASIN}`);
                     inResolve(variationMap);
                 }
             }).then(function(json) {
@@ -117,32 +114,6 @@ var amazonProduct = {
                             variationOptions : variationValues.length+1 == variationKeys.length ? map : Object.keys(map),
                             lastVariation : variationValues.length+1 == variationKeys.length ? true : false
                         });
-                        // var curVariation = variationKeys[variationValues.length];
-                        // if(Object.keys(map).length >= 10){
-                        //     resolve({
-                        //         text: "Too Much options"
-                        //     });
-                        // }else{
-                        //     message.text += curVariation;
-                        //
-                        //     var payload = {
-                        //         "METHOD": "VARIATION_PICK",
-                        //         "ASIN": ASIN,
-                        //         "VARIATION_VALUE": variationValues
-                        //     };
-                        //
-                        //     for (var key of Object.keys(map)) {
-                        //         payload.VARIATION_VALUE.push(key);
-                        //         message.quick_replies.push({
-                        //             "content_type": "text",
-                        //             //"content-type": "postback",
-                        //             "title": key,
-                        //             "payload": JSON.stringify(payload)
-                        //         });
-                        //         payload.VARIATION_VALUE.pop();
-                        //     }
-                        //     resolve(message);
-                        // }
                     }
             }, function(err) {
                 reject(err);
@@ -150,70 +121,68 @@ var amazonProduct = {
         });
     },
 
-    variationFind : function(ASIN) {
-        return new Promise(function(resolve, reject){
-            amazon_client.itemLookup({
-                "ItemId": ASIN,
-                "IdType": "ASIN",
-                "ResponseGroup": ["Variations","VariationOffers"]
-            }).then(function(result) {
-                //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
-                if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
-                    result[0].Variations[0].VariationDimensions !== undefined &&
-                    result[0].Variations[0].VariationDimensions.length > 0 &&
-                    result[0].Variations[0].VariationDimensions[0].VariationDimension != undefined &&
-                    result[0].Variations[0].VariationDimensions[0].VariationDimension.length > 0) {
+    variationFind: function(ASIN) {
+        return amazon_client.itemLookup({
+            "ItemId": ASIN,
+            "IdType": "ASIN",
+            "ResponseGroup": ["Variations","VariationOffers"]
+        }).then(function(result) {
+            //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
+            if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
+                result[0].Variations[0].VariationDimensions !== undefined &&
+                result[0].Variations[0].VariationDimensions.length > 0 &&
+                result[0].Variations[0].VariationDimensions[0].VariationDimension != undefined &&
+                result[0].Variations[0].VariationDimensions[0].VariationDimension.length > 0) {
 
-                    var map = {};
-                    var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
+                var map = {};
+                var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
 
-                    if (result[0].Variations[0].Item !== undefined && result[0].Variations[0].Item.length > 0) {
-                        var items = result[0].Variations[0].Item;
-                        for (var idx = 0; idx < items.length; ++idx) {
-                            var item = items[idx];
-                            var ref = map;
-                            if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
-                                var itemAttributes = item.ItemAttributes[0];
-                                for (var variationIdx in variationKeys) {
-                                    var variation = variationKeys[variationIdx];
-                                    var value = itemAttributes[variation][0];
-                                    if (!(value in ref)) {
-                                        if (variationIdx == variationKeys.length - 1) {
-                                            ref[value] = {
-                                                "ASIN": item.ASIN[0],
-                                                "Image:": item.LargeImage[0].URL[0],
-                                                "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
-                                                && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
-                                                && item.Offers[0].Offer[0].OfferListing[0]
-                                                && item.Offers[0].Offer[0].OfferListing[0].Price
-                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0]
-                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
-                                                && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]
-                                            }
-                                        } else {
-                                            ref[value] = {};
-                                            ref = ref[value];
+                if (result[0].Variations[0].Item !== undefined && result[0].Variations[0].Item.length > 0) {
+                    var items = result[0].Variations[0].Item;
+                    for (var idx = 0; idx < items.length; ++idx) {
+                        var item = items[idx];
+                        var ref = map;
+                        if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
+                            var itemAttributes = item.ItemAttributes[0];
+                            for (var variationIdx in variationKeys) {
+                                var variation = variationKeys[variationIdx];
+                                var value = itemAttributes[variation][0];
+                                if (!(value in ref)) {
+                                    if (variationIdx == variationKeys.length - 1) {
+                                        ref[value] = {
+                                            "ASIN": item.ASIN[0],
+                                            "Image": item.LargeImage[0].URL[0],
+                                            "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
+                                            && item.Offers[0].Offer[0].OfferListing[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]
                                         }
                                     } else {
+                                        ref[value] = {};
                                         ref = ref[value];
                                     }
+                                } else {
+                                    ref = ref[value];
                                 }
                             }
                         }
-                        resolve({
-                            variationKeys: variationKeys,
-                            map: map
-                        });
-                    } else {
-                        console.log("This item no Variatios item is empty")
                     }
+                    return {
+                        variationKeys: variationKeys,
+                        map: map
+                    };
                 } else {
-                    console.log("This item no Variatios")
+                    console.log("This item no Variatios item is empty")
                 }
-            }, function(err) {
-                console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));
-            });
-        })
+            } else {
+                console.log("This item no Variatios")
+            }
+        }, function(err) {
+            console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));
+        });
     }
 };
 
