@@ -55,7 +55,7 @@ var facebookMessageSender = {
                     title: "Select Options",
                     payload: JSON.stringify({
                         METHOD: "SELECT_VARIATIONS",
-                        ASIN: product.ParentASIN
+                        ASIN: product.ParentASIN[0]
                     })
                 }]
             }
@@ -118,6 +118,15 @@ var facebookMessageSender = {
         if (quick_replies.length > 9) {
             quick_replies = quick_replies.slice(0,9);
         }
+
+        quick_replies.push({
+            content_type: 'text',
+            title: 'Nevermind',
+            payload: JSON.stringify({
+                METHOD: 'VARIATION_PICK',
+                VARIATION_VALUE: 'Nevermind'
+            })
+        });
 
         let json = {
             recipient: {id: recipient_id},
@@ -199,7 +208,7 @@ var facebookMessageSender = {
             title: 'ReSelect',
             payload: {
                 METHOD: 'RESELECT',
-                ASIN: product.ParentASIN
+                ASIN: product.ParentASIN[0]
             }
         }];
 

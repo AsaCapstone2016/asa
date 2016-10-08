@@ -258,7 +258,10 @@ module.exports.handler = (message, sender, msgSender) => {
 
         if (payload.METHOD === "SELECT_VARIATIONS") {
           console.log("select variations");
-          return amazon.variationPick(payload.ASIN, [], null)
+          return actions.resetVariations(session)
+            .then(() => {
+              return amazon.variationPick(payload.ASIN, [], null)
+            })
             .then((result) => {
               return messageSender.sendVariationSelectionPrompt(sender, result);
             }, (error => {
