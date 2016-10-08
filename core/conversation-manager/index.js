@@ -279,7 +279,7 @@ module.exports.handler = (message, sender, msgSender) => {
             context.selectedVariations.push(payload.VARIATION_VALUE);
             return updateContext(session.uid, context)
               .then(() => {
-                return amazon.variationPick(payload.ASIN, context, null)
+                return amazon.variationPick(payload.ASIN, context.selectedVariations, null)
                   .then((result) => {
                     return messageSender.sendVariationSelectionPrompt(sender, result);
                   }, (error) => {

@@ -97,24 +97,25 @@ var amazonProduct = {
                 //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
                 //console.log("resolve map:", JSON.stringify(map, null, 2));
                 for (var i = 0; i < variationValues.length; i++) {
-                        map = map[variationValues[i]];
+                    map = map[variationValues[i]];
+                    //console.log(`Map after idx ${i}: ${JSON.stringify(map)}`);
+                }
+                if (variationValues.length === variationKeys.length) {
+                    if (map.ASIN !== undefined) {
+                        //GET INTO LAST LEVEL
+                        //CALL VARIATION DETEAIL FOR MORE DATA
+                        //itemDetail(ASIN, recipientId, callback);
+                    }else{
+                        rejct("ITEM WITHOUT ASIN");
                     }
-                    if (variationValues.length === variationKeys.length) {
-                        if (map.ASIN !== undefined) {
-                            //GET INTO LAST LEVEL
-                            //CALL VARIATION DETEAIL FOR MORE DATA
-                            //itemDetail(ASIN, recipientId, callback);
-                        }else{
-                            rejct("ITEM WITHOUT ASIN");
-                        }
-                    } else {
-                        resolve({
-                            ASIN : ASIN,
-                            variationKey : variationKeys[variationValues.length],
-                            variationOptions : variationValues.length+1 == variationKeys.length ? map : Object.keys(map),
-                            lastVariation : variationValues.length+1 == variationKeys.length ? true : false
-                        });
-                    }
+                } else {
+                    resolve({
+                        ASIN : ASIN,
+                        variationKey : variationKeys[variationValues.length],
+                        variationOptions : variationValues.length+1 == variationKeys.length ? map : Object.keys(map),
+                        lastVariation : variationValues.length+1 == variationKeys.length ? true : false
+                    });
+                }
             }, function(err) {
                 reject(err);
             });
