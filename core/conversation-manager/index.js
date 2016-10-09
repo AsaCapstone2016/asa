@@ -141,7 +141,9 @@ const actions = {
           msg += " - I want to buy something";
           console.log(`SEND help message to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
-            .then(() => null);
+            .then(() => {
+              return request.context;
+            });
         }
 
       }, (error) => {
@@ -186,7 +188,10 @@ const actions = {
           console.log(`SEND LIST OF ITEMS`);
           const items = request.context.items;
           return messageSender.sendSearchResults(recipientId, items)
-            .then(() => null);
+            .then(() => {
+              delete request.context.items;
+              return request.context;
+            });
         }
 
       }, (error) => {
@@ -194,23 +199,34 @@ const actions = {
       });
   },
   stopSelectingVariations(request) {
-    return getSessionFromSessionId(request.sessionId)
-      .then((session) => {
-        let context = session.context;
-        delete context.selectedVariations;
-        return updateContext(session.uid, context);
-      }, (error) => {
-        console.log(`ERROR in stopSelectingVariations: ${error}`);
-      });
+    return new Promise((resolve, reject) => {
+      let context = request.context;
+      delete context.selectedVariations;
+      delete context.parentASIN;
+      return resolve(context);
+    });
   },
   resetVariations(request) {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
-        let context = session.context;
-        context.selectedVariations = [];
-        return updateContext(session.uid, context);
-      }, (error) => {
-        console.log(`ERROR in resetVariations: ${error}`);
+        return new Promise((resolve, reject) => {
+          let recipientId = session.uid;
+          let context = request.context;
+          context.selectedVariations = [];
+
+          return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
+            .then((result) => {
+              return messageSender.sendVariationSelectionPrompt(recipientId, result)
+                .catch((error) => {
+                  console.log(`ERROR sending variation prompt: ${error}`);
+                })
+            }, (error) => {
+              console.log(`ERROR sending variation prompt: ${error}`);
+            })
+            .then(() => {
+              return resolve(context);
+            })
+        });
       });
   }
 };
@@ -257,31 +273,35 @@ module.exports.handler = (message, sender, msgSender) => {
         console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
         if (payload.METHOD === "SELECT_VARIATIONS") {
+          // User pressed "Select Options" button after getting search results
           console.log("select variations");
+          context.parentASIN = payload.ASIN;
           return actions.resetVariations(session)
-            .then(() => {
-              return amazon.variationPick(payload.ASIN, [], null)
-            })
-            .then((result) => {
-              return messageSender.sendVariationSelectionPrompt(sender, result);
-            }, (error => {
-              console.log(`ERROR sending variation prompt: ${error}`);
-            }));
+            .then((ctx) => {
+              return updateContext(uid, ctx);
+            }, (error) => {
+              console.log(`ERROR beginning variation selection: ${error}`);
+            });
 
         } else if (payload.METHOD === "VARIATION_PICK") {
+          // User selected a variation from a quickreply prompt
           console.log("pick variation");
           if (payload.VARIATION_VALUE === "Nevermind") {
+            // Stop selecting variations
             return actions.stopSelectingVariations(session)
-              .catch((error) => {
+              .then((ctx) => {
+                return updateContext(uid, ctx);
+              }, (error) => {
                 console.log(`ERROR quitting variation selection: ${error}`);
               });
           } else {
+            // Add selection to user's context and send next prompt
             context.selectedVariations.push(payload.VARIATION_VALUE);
-            return updateContext(session.uid, context)
+            return updateContext(uid, context)
               .then(() => {
-                return amazon.variationPick(payload.ASIN, context.selectedVariations, null)
+                return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                   .then((result) => {
-                    return messageSender.sendVariationSelectionPrompt(sender, result);
+                    return messageSender.sendVariationSelectionPrompt(uid, result);
                   }, (error) => {
                     console.log(`ERROR sending next variation prompt: ${error}`);
                   });
@@ -291,13 +311,17 @@ module.exports.handler = (message, sender, msgSender) => {
           }
 
         } else if (payload.METHOD === "ITEM_DETAILS") {
+          // User selected the last variation, add it to their context and send summary
           console.log("item details");
           console.log(`Print summary for item ${payload.ASIN}`);
 
         } else if (payload.METHOD === "RESELECT") {
+          // User wants to reselect the variations
           console.log("reselect variations");
           return actions.resetVariations(session)
-            .catch((error) => {
+            .then((ctx) => {
+              return updateContext(uid, ctx);
+            }, (error) => {
               console.log(`ERROR resetting selected variations: ${error}`);
             });
 
