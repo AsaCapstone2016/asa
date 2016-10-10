@@ -198,7 +198,7 @@ var facebookMessageSender = {
         var elements = [];
 
         var element = {};
-        element.title = product.parentTitle;
+        element.title = `${product.parentTitle} - ${product.price}`;
         element.item_url = product.cartUrl;
         element.image_url = product.image;
         var variationSummary = '';
