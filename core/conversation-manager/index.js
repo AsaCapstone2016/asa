@@ -91,7 +91,7 @@ let updateContext = (uid, ctx) => {
   let table = `${TABLE_PREFIX}Sessions`;
 
   let params = {
-    TableName: 'Sessions',
+    TableName: table,
     Key: {
       uid: uid
     },
