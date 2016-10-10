@@ -105,7 +105,7 @@ var facebookMessageSender = {
                 ASIN: variation_results.ASIN,
                 VARIATION_VALUE: variation
             };
-            let text = variation.length <= 20 ? variation : variation.substring(0,20);
+            let text = variation.length <= 20 ? variation : variation.substring(0, 20);
             let reply = {
                 content_type: 'text',
                 title: text,
@@ -116,7 +116,7 @@ var facebookMessageSender = {
         });
 
         if (quick_replies.length > 9) {
-            quick_replies = quick_replies.slice(0,9);
+            quick_replies = quick_replies.slice(0, 9);
         }
 
         quick_replies.push({
@@ -148,6 +148,7 @@ var facebookMessageSender = {
         let elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
+        facebookMessageSender.sendTextMessage(recipient_id, 'Select a ' + variation_results.variationKey);
         let variations = variation_results.variationOptions;
         Object.keys(variations).forEach(function (option) {
             let product = variations[option]
