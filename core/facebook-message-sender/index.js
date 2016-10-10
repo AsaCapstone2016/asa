@@ -57,7 +57,7 @@ var facebookMessageSender = {
                         METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN[0]
                     })
-                }]
+                }];
             }
             else {
                 element.buttons = [{
@@ -151,7 +151,7 @@ var facebookMessageSender = {
         facebookMessageSender.sendTextMessage(recipient_id, 'Select a ' + variation_results.variationKey);
         let variations = variation_results.variationOptions;
         Object.keys(variations).forEach(function (option) {
-            let product = variations[option]
+            let product = variations[option];
             let payload = {
                 METHOD: "ITEM_DETAILS",
                 ASIN: product.ASIN,

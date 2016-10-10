@@ -184,10 +184,10 @@ var amazonProduct = {
                         parentTitle: parentTitle
                     };
                 } else {
-                    console.log("This item no Variatios item is empty")
+                    console.log("This item no Variatios item is empty");
                 }
             } else {
-                console.log("This item no Variatios")
+                console.log("This item no Variatios");
             }
         }, function(err) {
             console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));

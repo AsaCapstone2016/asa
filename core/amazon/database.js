@@ -44,4 +44,4 @@ module.exports.itemVariationsDAO = {
 				console.log(`ERROR getting item from ItemVariations: ${error}`);
 			});
 	}
-}
+};
