@@ -93,7 +93,8 @@ var amazonProduct = {
             }).then(function(json) {
                 //console.log("JSON:", JSON.stringify(json, null, 2));
                 var variationKeys = json.variationKeys;
-                var map = json.map
+                var parentTitle = json.parentTitle;
+                var map = json.map;
                 //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
                 //console.log("resolve map:", JSON.stringify(map, null, 2));
                 for (var i = 0; i < variationValues.length; i++) {
@@ -103,6 +104,9 @@ var amazonProduct = {
                 if (variationValues.length === variationKeys.length) {
                     if (map.ASIN !== undefined) {
                         // At specific item level... no more variations
+                        map.parentTitle = parentTitle;
+                        map.variationNames = variationKeys;
+                        map.variationValues = variationValues;
                         resolve(map);
                     } else {
                         reject("ITEM WITHOUT ASIN");
@@ -153,15 +157,15 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
                                             "ASIN": item.ASIN[0],
-                                            "Image": item.LargeImage[0].URL[0],
-                                            "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            "image": item.LargeImage[0].URL[0],
+                                            "price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
                                             && item.Offers[0].Offer[0].OfferListing[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0],
-                                            "Title" : item.ItemAttributes && item.ItemAttributes[0]
+                                            "title" : item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
                                     } else {
