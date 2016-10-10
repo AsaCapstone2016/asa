@@ -190,21 +190,27 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param product the single result that we are sending. { title, image_url (LARGE), variation_arry, cart_url, price }
+     * @param product the single result that we are sending. { parentTitle, imageUrl (LARGE), variationNames,
+     * variationValues, cartUrl, price }
      */
     sendVariationSummary: function (recipient_id, product) {
         console.log(`Product to summarize: ${JSON.stringify(product)}`);
         var elements = [];
 
         var element = {};
-        element.title = product.Title;
-        element.item_url = product.cart_url;
-        element.image_url = product.Image;
-        element.subtitle = product.Price;
+        element.title = product.parentTitle;
+        element.item_url = product.cartUrl;
+        element.image_url = product.image;
+        var variationSummary = '';
+        for (var i = 0; i < product.variationNames.length; i++) {
+            variationSummary += `${product.variationNames[i]}: ${product.variationValues[i]}\n`;
+        }
+        variationSummary += product.price;
+        element.subtitle = variationSummary;
 
         element.buttons = [{
             type: "web_url",
-            url: product.cart_url,
+            url: product.cartUrl,
             title: "Purchase"
         }, {
             type: 'postback',
