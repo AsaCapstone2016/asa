@@ -55,7 +55,7 @@ functions:
       - http: GET fb-webhook
       - http: POST fb-webhook
 #    you can add any of the following events
-    #      - s3: ${env:BUCKET}
+#      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
 #      - sns: greeter-topic
 

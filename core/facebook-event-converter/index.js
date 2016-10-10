@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Created by evan on 9/20/16.
  */
@@ -30,12 +32,21 @@ var facebookEventConverter = {
                     return;
                 //If message is part of this object, we are processing simple text message
                 if (messaging.message) {
-                    messageObjects.push({
-                        UID: messaging.sender.id,
-                        content: {
+                    let msg_content;
+                    if (messaging.message.quick_reply !== undefined) {
+                        msg_content = {
+                            payload: messaging.message.quick_reply.payload,
+                            action: "postback"
+                        };
+                    } else {
+                        msg_content = {
                             payload: messaging.message.text,
                             action: "text"
-                        }
+                        };
+                    }
+                    messageObjects.push({
+                        UID: messaging.sender.id,
+                        content: msg_content
                     });
                 }
 
@@ -59,4 +70,3 @@ var facebookEventConverter = {
 };
 
 module.exports = facebookEventConverter;
-
