@@ -183,6 +183,8 @@ const actions = {
       .then((session) => {
         let recipientId = session.uid;
 
+        messageSender.sendTypingMessage(recipientId);
+
         if (recipientId) {
           console.log(`SEND LIST OF ITEMS`);
           const items = request.context.items;
@@ -208,8 +210,11 @@ const actions = {
   resetVariations(request) {
     return getSessionFromSessionId(request.sessionId)
       .then((session) => {
+        let recipientId = session.uid;
+
+        messageSender.sendTypingMessage(recipientId);
+
         return new Promise((resolve, reject) => {
-          let recipientId = session.uid;
           let context = request.context;
           context.selectedVariations = [];
 
@@ -273,7 +278,6 @@ module.exports.handler = (message, sender, msgSender) => {
 
         if (payload.METHOD === "SELECT_VARIATIONS") {
           // User pressed "Select Options" button after getting search results
-          console.log("select variations");
           context.parentASIN = payload.ASIN;
           return actions.resetVariations(session)
             .then((ctx) => {
@@ -284,7 +288,6 @@ module.exports.handler = (message, sender, msgSender) => {
 
         } else if (payload.METHOD === "VARIATION_PICK") {
           // User selected a variation from a quickreply prompt
-          console.log("pick variation");
           if (payload.VARIATION_VALUE === "Nevermind") {
             // Stop selecting variations
             return actions.stopSelectingVariations(session)
@@ -295,6 +298,9 @@ module.exports.handler = (message, sender, msgSender) => {
               });
           } else {
             // Add selection to user's context and send next prompt
+
+            messageSender.sendTypingMessage(uid);
+            
             context.selectedVariations.push(payload.VARIATION_VALUE);
             return updateContext(uid, context)
               .then(() => {
@@ -311,7 +317,9 @@ module.exports.handler = (message, sender, msgSender) => {
 
         } else if (payload.METHOD === "ITEM_DETAILS") {
           // User selected the last variation, add it to their context and send summary
-          console.log("item details");
+
+          messageSender.sendTypingMessage(uid);
+          
           context.selectedVariations.push(payload.VARIATION_VALUE);
           return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
             .then((product) => {
@@ -337,7 +345,6 @@ module.exports.handler = (message, sender, msgSender) => {
 
         } else if (payload.METHOD === "RESELECT") {
           // User wants to reselect the variations
-          console.log("reselect variations");
           context.parentASIN = payload.ASIN;
           return actions.resetVariations(session)
             .then((ctx) => {
