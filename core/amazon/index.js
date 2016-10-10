@@ -93,7 +93,7 @@ var amazonProduct = {
             }).then(function(json) {
                 //console.log("JSON:", JSON.stringify(json, null, 2));
                 var variationKeys = json.variationKeys;
-                var map = json.map
+                var map = json.map;
                 //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
                 //console.log("resolve map:", JSON.stringify(map, null, 2));
                 for (var i = 0; i < variationValues.length; i++) {
@@ -160,7 +160,7 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]
-                                        }
+                                        };
                                     } else {
                                         ref[value] = {};
                                         ref = ref[value];
@@ -176,10 +176,10 @@ var amazonProduct = {
                         map: map
                     };
                 } else {
-                    console.log("This item no Variatios item is empty")
+                    console.log("This item no Variatios item is empty");
                 }
             } else {
-                console.log("This item no Variatios")
+                console.log("This item no Variatios");
             }
         }, function(err) {
             console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));

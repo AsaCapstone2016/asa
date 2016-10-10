@@ -13,11 +13,11 @@ var sort = function (object) {
         sortedObject[keys[i]] = object[keys[i]];
     };
     return sortedObject;
-}
+};
 
 var capitalize = function (string) {
-    return string[0].toUpperCase() + string.slice(1)
-}
+    return string[0].toUpperCase() + string.slice(1);
+};
 
 var setDefaultParams = function (params, defaultParams) {
     for (var param in defaultParams) {
@@ -26,7 +26,7 @@ var setDefaultParams = function (params, defaultParams) {
         }
     }
     return params;
-}
+};
 
 var formatQueryParams = function (query, method, credentials) {
     var params = {};
@@ -98,7 +98,7 @@ var formatQueryParams = function (query, method, credentials) {
     params = sort(params);
 
     return params;
-}
+};
 
 var generateQueryString = function (query, method, credentials) {
     var unsignedString = '';
@@ -110,7 +110,7 @@ var generateQueryString = function (query, method, credentials) {
         return key + "=" + encodeURIComponent(params[key]).replace(/[!'()*]/g, function(c) {
                 return '%' + c.charCodeAt(0).toString(16);
             });
-    }).join("&")
+    }).join("&");
 
     var signature = encodeURIComponent(generateSignature('GET\n' + domain + '\n/onca/xml\n' + unsignedString, credentials.awsSecret)).replace(/\+/g, '%2B');
     var queryString = 'http://' + domain + '/onca/xml?' + unsignedString + '&Signature=' + signature;

@@ -57,7 +57,7 @@ var facebookMessageSender = {
                         METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN[0]
                     })
-                }]
+                }];
             }
             else {
                 element.buttons = [{
@@ -150,7 +150,7 @@ var facebookMessageSender = {
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
         let variations = variation_results.variationOptions;
         Object.keys(variations).forEach(function (option) {
-            let product = variations[option]
+            let product = variations[option];
             let payload = {
                 METHOD: "ITEM_DETAILS",
                 ASIN: product.ASIN,

@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "scripts": {
     "update-modules": "npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
-    "deploy": "npm run update-modules && sls deploy"
+    "deploy": "npm run lint && npm run update-modules && sls deploy",
+    "lint" : "eslint ./** --ext .js",
+    "lint:watch" : "eslint ./** -- -w"
   },
   "dependencies": {
     "cse498capstonewit": "^1.0.0-beta",
@@ -12,5 +14,8 @@
     "facebook-message-sender": "file:./core/facebook-message-sender",
     "conversation-manager": "file:./core/conversation-manager",
     "amazon": "file:./core/amazon"
+  },
+  "devDependencies": {
+    "eslint": "^3.7.1"
   }
 }

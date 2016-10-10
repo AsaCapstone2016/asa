@@ -136,7 +136,7 @@ const actions = {
           let msg = "Think of me as your personal shopping assistant.";
           msg += " I can help you discover and purchase items on Amazon.";
           msg += " Try saying...\n\n";
-          msg += " - I want to buy something\n"
+          msg += " - I want to buy something\n";
           msg += " - Can you find Ocarina of Time?";
           console.log(`SEND help message to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
@@ -223,13 +223,13 @@ const actions = {
               return messageSender.sendVariationSelectionPrompt(recipientId, result)
                 .catch((error) => {
                   console.log(`ERROR sending variation prompt: ${error}`);
-                })
+                });
             }, (error) => {
               console.log(`ERROR sending variation prompt: ${error}`);
             })
             .then(() => {
               return resolve(context);
-            })
+            });
         });
       });
   }
@@ -334,7 +334,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     });
                 }, (error) => {
                   console.log(`ERROR creating cart after variation selection: ${error}`);
-                })
+                });
             })
             .then(() => {
               return actions.stopSelectingVariations(session)
@@ -362,4 +362,4 @@ module.exports.handler = (message, sender, msgSender) => {
     }, (error) => {
       console.log(`ERROR retrieving session from database: ${error}`);
     });
-}
+};
