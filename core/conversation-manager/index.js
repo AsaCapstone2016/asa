@@ -327,7 +327,7 @@ module.exports.handler = (message, sender, msgSender) => {
               console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
               return amazon.createCart(product.ASIN, 1)
                 .then((cartUrl) => {
-                  product.cart_url = cartUrl;
+                  product.cartUrl = cartUrl;
                   product.parentASIN = context.parentASIN;
                   return messageSender.sendVariationSummary(uid, product)
                     .catch((error) => {

@@ -12,4 +12,7 @@ branches:
   only:
   - master
   - develop
+
+notifications:
+  slack: amazoncapstone:hLYn6XwxcLCRQZqqgKQmHcxA
 script: ./deploy.sh

@@ -17,5 +17,6 @@ var config = {
 console.log("CONFIG: ", config);
 
 jsonfile.writeFile('./config.json', config, (err) => {
-  console.log('***ERROR WRITING CONFIG: ', err);
+  if (err)
+    console.log('***ERROR WRITING CONFIG: ', err);
 });
