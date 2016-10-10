@@ -205,7 +205,6 @@ var facebookMessageSender = {
         for (var i = 0; i < product.variationNames.length; i++) {
             variationSummary += `${product.variationNames[i]}: ${product.variationValues[i]}\n`;
         }
-        variationSummary += product.price;
         element.subtitle = variationSummary;
 
         element.buttons = [{
