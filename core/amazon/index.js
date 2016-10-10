@@ -26,7 +26,7 @@ var amazonProduct = {
                     curItem.ParentASIN.length > 0 &&
                     curItem.ASIN !== undefined &&
                     curItem.ASIN != curItem.ParentASIN) {
-                    
+
                     console.log(`Item #${itemIdx}:${curItem.ASIN} has variations`);
                     curItem.HasVariations = true;
                 }
@@ -125,7 +125,7 @@ var amazonProduct = {
         return amazon_client.itemLookup({
             "ItemId": ASIN,
             "IdType": "ASIN",
-            "ResponseGroup": ["Variations","VariationOffers"]
+            "ResponseGroup": ["ItemAttributes","Variations","VariationOffers"]
         }).then(function(result) {
             //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
@@ -136,6 +136,8 @@ var amazonProduct = {
 
                 var map = {};
                 var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
+                var parentTitle = result[0].ItemAttributes && result[0].ItemAttributes[0]
+                && result[0].ItemAttributes[0].Title && result[0].ItemAttributes[0].Title[0];
 
                 if (result[0].Variations[0].Item !== undefined && result[0].Variations[0].Item.length > 0) {
                     var items = result[0].Variations[0].Item;
@@ -151,7 +153,6 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
                                             "ASIN": item.ASIN[0],
-                                            "Title": "PUT ITEM TITLE IN VAR MAP",
                                             "Image": item.LargeImage[0].URL[0],
                                             "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
@@ -159,7 +160,9 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
-                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0],
+                                            "Title" : item.ItemAttributes && item.ItemAttributes[0]
+                                            && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
                                     } else {
                                         ref[value] = {};
@@ -173,7 +176,8 @@ var amazonProduct = {
                     }
                     return {
                         variationKeys: variationKeys,
-                        map: map
+                        map: map,
+                        parentTitle: parentTitle
                     };
                 } else {
                     console.log("This item no Variatios item is empty")
