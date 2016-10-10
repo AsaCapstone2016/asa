@@ -6,6 +6,7 @@ let log = require('cse498capstonewit').log;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
+const TABLE_PREFIX = config.TABLE_PREFIX;
 
 // for dynamodb configuration
 let aws = require('aws-sdk');
@@ -20,7 +21,7 @@ let messageSender;
  */
 let getSessionIdFromUserId = (uid) => {
   let docClient = new aws.DynamoDB.DocumentClient();
-  let table = 'Sessions';
+  let table = `${TABLE_PREFIX}Sessions`;
   let record, sessionId;
 
   let params = {
@@ -59,7 +60,7 @@ let getSessionIdFromUserId = (uid) => {
  */
 let getSessionFromSessionId = (sessionId) => {
   let docClient = new aws.DynamoDB.DocumentClient();
-  let table = 'Sessions';
+  let table = `${TABLE_PREFIX}Sessions`;
   let index = 'sessionId-index';
 
   let params = {
@@ -87,7 +88,7 @@ let getSessionFromSessionId = (sessionId) => {
  */
 let updateContext = (uid, ctx) => {
   let docClient = new aws.DynamoDB.DocumentClient();
-  let table = 'Sessions';
+  let table = `${TABLE_PREFIX}Sessions`;
 
   let params = {
     TableName: 'Sessions',

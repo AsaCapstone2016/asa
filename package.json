@@ -3,9 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "update-modules": "npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
-    "deploy": "npm run lint && npm run update-modules && sls deploy",
-    "lint" : "eslint ./** --ext .js",
-    "lint:watch" : "eslint ./** -- -w"
+    "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
+    "lint": "eslint ./** --ext .js"
   },
   "dependencies": {
     "cse498capstonewit": "^1.0.0-beta",
