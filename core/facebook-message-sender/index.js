@@ -160,8 +160,8 @@ var facebookMessageSender = {
 
             var element = {};
             element.title = option;
-            element.image_url = product.Image;
-            element.subtitle = product.Price;
+            element.image_url = product.image;
+            element.subtitle = product.price;
             element.buttons = [{
                 type: "postback",
                 title: "Select",
@@ -189,11 +189,11 @@ var facebookMessageSender = {
 
     /**
      *
-     * @param recipient_id
+     * @param recipientId
      * @param product the single result that we are sending. { parentTitle, imageUrl (LARGE), variationNames,
      * variationValues, cartUrl, price }
      */
-    sendVariationSummary: function (recipient_id, product) {
+    sendVariationSummary: function (recipientId, product) {
         console.log(`Product to summarize: ${JSON.stringify(product)}`);
         var elements = [];
 
@@ -225,7 +225,7 @@ var facebookMessageSender = {
         elements.push(element);
 
         var json = {
-            recipient: {id: recipient_id},
+            recipient: {id: recipientId},
             message: {
                 attachment: {
                     type: "template",
