@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "amazon-product-api": "file:./../amazon-product-api"
+    "amazon-product-api": "file:./../amazon-product-api",
+    "aws-sdk": "^2.6.7"
   }
 }
