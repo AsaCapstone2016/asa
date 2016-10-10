@@ -198,10 +198,10 @@ var facebookMessageSender = {
         var elements = [];
 
         var element = {};
-        element.title = `${product.parentTitle} - ${product.price}`;
+        element.title = `${product.parentTitle}`;
         element.item_url = product.cartUrl;
         element.image_url = product.image;
-        var variationSummary = '';
+        var variationSummary = `${product.price}\n`;
         for (var i = 0; i < product.variationNames.length; i++) {
             variationSummary += `${product.variationNames[i]}: ${product.variationValues[i]}\n`;
         }
