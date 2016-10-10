@@ -102,11 +102,10 @@ var amazonProduct = {
                 }
                 if (variationValues.length === variationKeys.length) {
                     if (map.ASIN !== undefined) {
-                        //GET INTO LAST LEVEL
-                        //CALL VARIATION DETEAIL FOR MORE DATA
-                        //itemDetail(ASIN, recipientId, callback);
-                    }else{
-                        rejct("ITEM WITHOUT ASIN");
+                        // At specific item level... no more variations
+                        resolve(map);
+                    } else {
+                        reject("ITEM WITHOUT ASIN");
                     }
                 } else {
                     resolve({
@@ -152,6 +151,7 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
                                             "ASIN": item.ASIN[0],
+                                            "Title": "PUT ITEM TITLE IN VAR MAP",
                                             "Image": item.LargeImage[0].URL[0],
                                             "Price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing

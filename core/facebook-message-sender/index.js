@@ -153,7 +153,8 @@ var facebookMessageSender = {
             let product = variations[option]
             let payload = {
                 METHOD: "ITEM_DETAILS",
-                ASIN: product.ASIN
+                ASIN: product.ASIN,
+                VARIATION_VALUE: option
             };
 
             var element = {};
@@ -188,16 +189,17 @@ var facebookMessageSender = {
     /**
      *
      * @param recipient_id
-     * @param product the single result that we are looking up. { title, image_url (LARGE), variation_arry, cart_url, price }
+     * @param product the single result that we are sending. { title, image_url (LARGE), variation_arry, cart_url, price }
      */
     sendVariationSummary: function (recipient_id, product) {
+        console.log(`Product to summarize: ${JSON.stringify(product)}`);
         var elements = [];
 
         var element = {};
-        element.title = product.title;
+        element.title = product.Title;
         element.item_url = product.cart_url;
-        element.image_url = product.cart_url;
-        element.subtitle = product.price;
+        element.image_url = product.Image;
+        element.subtitle = product.Price;
 
         element.buttons = [{
             type: "web_url",
@@ -205,11 +207,11 @@ var facebookMessageSender = {
             title: "Purchase"
         }, {
             type: 'postback',
-            title: 'ReSelect',
-            payload: {
+            title: 'Reselect Options',
+            payload: JSON.stringify({
                 METHOD: 'RESELECT',
-                ASIN: product.ParentASIN[0]
-            }
+                ASIN: product.parentASIN
+            })
         }];
 
 

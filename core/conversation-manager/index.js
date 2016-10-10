@@ -133,12 +133,11 @@ const actions = {
         let recipientId = session.uid;
 
         if (recipientId) {
-          let msg = "Hey, think of me as your personal shopping assistant.";
+          let msg = "Think of me as your personal shopping assistant.";
           msg += " I can help you discover and purchase items on Amazon.";
-          msg += " You could ask me...\n\n";
-          msg += " - I'm looking for an xbox\n";
-          msg += " - Can you find rainboots?\n";
-          msg += " - I want to buy something";
+          msg += " Try saying...\n\n";
+          msg += " - I want to buy something\n"
+          msg += " - Can you find Ocarina of Time?";
           console.log(`SEND help message to ${recipientId}`);
           return messageSender.sendTextMessage(recipientId, msg)
             .then(() => {
@@ -313,11 +312,33 @@ module.exports.handler = (message, sender, msgSender) => {
         } else if (payload.METHOD === "ITEM_DETAILS") {
           // User selected the last variation, add it to their context and send summary
           console.log("item details");
-          console.log(`Print summary for item ${payload.ASIN}`);
+          context.selectedVariations.push(payload.VARIATION_VALUE);
+          return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
+            .then((product) => {
+              console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
+              return amazon.createCart(product.ASIN, 1)
+                .then((cartUrl) => {
+                  product.cart_url = cartUrl;
+                  product.parentASIN = context.parentASIN;
+                  return messageSender.sendVariationSummary(uid, product)
+                    .catch((error) => {
+                      console.log(`ERROR sending product summary: ${error}`);
+                    });
+                }, (error) => {
+                  console.log(`ERROR creating cart after variation selection: ${error}`);
+                })
+            })
+            .then(() => {
+              return actions.stopSelectingVariations(session)
+                .then((ctx) => {
+                  return updateContext(uid, ctx);
+                });
+            });
 
         } else if (payload.METHOD === "RESELECT") {
           // User wants to reselect the variations
           console.log("reselect variations");
+          context.parentASIN = payload.ASIN;
           return actions.resetVariations(session)
             .then((ctx) => {
               return updateContext(uid, ctx);
