@@ -18,54 +18,69 @@ provider:
   runtime: nodejs4.3
 
 # you can overwrite defaults here
-  stage: dev
+  stage: ${env:SLS_USER}
   region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:ListBucket"
-#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
-#    - Effect: "Allow"
-#      Action:
-#        - "s3:PutObject"
-#      Resource:
-#        Fn::Join:
-#          - ""
-#          - - "arn:aws:s3:::"
-#            - "Ref" : "ServerlessDeploymentBucket"
+# iamRoleStatements:
+#   - Effect: Allow
+#     Action:
+#       - dynamodb:GetItem
+#       - dynamodb:PutItem
+#       - dynamodb:UpdateItem
+#       - dynamodb:DeleteItem
+#       - dynamodb:Query
+#       - dynamodb:Scan
+#     Resource: arn:aws:dynamomdb:*:*:table/*
 
 # you can add packaging information here
-#package:
+package:
   include:
-    - core
     - node_modules
     - functions
-    - config.js
+    - config.json
   exclude:
-    - test
+    - tests
+    - asa-wit-app.zip
 #  artifact: my-service-code.zip
 
 functions:
   facebookLambda:
-    handler: functions/handler.facebookLambda
+    handler: functions/fb-endpoint.facebookLambda
+    timeout: 10
     events:
-      - http: GET evan
-      - http: POST evan
+      - http: GET fb-webhook
+      - http: POST fb-webhook
 #    you can add any of the following events
-    #      - s3: ${env:BUCKET}
+#      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
 #      - sns: greeter-topic
 
 # you can add CloudFormation resource templates here
-#resources:
-#  Resources:
-#    NewResource:
-#      Type: AWS::S3::Bucket
-#      Properties:
-#        BucketName: my-new-bucket
-#  Outputs:
-#     NewOutput:
-#       Description: "Description for the output"
-#       Value: "Some output value"
+resources:
+  Resources:
+    DynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Sessions
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+          - AttributeName: sessionId
+            AttributeType: N
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: sessionId-index
+            KeySchema:
+              - AttributeName: sessionId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5

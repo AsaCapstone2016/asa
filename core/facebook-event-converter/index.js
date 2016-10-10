@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Created by evan on 9/20/16.
  */
@@ -8,7 +10,7 @@ var facebookEventConverter = {
      *  used by the system. Currently this is returning the following object:
      *  {
      *    UID: unique user Id
-     *    message:{
+     *    content:{
      *      payload: payload of message (could just be text).
      *      action: action of message(text, postback, etc.).
      *    }
@@ -30,12 +32,21 @@ var facebookEventConverter = {
                     return;
                 //If message is part of this object, we are processing simple text message
                 if (messaging.message) {
-                    messageObjects.push({
-                        UID: messaging.sender.id,
-                        message: {
+                    let msg_content;
+                    if (messaging.message.quick_reply !== undefined) {
+                        msg_content = {
+                            payload: messaging.message.quick_reply.payload,
+                            action: "postback"
+                        };
+                    } else {
+                        msg_content = {
                             payload: messaging.message.text,
                             action: "text"
-                        }
+                        };
+                    }
+                    messageObjects.push({
+                        UID: messaging.sender.id,
+                        content: msg_content
                     });
                 }
 
@@ -43,7 +54,7 @@ var facebookEventConverter = {
                 else if (messaging.postback) {
                     messageObjects.push({
                         UID: messaging.sender.id,
-                        message: {
+                        content: {
                             payload: messaging.postback.payload,
                             action: "postback"
                         }
@@ -59,4 +70,3 @@ var facebookEventConverter = {
 };
 
 module.exports = facebookEventConverter;
-
