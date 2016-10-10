@@ -7,4 +7,7 @@ env:
     - SLS_DEBUG=true 
 before_install:
   - npm i -g serverless
+
+notifications:
+  slack: amazoncapstone:hLYn6XwxcLCRQZqqgKQmHcxA
 script: ./deploy.sh
