@@ -39,6 +39,7 @@ package:
     - node_modules
     - functions
     - config.json
+    - core/database
   exclude:
     - tests
     - asa-wit-app.zip
@@ -51,6 +52,11 @@ functions:
     events:
       - http: GET fb-webhook
       - http: POST fb-webhook
+  cartRedirect:
+    handler: functions/cart-redirect.cartRedirect
+    timeout: 3
+    events:
+      - http: GET cart-redirect
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
