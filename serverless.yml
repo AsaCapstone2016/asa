@@ -59,7 +59,7 @@ functions:
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    DynamoDbTable:
+    SessionsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: ASA-${opt:stage}-Sessions
@@ -84,3 +84,37 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+    SeachQueriesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-SearchQueries
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    PurchasedItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+         TableName: ASA-${opt:stage}-PurchasedItems
+         AttributeDefinitions:
+           - AttributeName: uid
+             AttributeType: S
+           - AttributeName: date
+             AttributeType: S
+         KeySchema:
+           - AttributeName: uid
+             KeyType: HASH
+           - AttributeName: date
+             KeyType: RANGE
+         ProvisionedThroughput:
+           ReadCapacityUnits: 5
+           WriteCapacityUnits: 5
