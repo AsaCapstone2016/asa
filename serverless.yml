@@ -22,16 +22,16 @@ provider:
   region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
-# iamRoleStatements:
-#   - Effect: Allow
-#     Action:
-#       - dynamodb:GetItem
-#       - dynamodb:PutItem
-#       - dynamodb:UpdateItem
-#       - dynamodb:DeleteItem
-#       - dynamodb:Query
-#       - dynamodb:Scan
-#     Resource: arn:aws:dynamomdb:*:*:table/*
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:Query
+        - dynamodb:Scan
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:*
 
 # you can add packaging information here
 package:
@@ -61,6 +61,7 @@ resources:
   Resources:
     SessionsTable:
       Type: AWS::DynamoDB::Table
+      DependsOn: SeachQueriesTable
       Properties:
         TableName: ASA-${opt:stage}-Sessions
         AttributeDefinitions:
@@ -86,6 +87,7 @@ resources:
           WriteCapacityUnits: 5
     SeachQueriesTable:
       Type: AWS::DynamoDB::Table
+      DependsOn: PurchasedItemsTable
       Properties:
         TableName: ASA-${opt:stage}-SearchQueries
         AttributeDefinitions:
