@@ -1,11 +1,10 @@
 var jsonfile = require('jsonfile');
 
-var flag = process.argv[2];
-var inProd = flag === '--prod';
-var FB_PAGE_TOKEN = inProd ? process.env.FB_PAGE_TOKEN_PROD
-    : process.env.FB_PAGE_TOKEN_DEV;
-var TABLE_PREFIX = inProd ? `ASA-prod-`
-    : `ASA-dev-`;
+var inProd = process.argv[2] === '--prod';
+
+var FB_PAGE_TOKEN = inProd ? process.env.FB_PAGE_TOKEN_PROD : process.env.FB_PAGE_TOKEN_DEV;
+var TABLE_PREFIX = inProd ? `ASA-prod-` : `ASA-dev-`;
+
 var config = {
     FB_PAGE_TOKEN: FB_PAGE_TOKEN,
     AWS_ID: process.env.AWS_ID,

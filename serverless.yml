@@ -39,7 +39,6 @@ package:
     - node_modules
     - functions
     - config.json
-    - core/database
   exclude:
     - tests
     - asa-wit-app.zip

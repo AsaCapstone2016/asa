@@ -163,15 +163,16 @@ const actions = {
                 return new Promise((resolve, reject) => {
                     if ('search_query' in entities) {
 
-                        // entities.search_query.forEach((query)=> {
-                        //
-                        // });
-                        let query = entities.search_query[0].value;
+                        let keywords = [];
+                        entities.search_query.forEach((query) => {
+                            keywords.push(query.value);
+                        });
+                        keywords = keywords.join(' ');
 
-                        console.log(`SEARCH: ${query}`);
-                        searchQueryDAO.addItem(recipientId, query);
+                        console.log(`SEARCH: ${keywords}`);
+                        searchQueryDAO.addItem(recipientId, keywords);
 
-                        return amazon.itemSearch(query)
+                        return amazon.itemSearch(keywords)
                             .then((json) => {
                                 context.items = json;
                                 delete context.missing_keywords;
