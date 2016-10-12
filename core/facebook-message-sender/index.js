@@ -62,7 +62,7 @@ var facebookMessageSender = {
             else {
                 element.buttons = [{
                     type: "web_url",
-                    url: product.CartUrl,
+                    url: product.cartUrl,
                     title: "Purchase"
                 }];
             }
