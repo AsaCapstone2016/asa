@@ -12,7 +12,7 @@ var amazon_client = amazon_api.createClient({
 });
 
 var amazonProduct = {
-    itemSearch: function(keywords) {
+    itemSearch: function (keywords) {
         return amazon_client.itemSearch({
             "searchIndex": "All",
             "keywords": keywords,
@@ -36,15 +36,16 @@ var amazonProduct = {
                     //Build virtual cart here
                     promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
                         .then((url) => {
+
                             if (url === undefined) {
                                 url = curItem.DetailPageURL[0];
                             }
-                            curItem.CartUrl = url;
+                            curItem.cartUrl = url;
                         }));
                 } else {
                     // *** ERROR *** no ASIN
                     console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
-                    curItem.CartUrl = "https://amazon.com";
+                    curItem.cartUrl = "https://amazon.com";
                 }
             }
             return Promise.all(promiseArray).then(() => {
@@ -56,33 +57,37 @@ var amazonProduct = {
         });
     },
 
-    createCart: function(ASIN, quantity) {
+    createCart: function (ASIN, quantity) {
         return amazon_client.cartCreate({
             "Item.1.ASIN": ASIN,
             "Item.1.Quantity": quantity
-        }).then(function(result) {
+        }).then(function (result) {
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
-                if (result.PurchaseURL !== undefined) {
+                if (result.MobileCartURL !== undefined) {
+                    console.log(`${ASIN} cart url: ${result.MobileCartURL[0]}`);
+                    return result.MobileCartURL[0];
+                }
+                else if (result.PurchaseURL !== undefined) {
                     console.log(`${ASIN} cart url: ${result.PurchaseURL[0]}`);
                     return result.PurchaseURL[0];
                 }
             }
-        }, function(err) {
+        }, function (err) {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
             console.log(`ERROR creating cart for ${ASIN}`);
             return 'https://amazon.com';
         });
     },
 
-    variationPick: function(ASIN, variationValues, variationMap){
-        return new Promise(function(resolve, reject){
-            return new Promise(function(inResolve, inReject){
+    variationPick: function (ASIN, variationValues, variationMap) {
+        return new Promise(function (resolve, reject) {
+            return new Promise(function (inResolve, inReject) {
                 if (variationMap === null) {
                     amazonProduct.variationFind(ASIN)
-                        .then(function(result) {
+                        .then(function (result) {
                             console.log(`got variations map: ${JSON.stringify(result)}`);
                             inResolve(result);
-                        }, function(err) {
+                        }, function (err) {
                             console.log("didn't get variation map...");
                             inReject(err);
                         });
@@ -90,7 +95,7 @@ var amazonProduct = {
                     console.log(`Already have variation map for ${ASIN}`);
                     inResolve(variationMap);
                 }
-            }).then(function(json) {
+            }).then(function (json) {
                 //console.log("JSON:", JSON.stringify(json, null, 2));
                 var variationKeys = json.variationKeys;
                 var parentTitle = json.parentTitle;
@@ -113,24 +118,24 @@ var amazonProduct = {
                     }
                 } else {
                     resolve({
-                        ASIN : ASIN,
-                        variationKey : variationKeys[variationValues.length],
-                        variationOptions : variationValues.length+1 == variationKeys.length ? map : Object.keys(map),
-                        lastVariation : variationValues.length+1 == variationKeys.length ? true : false
+                        ASIN: ASIN,
+                        variationKey: variationKeys[variationValues.length],
+                        variationOptions: variationValues.length + 1 == variationKeys.length ? map : Object.keys(map),
+                        lastVariation: variationValues.length + 1 == variationKeys.length ? true : false
                     });
                 }
-            }, function(err) {
+            }, function (err) {
                 reject(err);
             });
         });
     },
 
-    variationFind: function(ASIN) {
+    variationFind: function (ASIN) {
         return amazon_client.itemLookup({
             "ItemId": ASIN,
             "IdType": "ASIN",
-            "ResponseGroup": ["ItemAttributes","Variations","VariationOffers"]
-        }).then(function(result) {
+            "ResponseGroup": ["ItemAttributes", "Variations", "VariationOffers"]
+        }).then(function (result) {
             //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
                 result[0].Variations[0].VariationDimensions !== undefined &&
@@ -141,23 +146,32 @@ var amazonProduct = {
                 var map = {};
                 var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
                 var parentTitle = result[0].ItemAttributes && result[0].ItemAttributes[0]
-                && result[0].ItemAttributes[0].Title && result[0].ItemAttributes[0].Title[0];
+                    && result[0].ItemAttributes[0].Title && result[0].ItemAttributes[0].Title[0];
 
                 if (result[0].Variations[0].Item !== undefined && result[0].Variations[0].Item.length > 0) {
                     var items = result[0].Variations[0].Item;
                     for (var idx = 0; idx < items.length; ++idx) {
                         var item = items[idx];
                         var ref = map;
+
                         if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
-                            var itemAttributes = item.ItemAttributes[0];
+                            var itemAttributes = {};
+                            var variationAttributes = item.VariationAttributes && item.VariationAttributes[0]
+                            && item.VariationAttributes[0].VariationAttribute;
+
+                            for(let variationAttributeIdx in variationAttributes){
+                                let variationAttribute = variationAttributes[variationAttributeIdx];
+                                itemAttributes[variationAttribute.Name[0]] = variationAttribute.Value[0]
+                            }
+
                             for (var variationIdx in variationKeys) {
                                 var variation = variationKeys[variationIdx];
-                                var value = itemAttributes[variation][0];
+                                var value = itemAttributes[variation];
                                 if (!(value in ref)) {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
-                                            "ASIN": item.ASIN[0],
-                                            "image": item.LargeImage[0].URL[0],
+                                            "ASIN": item.ASIN && item.ASIN[0],
+                                            "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
                                             "price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
                                             && item.Offers[0].Offer[0].OfferListing[0]
@@ -165,7 +179,7 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0],
-                                            "title" : item.ItemAttributes && item.ItemAttributes[0]
+                                            "title": item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
                                     } else {
@@ -176,8 +190,12 @@ var amazonProduct = {
                                     ref = ref[value];
                                 }
                             }
+                        }else{
+                            console.log("no item attributes");
                         }
                     }
+
+
                     return {
                         variationKeys: variationKeys,
                         map: map,
@@ -189,13 +207,10 @@ var amazonProduct = {
             } else {
                 console.log("This item no Variatios");
             }
-        }, function(err) {
+        }, function (err) {
             console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));
         });
     }
 };
-
-
-
 
 module.exports = amazonProduct;
