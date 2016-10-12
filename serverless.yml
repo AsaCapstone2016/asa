@@ -61,7 +61,10 @@ functions:
     handler: functions/cart-redirect.cartRedirect
     timeout: 3
     events:
-      - http: GET cart-redirect
+      - http:
+          path: cart-redirect
+          method: get
+          integration: lambda
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
