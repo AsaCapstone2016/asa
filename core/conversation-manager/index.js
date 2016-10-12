@@ -134,16 +134,18 @@ const actions = {
             .then((session) => {
                 let recipientId = session.uid;
 
-        if (recipientId) {
-          let msg = "Think of me as your personal shopping assistant.";
-          msg += " I can help you discover and purchase items on Amazon.";
-          msg += " Try saying...\n\n";
-          msg += " • I want to buy something\n";
-          msg += " • Can you find Ocarina of Time?";
-          console.log(`SEND help message to ${recipientId}`);
-          return messageSender.sendTextMessage(recipientId, msg)
-            .then(() => {
-              return request.context;
+                if (recipientId) {
+                let msg = "Think of me as your personal shopping assistant.";
+                msg += " I can help you discover and purchase items on Amazon.";
+                msg += " Try saying...\n\n";
+                msg += " • I want to buy something\n";
+                msg += " • Can you find Ocarina of Time?";
+                console.log(`SEND help message to ${recipientId}`);
+                return messageSender.sendTextMessage(recipientId, msg)
+                    .then(() => {
+                    return request.context;
+                    });
+                }
             });
     },
     search(request) {
