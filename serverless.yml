@@ -22,16 +22,16 @@ provider:
   region: us-east-1
 
 # you can add statements to the Lambda function's IAM Role here
-# iamRoleStatements:
-#   - Effect: Allow
-#     Action:
-#       - dynamodb:GetItem
-#       - dynamodb:PutItem
-#       - dynamodb:UpdateItem
-#       - dynamodb:DeleteItem
-#       - dynamodb:Query
-#       - dynamodb:Scan
-#     Resource: arn:aws:dynamomdb:*:*:table/*
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+        - dynamodb:Query
+        - dynamodb:Scan
+      Resource: arn:aws:dynamodb:${self:provider.region}:*:*
 
 # you can add packaging information here
 package:
@@ -57,6 +57,14 @@ functions:
           path: fb-webhook
           method: post
           integration: lambda
+  cartRedirect:
+    handler: functions/cart-redirect.cartRedirect
+    timeout: 3
+    events:
+      - http:
+          path: cart-redirect
+          method: get
+          integration: lambda
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
@@ -65,8 +73,9 @@ functions:
 # you can add CloudFormation resource templates here
 resources:
   Resources:
-    DynamoDbTable:
+    SessionsTable:
       Type: AWS::DynamoDB::Table
+      DependsOn: SeachQueriesTable
       Properties:
         TableName: ASA-${opt:stage}-Sessions
         AttributeDefinitions:
@@ -90,3 +99,38 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
+    SeachQueriesTable:
+      Type: AWS::DynamoDB::Table
+      DependsOn: PurchasedItemsTable
+      Properties:
+        TableName: ASA-${opt:stage}-SearchQueries
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+          - AttributeName: date
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+    PurchasedItemsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+         TableName: ASA-${opt:stage}-PurchasedItems
+         AttributeDefinitions:
+           - AttributeName: uid
+             AttributeType: S
+           - AttributeName: date
+             AttributeType: S
+         KeySchema:
+           - AttributeName: uid
+             KeyType: HASH
+           - AttributeName: date
+             KeyType: RANGE
+         ProvisionedThroughput:
+           ReadCapacityUnits: 5
+           WriteCapacityUnits: 5
