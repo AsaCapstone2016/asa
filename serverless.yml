@@ -75,7 +75,6 @@ resources:
   Resources:
     SessionsTable:
       Type: AWS::DynamoDB::Table
-      DependsOn: SeachQueriesTable
       Properties:
         TableName: ASA-${opt:stage}-Sessions
         AttributeDefinitions:
@@ -101,7 +100,6 @@ resources:
           WriteCapacityUnits: 5
     SeachQueriesTable:
       Type: AWS::DynamoDB::Table
-      DependsOn: PurchasedItemsTable
       Properties:
         TableName: ASA-${opt:stage}-SearchQueries
         AttributeDefinitions:
