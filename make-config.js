@@ -4,7 +4,7 @@ var inProd = process.argv[2] === '--prod';
 
 var FB_PAGE_TOKEN = inProd ? process.env.FB_PAGE_TOKEN_PROD : process.env.FB_PAGE_TOKEN_DEV;
 var TABLE_PREFIX = inProd ? `ASA-prod-` : `ASA-dev-`;
-var CART_REDIRECT_URL = inProd ? `http://google.com` : `https://cse.msu.edu`;
+var CART_REDIRECT_URL = inProd ? process.env.CART_REDIRECT_URL_PROD : process.env.CART_REDIRECT_URL_DEV;
 
 var config = {
     FB_PAGE_TOKEN: FB_PAGE_TOKEN,
