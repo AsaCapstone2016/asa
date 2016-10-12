@@ -153,17 +153,26 @@ var amazonProduct = {
                     for (var idx = 0; idx < items.length; ++idx) {
                         var item = items[idx];
                         var ref = map;
+
                         if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
-                            var itemAttributes = item.ItemAttributes[0];
+                            var itemAttributes = {};
+                            var variationAttributes = item.VariationAttributes && item.VariationAttributes[0]
+                            && item.VariationAttributes[0].VariationAttribute;
+
+                            for(let variationAttributeIdx in variationAttributes){
+                                let variationAttribute = variationAttributes[variationAttributeIdx];
+                                itemAttributes[variationAttribute.Name[0]] = variationAttribute.Value[0]
+                            }
+
                             for (var variationIdx in variationKeys) {
                                 var variation = variationKeys[variationIdx];
-                                var value = itemAttributes[variation][0];
+                                var value = itemAttributes[variation];
                                 if (!(value in ref)) {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
-                                            "ASIN": item.ASIN[0],
-                                            "image": item.LargeImage[0].URL[0],
-                                            "price": item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            "ASIN": item.ASIN && item.ASIN[0],
+                                            "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
+                                            "price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
                                             && item.Offers[0].Offer[0].OfferListing[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price
@@ -181,8 +190,12 @@ var amazonProduct = {
                                     ref = ref[value];
                                 }
                             }
+                        }else{
+                            console.log("no item attributes");
                         }
                     }
+
+
                     return {
                         variationKeys: variationKeys,
                         map: map,

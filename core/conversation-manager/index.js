@@ -194,7 +194,31 @@ const actions = {
             .then((session) => {
                 let recipientId = session.uid;
 
-                messageSender.sendTypingMessage(recipientId);
+      }, (error) => {
+        console.log(`ERROR in sendSearchResults action: ${error}`);
+      });
+  },
+  stopSelectingVariations(request) {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
+        return messageSender.sendTextMessage(recipientId, "Ok, let me know if you need anything else");
+      })
+      .then(() => {
+        return new Promise((resolve, reject) => {
+          let context = request.context;
+          delete context.selectedVariations;
+          delete context.parentASIN;
+          return resolve(context);
+        });
+      }, (error) => {
+        console.log(`ERROR stopping variation selection: ${error}`);
+      })
+  },
+  resetVariations(request) {
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
 
                 if (recipientId) {
                     console.log(`SEND LIST OF ITEMS`);

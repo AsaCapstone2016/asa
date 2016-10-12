@@ -49,8 +49,14 @@ functions:
     handler: functions/fb-endpoint.facebookLambda
     timeout: 10
     events:
-      - http: GET fb-webhook
-      - http: POST fb-webhook
+      - http:
+          path: fb-webhook
+          method: get
+          integration: lambda
+      - http:
+          path: fb-webhook
+          method: post
+          integration: lambda
   cartRedirect:
     handler: functions/cart-redirect.cartRedirect
     timeout: 3
