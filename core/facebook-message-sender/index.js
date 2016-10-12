@@ -210,7 +210,8 @@ var facebookMessageSender = {
         element.buttons = [{
             type: "web_url",
             url: product.cartUrl,
-            title: "Purchase"
+            title: "Purchase",
+            webview_height_ratio: "TALL"
         }, {
             type: 'postback',
             title: 'Reselect Options',
@@ -219,7 +220,6 @@ var facebookMessageSender = {
                 ASIN: product.parentASIN
             })
         }];
-
 
         elements.push(element);
 
