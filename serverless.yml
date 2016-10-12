@@ -49,11 +49,11 @@ functions:
     handler: functions/fb-endpoint.facebookLambda
     timeout: 10
     events:
-      - http
+      - http:
           path: fb-webhook
           method: get
           integration: lambda
-      - http
+      - http:
           path: fb-webhook
           method: post
           integration: lambda
