@@ -190,9 +190,21 @@ const actions = {
             });
     },
     sendSearchResults(request) {
-        return getSessionFromSessionId(request.sessionId)
-            .then((session) => {
-                let recipientId = session.uid;
+    return getSessionFromSessionId(request.sessionId)
+      .then((session) => {
+        let recipientId = session.uid;
+
+        messageSender.sendTypingMessage(recipientId);
+
+        if (recipientId) {
+          console.log(`SEND LIST OF ITEMS`);
+          const items = request.context.items;
+          return messageSender.sendSearchResults(recipientId, items)
+            .then(() => {
+              delete request.context.items;
+              return request.context;
+            });
+        }
 
       }, (error) => {
         console.log(`ERROR in sendSearchResults action: ${error}`);
@@ -220,54 +232,27 @@ const actions = {
       .then((session) => {
         let recipientId = session.uid;
 
-                if (recipientId) {
-                    console.log(`SEND LIST OF ITEMS`);
-                    const items = request.context.items;
-                    return messageSender.sendSearchResults(recipientId, items)
-                        .then(() => {
-                            delete request.context.items;
-                            return request.context;
-                        });
-                }
+        messageSender.sendTypingMessage(recipientId);
 
-            }, (error) => {
-                console.log(`ERROR in sendSearchResults action: ${error}`);
-            });
-    },
-    stopSelectingVariations(request) {
         return new Promise((resolve, reject) => {
-            let context = request.context;
-            delete context.selectedVariations;
-            delete context.parentASIN;
-            return resolve(context);
-        });
-    },
-    resetVariations(request) {
-        return getSessionFromSessionId(request.sessionId)
-            .then((session) => {
-                let recipientId = session.uid;
+          let context = request.context;
+          context.selectedVariations = [];
 
-                messageSender.sendTypingMessage(recipientId);
-
-                return new Promise((resolve, reject) => {
-                    let context = request.context;
-                    context.selectedVariations = [];
-
-                    return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
-                        .then((result) => {
-                            return messageSender.sendVariationSelectionPrompt(recipientId, result)
-                                .catch((error) => {
-                                    console.log(`ERROR sending variation prompt: ${error}`);
-                                });
-                        }, (error) => {
-                            console.log(`ERROR sending variation prompt: ${error}`);
-                        })
-                        .then(() => {
-                            return resolve(context);
-                        });
+          return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
+            .then((result) => {
+              return messageSender.sendVariationSelectionPrompt(recipientId, result)
+                .catch((error) => {
+                  console.log(`ERROR sending variation prompt: ${error}`);
                 });
+            }, (error) => {
+              console.log(`ERROR sending variation prompt: ${error}`);
+            })
+            .then(() => {
+              return resolve(context);
             });
-    }
+        });
+      });
+  }
 };
 
 const witClient = new Wit({
