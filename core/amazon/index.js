@@ -65,11 +65,11 @@ var amazonProduct = {
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
                 if (result.MobileCartURL !== undefined) {
                     console.log(`${ASIN} cart url: ${result.MobileCartURL[0]}`);
-                    return `${config.CART_REDIRECT_URL}?uid=${uid}&cart_url=${result.MobileCartURL[0]}&ASIN=${product.ASIN}`;
+                    return result.MobileCartURL[0];
                 }
                 else if (result.PurchaseURL !== undefined) {
                     console.log(`${ASIN} cart url: ${result.PurchaseURL[0]}`);
-                    return `${config.CART_REDIRECT_URL}?uid=${uid}&cart_url=${result.PurchaseURL[0]}&ASIN=${product.ASIN}`;
+                    return result.PurchaseURL[0];
                 }
             }
         }, function (err) {
