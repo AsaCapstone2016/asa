@@ -131,7 +131,7 @@ var facebookMessageSender = {
         let json = {
             recipient: {id: recipient_id},
             message: {
-                text: `Select a ${variation_results.variationKey}`,
+                text: `Select ${variation_results.variationKey}`,
                 quick_replies: quick_replies
             }
         };
@@ -148,7 +148,7 @@ var facebookMessageSender = {
         let elements = [];
 
         // For now we are returning 10 products, can change this to limit min {max_items, 5}
-        facebookMessageSender.sendTextMessage(recipient_id, 'Select a ' + variation_results.variationKey);
+        facebookMessageSender.sendTextMessage(recipient_id, `Select ${variation_results.variationKey}`);
         let variations = variation_results.variationOptions;
         Object.keys(variations).forEach(function (option) {
             let product = variations[option];
