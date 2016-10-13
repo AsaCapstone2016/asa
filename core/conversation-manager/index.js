@@ -135,16 +135,16 @@ const actions = {
                 let recipientId = session.uid;
 
                 if (recipientId) {
-                let msg = "Think of me as your personal shopping assistant.";
-                msg += " I can help you discover and purchase items on Amazon.";
-                msg += " Try saying...\n\n";
-                msg += " • I want to buy something\n";
-                msg += " • Can you find Ocarina of Time?";
-                console.log(`SEND help message to ${recipientId}`);
-                return messageSender.sendTextMessage(recipientId, msg)
-                    .then(() => {
-                    return request.context;
-                    });
+                    let msg = "Think of me as your personal shopping assistant.";
+                    msg += " I can help you discover and purchase items on Amazon.";
+                    msg += " Try saying...\n\n";
+                    msg += " • I want to buy something\n";
+                    msg += " • Can you find Ocarina of Time?";
+                    console.log(`SEND help message to ${recipientId}`);
+                    return messageSender.sendTextMessage(recipientId, msg)
+                        .then(() => {
+                            return request.context;
+                        });
                 }
             });
     },
@@ -198,7 +198,7 @@ const actions = {
                     const items = request.context.items;
                     items.forEach((item)=> {
                         let cartUrl = item.cartUrl;
-                        item.cartUrl = `${config.CART_REDIRECT_URL}?uid=${recipientId}&cart_url=${cartUrl}&ASIN=${item.ASIN}`;
+                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${cartUrl}&ASIN=${item.ASIN}`;
                         console.log(`CARTURL: ${item.cartUrl}`);
                     });
                     return messageSender.sendSearchResults(recipientId, items)
@@ -349,7 +349,7 @@ module.exports.handler = (message, sender, msgSender) => {
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
 
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?uid=${uid}&cart_url=${cartUrl}&ASIN=${product.ASIN}`;
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${cartUrl}&ASIN=${product.ASIN}`;
                                     console.log('URL WE WANT ' + modifiedUrl);
                                     product.cartUrl = modifiedUrl;
 
