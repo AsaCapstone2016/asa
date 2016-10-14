@@ -5,5 +5,7 @@
 
 module.exports = {
     purchasedItemDAO: require('./lib/purchasedItemDAO'),
-    searchQueryDAO: require('./lib/searchQueryDAO')
+    searchQueryDAO: require('./lib/searchQueryDAO'),
+    sessionsDAO: require('./lib/sessionsDAO'),
+    itemVariationsDAO: require('./lib/itemVariationsDAO')
 };

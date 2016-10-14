@@ -3,7 +3,10 @@
 let amazon = require('amazon');
 let Wit = require('cse498capstonewit').Wit;
 let log = require('cse498capstonewit').log;
+
+// database access objects
 let searchQueryDAO = require('database').searchQueryDAO;
+let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -16,105 +19,9 @@ aws.config.update({region: 'us-east-1'});
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
 
-/**
- * Retrieve session from database or create new one from user id
- * uid: user id of recipient, primary key for db record
- */
-let getSessionIdFromUserId = (uid) => {
-    let docClient = new aws.DynamoDB.DocumentClient();
-    let table = `${TABLE_PREFIX}Sessions`;
-    let record, sessionId;
-
-    let params = {
-        TableName: table,
-        Key: {
-            uid: uid
-        }
-    };
-
-    return docClient.get(params).promise()
-        .then((data) => {
-            if (Object.keys(data).length != 0) {
-                // if session exists, grab it
-                console.log('SESSION exists!');
-                return data.Item;
-            } else {
-                // if session does not exist, create it
-                console.log('SESSION does not exist!');
-                let params = {
-                    TableName: table,
-                    Item: {
-                        uid: uid,
-                        sessionId: new Date().getTime(),
-                        context: {}
-                    }
-                };
-                return docClient.put(params).promise()
-                    .then((success) => params.Item);
-            }
-        });
-};
-
-/**
- * Retrieve user id from session id
- * sessionId: session id, primary key for sessionId index
- */
-let getSessionFromSessionId = (sessionId) => {
-    let docClient = new aws.DynamoDB.DocumentClient();
-    let table = `${TABLE_PREFIX}Sessions`;
-    let index = 'sessionId-index';
-
-    let params = {
-        TableName: table,
-        IndexName: index,
-        KeyConditionExpression: 'sessionId = :sessionId',
-        ExpressionAttributeValues: {
-            ':sessionId': sessionId
-        }
-    };
-
-    return docClient.query(params).promise()
-        .then((data) => {
-            // We should only ever have one session so just return the first item
-            return data.Items[0];
-        }, (error) => {
-            console.log(`ERROR retrieving session: ${error}`);
-        });
-};
-
-/**
- * Update context in database given user id
- * uid: user id of the user whose context we want to update
- * ctx: new user context
- */
-let updateContext = (uid, ctx) => {
-    let docClient = new aws.DynamoDB.DocumentClient();
-    let table = `${TABLE_PREFIX}Sessions`;
-
-    let params = {
-        TableName: table,
-        Key: {
-            uid: uid
-        },
-        UpdateExpression: 'set context = :ctx',
-        ExpressionAttributeValues: {
-            ':ctx': ctx
-        },
-        ReturnValues: 'UPDATED_NEW'
-    };
-
-    return docClient.update(params).promise()
-        .then((success) => {
-            console.log(`Updated context for ${uid} to ${JSON.stringify(ctx)}`);
-        }, (error) => {
-            console.log(`ERROR updating context: ${error}`);
-        });
-};
-
-// todo: split this out into different actions
 const actions = {
     send(request, response) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -130,7 +37,7 @@ const actions = {
             });
     },
     sendHelpMessage(request) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -149,7 +56,7 @@ const actions = {
             });
     },
     search(request) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -187,7 +94,7 @@ const actions = {
             });
     },
     sendSearchResults(request) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -213,7 +120,7 @@ const actions = {
             });
     },
     stopSelectingVariations(request) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 return messageSender.sendTextMessage(recipientId, "Ok, let me know if you need anything else");
@@ -230,7 +137,7 @@ const actions = {
             })
     },
     resetVariations(request) {
-        return getSessionFromSessionId(request.sessionId)
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -269,7 +176,7 @@ const witClient = new Wit({
  * msgSender: messaging platform specific message sender
  */
 module.exports.handler = (message, sender, msgSender) => {
-    return getSessionIdFromUserId(sender)
+    return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
 
             console.log(`SESSION: ${JSON.stringify(session)}`);
@@ -287,7 +194,7 @@ module.exports.handler = (message, sender, msgSender) => {
                 console.log(`user sent a text message: ${text}`);
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        return updateContext(uid, ctx);
+                        return sessionsDAO.updateContext(uid, ctx);
                     }, (error) => {
                         console.log(`ERROR during runActions: ${error}`);
                     });
@@ -303,7 +210,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.parentASIN = payload.ASIN;
                     return actions.resetVariations(session)
                         .then((ctx) => {
-                            return updateContext(uid, ctx);
+                            return sessionsDAO.updateContext(uid, ctx);
                         }, (error) => {
                             console.log(`ERROR beginning variation selection: ${error}`);
                         });
@@ -314,7 +221,7 @@ module.exports.handler = (message, sender, msgSender) => {
                         // Stop selecting variations
                         return actions.stopSelectingVariations(session)
                             .then((ctx) => {
-                                return updateContext(uid, ctx);
+                                return sessionsDAO.updateContext(uid, ctx);
                             }, (error) => {
                                 console.log(`ERROR quitting variation selection: ${error}`);
                             });
@@ -324,7 +231,7 @@ module.exports.handler = (message, sender, msgSender) => {
                         messageSender.sendTypingMessage(uid);
 
                         context.selectedVariations.push(payload.VARIATION_VALUE);
-                        return updateContext(uid, context)
+                        return sessionsDAO.updateContext(uid, context)
                             .then(() => {
                                 return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                                     .then((result) => {
@@ -365,7 +272,7 @@ module.exports.handler = (message, sender, msgSender) => {
                         .then(() => {
                             return actions.stopSelectingVariations(session)
                                 .then((ctx) => {
-                                    return updateContext(uid, ctx);
+                                    return sessionsDAO.updateContext(uid, ctx);
                                 });
                         });
 
@@ -374,7 +281,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.parentASIN = payload.ASIN;
                     return actions.resetVariations(session)
                         .then((ctx) => {
-                            return updateContext(uid, ctx);
+                            return sessionsDAO.updateContext(uid, ctx);
                         }, (error) => {
                             console.log(`ERROR resetting selected variations: ${error}`);
                         });
