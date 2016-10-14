@@ -42,7 +42,7 @@ const actions = {
                 let recipientId = session.uid;
 
                 if (recipientId) {
-                    let msg = "Think of me as your personal shopping assistant.";
+                    let msg = "Hi! Think of me as your personal shopping assistant.";
                     msg += " I can help you discover and purchase items on Amazon.";
                     msg += " Try saying...\n\n";
                     msg += " • I want to buy something\n";
@@ -123,7 +123,7 @@ const actions = {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
-                return messageSender.sendTextMessage(recipientId, "Ok, let me know if you need anything else");
+                return messageSender.sendTextMessage(recipientId, "Let me know if you need anything else!");
             })
             .then(() => {
                 return new Promise((resolve, reject) => {
@@ -188,10 +188,9 @@ module.exports.handler = (message, sender, msgSender) => {
             let context = session.context;
 
             if (message.content.action === 'text') {
-
                 // Handle text messages from the user
                 let text = message.content.payload;
-                console.log(`user sent a text message: ${text}`);
+                console.log(`MESSAGE content: ${text}`);
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
                         return sessionsDAO.updateContext(uid, ctx);
@@ -200,12 +199,19 @@ module.exports.handler = (message, sender, msgSender) => {
                     });
 
             } else if (message.content.action === 'postback') {
-
                 // Handle button presses and quick replies
                 let payload = JSON.parse(message.content.payload);
                 console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
-                if (payload.METHOD === "SELECT_VARIATIONS") {
+                if (payload.METHOD === "GET_STARTED") {
+                    // User selected the 'Get Started' button on first conversation initiation
+                    return actions.sendHelpMessage(session)
+                        .then((success) => {
+                            console.log('CONVERSATION INITIATED and help message sent');
+                        }, (error) => {
+                            console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                        });
+                } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
                     context.parentASIN = payload.ASIN;
                     return actions.resetVariations(session)
