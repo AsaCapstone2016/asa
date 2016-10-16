@@ -6,6 +6,7 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: "evanm-20"
 });
+var recommend = require("./test/recommend.js");
 
 function nodeTraverse(browseNodes, browseNodeFreq, doubleCountArray, doubleCount){
     for(var idx in browseNodes){
@@ -59,7 +60,7 @@ function similaritySearch(keyword){
             }
             items.push({
                 title: item.ItemAttributes[0].Title[0],
-                browseNode: browseNodeFreq
+                browseNodes: browseNodeFreq
             });
         }
 
@@ -68,10 +69,6 @@ function similaritySearch(keyword){
         console.log("ERR:", JSON.stringify(err, null, 2));
     });
 }
-
-similaritySearch("asics").then(function(res){
-    console.log(JSON.stringify(res, null, 2));
-});
 
 function browseNodeItemSearch(keyword){
     return amazon_client.itemSearch({
@@ -122,55 +119,71 @@ function browseNodeItemLookUp(ASIN){
 
 
 
-// var itemBought = [
-//     '1449340377',   //Python Cookbook, Third edition
-//     '0321714113',   //C++ Primer (5th Edition)
-//     '0596009208',   //Head First Java, 2nd Edition
-//     '1338099132',   //Harry Potter and the Cursed Child, Parts 1 & 2, Special Rehearsal Edition Script
-//     '059035342X',   //Harry Potter and the Sorcerer's Stone
-//     '054579191X',   //The Hunger Games Box Set: Foil Edition
-//     'B01DE9DY8S',   //PlayStation VR
-//     'B01F9HMO2K',   //Battlefield 1 - PlayStation 4
-//     'B01GKH5Q9G',   //FIFA 17 - PlayStation 4
-//     'B01EZA0CEE',   //B01EZA0CEE
-// ];
-//
-// var browseNodeFreq = {};
-// var pArray = [];
-// itemBought.forEach(function(item){
-//     pArray.push(browseNodeItemLookUp(item).then(function(res){
-//         //console.log(JSON.stringify(res, null, 2));
-//         Object.keys(res).forEach(function(key){
-//             if(!(key in browseNodeFreq)){
-//                 browseNodeFreq[key] = res[key];
-//             }else{
-//                 browseNodeFreq[key].cnt += res[key].cnt;
-//                 browseNodeFreq[key].BrowseNodeId += res[key].BrowseNodeId;
-//             }
-//         });
-//     }), function(err){
-//         console.log("ERR", JSON.stringify(err, null, 2));
-//     });
-// });
-//
-// Promise.all(pArray).then(function(res){
-//     //console.log(JSON.stringify(browseNodeFreq, null, 2));
-//     var arr = [];
-//
-//     Object.keys(browseNodeFreq).forEach(function(key){
-//         let node = browseNodeFreq[key];
-//         node.key = key;
-//         arr.push(node);
-//     });
-//
-//     arr.sort(function(a, b){
-//         return b.cnt - a.cnt;
-//     })
-//
-//     console.log(JSON.stringify(arr, null, 2));
-// }, function(err){
-//     cosnole.log(JSON.stringify(err, null, 2));
-// });
+var itemBought = [
+    '1449340377',   //Python Cookbook, Third edition
+    '0321714113',   //C++ Primer (5th Edition)
+    '0596009208',   //Head First Java, 2nd Edition
+    '1338099132',   //Harry Potter and the Cursed Child, Parts 1 & 2, Special Rehearsal Edition Script
+    '059035342X',   //Harry Potter and the Sorcerer's Stone
+    '054579191X',   //The Hunger Games Box Set: Foil Edition
+    'B01DE9DY8S',   //PlayStation VR
+    'B01F9HMO2K',   //Battlefield 1 - PlayStation 4
+    'B01GKH5Q9G',   //FIFA 17 - PlayStation 4
+    'B01EZA0CEE',   //B01EZA0CEE
+];
+
+var browseNodeFreq = {};
+var pArray = [];
+itemBought.forEach(function(item){
+    pArray.push(browseNodeItemLookUp(item).then(function(res){
+        //console.log(JSON.stringify(res, null, 2));
+        Object.keys(res).forEach(function(key){
+            if(!(key in browseNodeFreq)){
+                browseNodeFreq[key] = res[key];
+            }else{
+                browseNodeFreq[key].cnt += res[key].cnt;
+                browseNodeFreq[key].BrowseNodeId += res[key].BrowseNodeId;
+            }
+        });
+    }), function(err){
+        console.log("ERR", JSON.stringify(err, null, 2));
+    });
+});
+
+Promise.all(pArray).then(function(res){
+    //console.log(JSON.stringify(browseNodeFreq, null, 2));
+    //var arr = [];
+
+    // Object.keys(browseNodeFreq).forEach(function(key){
+    //     let node = browseNodeFreq[key];
+    //     node.key = key;
+    //     arr.push(node);
+    // });
+    //
+    // arr.sort(function(a, b){
+    //     return b.cnt - a.cnt;
+    // })
+
+
+
+    var profile = {
+        uid : 'null',
+        itemsPurchased: 10,
+        browseNodes: browseNodeFreq
+    }
+
+    similaritySearch("asics").then(function(items){
+        //console.log(JSON.stringify(profile, null, 2));
+        console.log("-------------------");
+        //console.log(JSON.stringify(items, null, 2));
+        console.log("-------------------");
+        console.log(JSON.stringify(recommend(profile, items), null, 2));
+    }, function(err){
+        console.log(JSON.stringify(err, null, 2));
+    });
+}, function(err){
+    cosnole.log(JSON.stringify(err, null, 2));
+});
 
 
 // browseNodeItemSearch("python 3").then(function(res){
