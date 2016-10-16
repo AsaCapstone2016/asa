@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "amazon": "file:./core/amazon",
+    "compute-cosine-distance": "^1.0.0",
     "conversation-manager": "file:./core/conversation-manager",
     "cse498capstonewit": "^1.0.0-beta",
     "database": "file:./core/database",
