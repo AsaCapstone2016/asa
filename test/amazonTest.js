@@ -18,11 +18,11 @@ function nodeTravese(browseNodes, browseNodeFreq, doubleCount){
                     BrowseNodeId: []
                 }
             }
-            // if(!(browseNode.Name[0] in doubleCount)){
-            doubleCount[browseNode.Name[0]] = 1;
-            browseNodeFreq[browseNode.Name[0]].cnt += 1;
-            browseNodeFreq[browseNode.Name[0]].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
-            // }
+            if(!(browseNode.Name[0] in doubleCount)){
+                doubleCount[browseNode.Name[0]] = 1;
+                browseNodeFreq[browseNode.Name[0]].cnt += 1;
+                browseNodeFreq[browseNode.Name[0]].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
+            }
         }
         //if(!browseNode.IsCategoryRoot && browseNode.Ancestors && browseNode.Ancestors[0] &&
         if(browseNode.Ancestors && browseNode.Ancestors[0] &&
@@ -73,6 +73,8 @@ function browseNodeItemLookUp(ASIN){
         let item = res[0];
         let browseNodes = item.BrowseNodes && item.BrowseNodes[0]
         && item.BrowseNodes[0].BrowseNode;
+
+        console.log("BrowseNodes:",JSON.stringify(browseNodes, null, 2));
 
         var doubleCount = {};
         nodeTravese(browseNodes, browseNodeFreq, doubleCount);
