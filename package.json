@@ -7,13 +7,14 @@
     "lint": "eslint ./** --ext .js"
   },
   "dependencies": {
+    "amazon": "file:./core/amazon",
+    "conversation-manager": "file:./core/conversation-manager",
     "cse498capstonewit": "^1.0.0-beta",
-    "node-fetch": "^1.6.2",
     "database": "file:./core/database",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
-    "conversation-manager": "file:./core/conversation-manager",
-    "amazon": "file:./core/amazon"
+    "fuzzy": "^0.1.3",
+    "node-fetch": "^1.6.2"
   },
   "devDependencies": {
     "eslint": "^3.7.1"
