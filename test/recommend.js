@@ -10,7 +10,10 @@
                 id:
                 count:
             },
-            <node name>: <count>
+            <node name>: {
+                id: 
+                count: 
+            }
         }
     }
 
@@ -34,11 +37,14 @@ let rank = function (profile, items) {
     let result = [];
 
     // Create profile vector
-    profile.BrowseNodes.forEach((node, idx) => {
+    let idx = 0;
+    Object.keys(profile.BrowseNodes).forEach((node) => {
         // Map this browse node to and index
         nodeMap[node] = idx;
         // Add the count to the profile vector
-        profileVector.push(count);
+        profileVector.push(profile.BrowseNodes[node].cnt);
+        
+        idx++;
     });
 
     // Calculate cosine similarity b/w an item and the profile
