@@ -200,7 +200,6 @@ var facebookMessageSender = {
 
         var element = {};
         element.title = `${product.parentTitle}`;
-        element.item_url = product.cartUrl;
         element.image_url = product.image;
         var variationSummary = `${product.price}\n`;
         for (var i = 0; i < product.variationNames.length; i++) {
