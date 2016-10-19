@@ -63,13 +63,13 @@ var amazonProduct = {
             "Item.1.Quantity": quantity
         }).then(function (result) {
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
-                if (result.MobileCartURL !== undefined) {
-                    console.log(`${ASIN} cart url: ${result.MobileCartURL[0]}`);
-                    return result.MobileCartURL[0];
-                }
-                else if (result.PurchaseURL !== undefined) {
+                if (result.PurchaseURL !== undefined) {
                     console.log(`${ASIN} cart url: ${result.PurchaseURL[0]}`);
                     return result.PurchaseURL[0];
+                }
+                else if (result.MobileCartURL !== undefined) {
+                    console.log(`${ASIN} cart url: ${result.MobileCartURL[0]}`);
+                    return result.MobileCartURL[0];
                 }
             }
         }, function (err) {
