@@ -18,7 +18,7 @@ module.exports.facebookLambda = function (event, context, callback) {
 
         // Send each message in the common event object to the conversation manager
         messages.forEach((message) => {
-            console.log(`MESSAGE recevied: ${JSON.stringify(message, null, 2)}`);
+            console.log(`MESSAGE recieved: ${JSON.stringify(message, null, 2)}`);
             return conversation.handler(message, message.UID, facebookMessageSender);
         });
     } else if (event.method === "GET") {
