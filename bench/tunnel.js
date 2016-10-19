@@ -6,7 +6,7 @@ let config = {
   proto: 'http',
   addr: 3000,
   subdomain: 'asa-dev-sam',
-  authtoken: '',
+  authtoken: process.env.NGROK_TOKEN || '',
   region: 'us'
 }
 
