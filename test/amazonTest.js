@@ -60,8 +60,7 @@ function browseNodeItemSearch(keyword){
     var order = 0;
     while(curPgae <= pages){
         pArray.push(amazon_client.itemSearch({
-            //"searchIndex": "All",
-            "searchIndex": "Clothing, Shoes & Jewelry",
+            "searchIndex": "All",
             "keywords": keyword,
             "responseGroup": ["ItemAttributes","BrowseNodes"],
             "ItemPage" : curPgae
@@ -100,32 +99,6 @@ function browseNodeItemSearch(keyword){
     }, function(err){
         return `ERR: ${JSON.stringify(err, null, 2)}`;
     });
-    // return amazon_client.itemSearch({
-    //     "searchIndex": "All",
-    //     "keywords": keyword,
-    //     "responseGroup": ["ItemAttributes","BrowseNodes"]
-    // }).then(function(res){
-    //     //console.log("RES:", JSON.stringify(res, null, 2));
-    //     var items = [];
-    //     for(var idx in res){
-    //         var doubleCount = {};
-    //         var browseNodeFreq = {};
-    //         var item = res[idx];
-    //         //console.log(`Item ${idx}: ASIN: ${item.ASIN[0]} Title: ${item.ItemAttributes[0].Title[0]}`);
-    //         let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
-    //         if(browseNodes){
-    //             nodeTraverse(browseNodes, browseNodeFreq, doubleCount, true, 0, 3);
-    //         }
-    //         items.push({
-    //             title: item.ItemAttributes[0].Title[0],
-    //             browseNodes: browseNodeFreq
-    //         });
-    //     }
-    //
-    //     return items;
-    // }, function(err){
-    //     return `ERR: ${JSON.stringify(err, null, 2)}`;
-    // });
 }
 
 
@@ -208,31 +181,6 @@ function buildUserProfile(){
         'B01F9HMO2K',   //Battlefield 1 - PlayStation 4
         'B01GKH5Q9G',   //FIFA 17 - PlayStation 4
         'B01EZA0CEE'   //B01EZA0CEE
-
-        // 'B00LJO86NY',
-        // 'B00DVFLJDS',
-        // 'B005NGQWL2',
-        // 'B00MBFPT44',
-        // 'B00PC9HFNY',
-        // 'B000OOYECC',
-        // 'B00PC9HFNY',
-        // 'B00NH11N5A',
-        // 'B0043T7FXE',
-        // 'B004CADY9I',
-        // 'B003BMS5LK',
-        // 'B00DOZHL82',
-        // 'B00PC9HFNY',
-        // 'B012M8LXQW',
-        // 'B00TY6A1LY',
-        // 'B00KHRYRLY',
-        // 'B00X13ZC9M',
-        // 'B00SV7IEJI',
-        // 'B00NO57AD8',
-        // 'B00L7UZMAK',
-        // 'B00TY6A1LY',
-        // 'B00RORBPEW',
-        // 'B008CP5QJK',
-        // 'B00OTWOAAQ'
     ];
 
     var browseNodeFreq = {};
@@ -281,34 +229,10 @@ function buildUserProfile(){
 
         return profile;
 
-        //Apply user profile into product
-        // similaritySearch("2k").then(function(items){
-        //     console.log(JSON.stringify(recommend(profile, items), null, 2));
-        // }, function(err){
-        //     console.log(JSON.stringify(err, null, 2));
-        // });
     }, function(err){
         return `ERR: ${JSON.stringify(err, null, 2)}`;
     });
 }
-
-// buildUserProfile().then(function(res){
-//     console.log(JSON.stringify(res, null, 2));
-// }, function(err){
-//     console.log(JSON.stringify(err, null, 2));
-// })
-
-// browseNodeItemSearch("2k").then(function(res){
-//     console.log(JSON.stringify(res, null, 2));
-// }, function(err){
-//     console.log(JSON.stringify(err, null, 2));
-// })
-
-// buildUserProfile().then(function(res){
-//     console.log(`RES: ${JSON.stringify(res, null, 2)}`);
-// }, function(err){
-//     console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
-// })
 
 
 function similaritySearch(){
@@ -323,47 +247,3 @@ function similaritySearch(){
 }
 
 similaritySearch();
-
-// browseNodeItemSearch("2k").then(function(res){
-//     console.log(JSON.stringify(recommend(res[0], res[1]), null, 2));
-//     //console.log(JSON.stringify(res, null, 2));
-//     //console.log(res.length);
-// }, function(err){
-//     console.log(JSON.stringify(err, null, 2));
-// });
-
-
-
-// browseNodeItemSearch("python 3").then(function(res){
-//     //console.log(Object.keys(res).length);
-//     //console.log("RES:", JSON.stringify(res, null, 2));
-//
-//     var arr = [];
-//
-//     Object.keys(res).forEach(function(key){
-//         let node = res[key];
-//         node.key = key;
-//         arr.push(node);
-//     });
-//
-//     arr.sort(function(a, b){
-//         return b.cnt - a.cnt;
-//     })
-//
-//     console.log(JSON.stringify(arr, null, 2));
-//
-//     //console.log("------SORT------");
-//     //Object.keys(res).sort(function(a,b){ return res[a].cnt - res[b].cnt });
-//     //console.log("RES:", JSON.stringify(res, null, 2));
-// }, function(err){
-//     console.log("ERR:", JSON.stringify(err, null, 4));
-// });
-
-
-
-// browseNodeItemLookUp("0439023521").then(function(res){
-//     console.log(Object.keys(res).length);
-//     console.log("RES:", JSON.stringify(res, null, 2));
-// }, function(err){
-//     console.log("ERR:", JSON.stringify(err, null, 4));
-// });
