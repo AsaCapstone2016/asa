@@ -104,9 +104,8 @@ const actions = {
                     console.log(`SEND LIST OF ITEMS`);
                     const items = request.context.items;
                     items.forEach((item)=> {
-                        let cartUrl = item.cartUrl;
-                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${cartUrl}&ASIN=${item.ASIN}`;
-                        console.log(`CARTURL: ${item.cartUrl}`);
+
+                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${encodeURIComponent(item.cartUrl)}&ASIN=${item.ASIN}`;
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
@@ -261,8 +260,7 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
-
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${cartUrl}&ASIN=${product.ASIN}`;
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${encodeURIComponent(cartUrl)}&ASIN=${product.ASIN}`;
                                     console.log('URL WE WANT ' + modifiedUrl);
                                     product.cartUrl = modifiedUrl;
 
