@@ -18,20 +18,24 @@ module.exports.cartRedirect = function (event, context, callback) {
         console.log(`Skipping this request`);
         return;
     }
-    console.log(`PURCHASE REDIRECT EVENT ${JSON.stringify(event, null, 2)}`);
-    console.log(`PURCHASE REDIRECT CONTEXT ${JSON.stringify(context, null, 2)}`);
 
     let uid = querystring.user_id;
     let redirectUrl = querystring.redirect_url;
     let ASIN = querystring.ASIN;
     let isCartUrl = querystring.is_cart;
     let isMobileRequest = event.params.header['CloudFront-Is-Mobile-Viewer'];
+
+    console.log(`redirect_url: ${redirectUrl}`);
+    console.log(`is cart: ${isCartUrl}`);
+    console.log(`is mobile: ${isMobileRequest}`);
     
     if (isCartUrl === '1') {
+        console.log("here");
         let cartParams = redirectUrl.substring(redirectUrl.indexOf("?") + 1);
-        if (isMobileRequest)
+        if (isMobileRequest === 'true') {
+            console.log("here again");
             redirectUrl = `https://www.amazon.com/gp/aw/rcart?${cartParams}`;
-        else {
+        } else {
             redirectUrl = `https://www.amazon.com/gp/cart/aws-merge.html?${cartParams}`;
         }
     }
