@@ -261,15 +261,21 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${encodeURIComponent(cartUrl)}&ASIN=${product.ASIN}`;
-                                    console.log('URL WE WANT ' + modifiedUrl);
-                                    product.cartUrl = modifiedUrl;
+                                    if (cartUrl !== undefined) {
+                                        // Send variations summary with cart redirect url
+                                        let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${encodeURIComponent(cartUrl)}&ASIN=${product.ASIN}`;
+                                        console.log('URL WE WANT ' + modifiedUrl);
+                                        product.cartUrl = modifiedUrl;
 
-                                    product.parentASIN = context.parentASIN;
-                                    return messageSender.sendVariationSummary(uid, product)
-                                        .catch((error) => {
-                                            console.log(`ERROR sending product summary: ${error}`);
-                                        });
+                                        product.parentASIN = context.parentASIN;
+                                        return messageSender.sendVariationSummary(uid, product)
+                                            .catch((error) => {
+                                                console.log(`ERROR sending product summary: ${error}`);
+                                            });
+                                    } else {
+                                        // Send message saying the user should try purchasing it on Amazon including link to parent
+                                        return messageSender.sendTextMessage(uid, "Sorry, I couldn't make a purchase link for that item... If you still want to buy it try using Amazon's website");
+                                    }
                                 }, (error) => {
                                     console.log(`ERROR creating cart after variation selection: ${error}`);
                                 });
