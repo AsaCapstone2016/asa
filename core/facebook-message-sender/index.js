@@ -62,7 +62,7 @@ var facebookMessageSender = {
             else {
                 element.buttons = [{
                     type: "web_url",
-                    url: product.cartUrl,
+                    url: product.purchaseUrl,
                     title: "Purchase",
                     webview_height_ratio: "TALL"
                 }];

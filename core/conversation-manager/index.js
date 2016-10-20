@@ -104,8 +104,9 @@ const actions = {
                     console.log(`SEND LIST OF ITEMS`);
                     const items = request.context.items;
                     items.forEach((item)=> {
-
-                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${encodeURIComponent(item.cartUrl)}&ASIN=${item.ASIN}`;
+                        if (item.cartCreated) {
+                            item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${encodeURIComponent(item.purchaseUrl)}&ASIN=${item.ASIN}`;
+                        }
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {

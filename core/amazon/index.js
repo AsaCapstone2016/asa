@@ -36,15 +36,20 @@ var amazonProduct = {
                     //Build virtual cart here
                     promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
                         .then((url) => {
-
-                            if (url === undefined) {
-                                url = curItem.DetailPageURL[0];
+                            
+                            if (url !== undefined) {
+                                curItem.cartCreated = true;
+                                curItem.purchaseUrl = url;
+                            } else {
+                                curItem.cartCreated = false;
+                                curItem.purchaseUrl = curItem.DetailPageURL[0];
                             }
-                            curItem.cartUrl = url;
+                            
                         }));
                 } else {
                     // *** ERROR *** no ASIN
                     console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
+                    curItem.cartCreated = false;
                     curItem.cartUrl = "https://amazon.com";
                 }
             }
@@ -75,7 +80,7 @@ var amazonProduct = {
         }, function (err) {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
             console.log(`ERROR creating cart for ${ASIN}`);
-            return 'https://amazon.com';
+            return undefined;
         });
     },
 
