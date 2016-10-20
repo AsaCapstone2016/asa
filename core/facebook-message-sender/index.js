@@ -62,7 +62,7 @@ var facebookMessageSender = {
             else {
                 element.buttons = [{
                     type: "web_url",
-                    url: product.cartUrl,
+                    url: product.purchaseUrl,
                     title: "Purchase",
                     webview_height_ratio: "TALL"
                 }];
@@ -192,7 +192,7 @@ var facebookMessageSender = {
      *
      * @param recipientId
      * @param product the single result that we are sending. { parentTitle, imageUrl (LARGE), variationNames,
-     * variationValues, cartUrl, price }
+     * variationValues, purchaseUrl, price }
      */
     sendVariationSummary: function (recipientId, product) {
         console.log(`Product to summarize: ${JSON.stringify(product)}`);
@@ -209,7 +209,7 @@ var facebookMessageSender = {
 
         element.buttons = [{
             type: "web_url",
-            url: product.cartUrl,
+            url: product.purchaseUrl,
             title: "Purchase",
             webview_height_ratio: "TALL"
         }, {

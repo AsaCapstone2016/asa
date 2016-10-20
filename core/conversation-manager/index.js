@@ -104,8 +104,11 @@ const actions = {
                     console.log(`SEND LIST OF ITEMS`);
                     const items = request.context.items;
                     items.forEach((item)=> {
-
-                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${encodeURIComponent(item.cartUrl)}&ASIN=${item.ASIN}`;
+                        let isCart = '0';
+                        if (item.cartCreated) {
+                            isCart = '1';
+                        }
+                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${encodeURIComponent(item.purchaseUrl)}&ASIN=${item.ASIN}&is_cart=${isCart}`;
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
@@ -260,9 +263,20 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${encodeURIComponent(cartUrl)}&ASIN=${product.ASIN}`;
+                                    let isCart = '1';
+                                    let redirectUrl = cartUrl;
+
+                                    // If the cart wasn't created, the purchase link should send them to the Amazon page for the specific item
+                                    if (cartUrl === undefined) {
+                                        isCart = '0';
+                                        redirectUrl = `http://asin.info/a/${product.ASIN}`;
+                                    }
+
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${encodeURIComponent(redirectUrl)}&ASIN=${product.ASIN}&is_cart=${isCart}`;
+                                    
+                                    // Send variations summary with cart redirect url
                                     console.log('URL WE WANT ' + modifiedUrl);
-                                    product.cartUrl = modifiedUrl;
+                                    product.purchaseUrl = modifiedUrl;
 
                                     product.parentASIN = context.parentASIN;
                                     return messageSender.sendVariationSummary(uid, product)
