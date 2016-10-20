@@ -46,9 +46,6 @@ let rank = function (profile, items) {
         idx++;
     });
 
-    // console.log("nodeMap",JSON.stringify(nodeMap, null, 2));
-    //console.log("profileVector", JSON.stringify(profileVector, null, 2));
-
     // Calculate cosine similarity b/w an item and the profile
     items.forEach((item) => {
         // Create item vector
@@ -59,19 +56,6 @@ let rank = function (profile, items) {
                 itemVector[nodeMap[node]] = item.browseNodes[node].cnt;
             }
         });
-
-        // item.browseNodes.forEach((node) => {
-        //     if (nodeMap[node.key] !== undefined) {
-        //         itemVector[nodeMap[node.key]] = node.cnt;
-        //     }
-        // });
-
-        // Add cosine similarity to the result
-
-        // cosineSim = distance(profileVector, itemVector);
-        // if(cosineSim === null){
-        //
-        // }
 
         var cosineSim = distance(profileVector, itemVector);
         if(!cosineSim){
