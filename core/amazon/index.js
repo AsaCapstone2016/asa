@@ -50,7 +50,7 @@ var amazonProduct = {
                     // *** ERROR *** no ASIN
                     console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
                     curItem.cartCreated = false;
-                    curItem.cartUrl = "https://amazon.com";
+                    curItem.purchaseUrl = "https://amazon.com";
                 }
             }
             return Promise.all(promiseArray).then(() => {
