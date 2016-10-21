@@ -1,5 +1,7 @@
+'use strict';
+
 var amazon_api = require("amazon-product-api");
-var config = require('./config');
+var config = require('./../config');
 
 var amazon_client = amazon_api.createClient({
   awsId: config.AWS_ID,
@@ -52,6 +54,11 @@ function getASIN(product) {
 function getProductGroup(product) {
   return product.ItemAttributes[0].ProductGroup[0];
 }
+
+function getBrowseNodes(product) {
+  return product.getBrowseNodes[0].getBrowseNode;
+}
+
 let wait = time => new Promise(f => setTimeout(f, time));
 
 let ASINs = [ 
@@ -67,7 +74,9 @@ let ASINs = [
   '1118102274',
   'B00CY9RQ2K',
   'B00O9GW8TC',
-  'B01IM96BQM'];
+  'B01IM96BQM',
+  'B004HYK956',
+  'B00006IJJK'];
 
 function getBatches(ASINs) {
   let results = [];
@@ -87,10 +96,10 @@ let items = [];
 Promise.all(promises).then(responses => {
   responses.forEach(response => {
     response.forEach(item => {
-      items.push(getTitle(item));
+      items.push(item);
     })
   })
-  console.log(items);
+  console.log(prettyPrint(items));
 }).catch(err => {
   console.log('error: ', prettyPrint(err))
 })

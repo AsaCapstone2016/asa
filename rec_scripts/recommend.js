@@ -63,6 +63,7 @@ let rank = function (profile, items) {
         }
         result.push({
             item: item.title,
+            ASIN: item.ASIN,
             cosineSim: cosineSim,
             order: item.order
         });

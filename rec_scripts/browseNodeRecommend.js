@@ -12,15 +12,13 @@ let recommend = require("./recommend");
 
 let purchaseHistory = process.argv[2];
 let query = process.argv[3];
-let numItemPages = process.argv[4] !== undefined ? process.argv[4] : 5;
-let browseNodeDepth = process.argv[5] !== undefined ? process.argv[5] : 2;
+let browseNodeDepth = process.argv[4] !== undefined ? process.argv[4] : 2;
+let numItemPages = process.argv[5] !== undefined ? process.argv[5] : 5;
 
 console.log(`profile items: ${purchaseHistory}`);
 console.log(`query: ${query}`);
 console.log(`pages: ${numItemPages}`);
 console.log(`depth: ${browseNodeDepth}`);
-console.log()
-console.log("--------------------------------");
 console.log();
 
 /**
@@ -32,10 +30,10 @@ console.log();
  * @param  Int      curLevel            [current level in node traverse]
  * @param  Int      maxLevel            [max level to traverse]
  */
-function traverseItemNodes(browseNodes, browseNodeFreq, doubleCountArray, doubleCount, curLevel, maxLevel){
+function traverseItemNodes(nodes, browseNodeFreq, doubleCountArray, doubleCount, curLevel, maxLevel) {
     if(curLevel > maxLevel) return;
-    for(var idx in browseNodes){
-        var browseNode = browseNodes[idx];
+    for(let idx in nodes) {
+        let browseNode = nodes[idx];
         //if(browseNode.Name && browseNode.Name[0]){
         if(!browseNode.IsCategoryRoot && browseNode.Name && browseNode.Name[0]){
             if(!(browseNode.Name[0] in browseNodeFreq)){
@@ -69,15 +67,14 @@ let profiler = {
         let browseNodeFreq = {};
         let promiseArray = [];
         rawItems.forEach((item) => {
-            let browseNodes = item.browseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
-            let ASIN = item.ASIn && item.ASIN[0];
+            let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
+            let ASIN = item.ASIN && item.ASIN[0];
             let title = item.ItemAttributes && item.ItemAttributes[0] && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title;
             console.log(`Bought: ${title}`);
 
             promiseArray.push(new Promise((resolve, reject) => {
                 let itemNodeFreq = {};
                 traverseItemNodes(browseNodes, itemNodeFreq, {}, false, 0, depth);
-
                 Object.keys(itemNodeFreq).forEach((key) => {
                     if ( !(key in browseNodeFreq) ) {
                         browseNodeFreq[key] = itemNodeFreq[key];
@@ -86,31 +83,32 @@ let profiler = {
                         browseNodeFreq[key].BrowseNodeId += itemNodeFreq[key].BrowseNodeId;
                     }
                 })
+                resolve();
             }));
         });
 
         return Promise.all(promiseArray).then((result) => {
             // Print sorted user profile
-            let arr = [];
-            Object.keys(browseNodeFreq).forEach((key) => {
-                arr.push({
-                    key: key,
-                    cnt: browseNodeFreq[key].cnt,
-                    BrowseNodeId: browseNodeFreq[key].BrowseNodeId
-                });
-            })
+            // let arr = [];
+            // Object.keys(browseNodeFreq).forEach((key) => {
+            //     arr.push({
+            //         key: key,
+            //         cnt: browseNodeFreq[key].cnt,
+            //         BrowseNodeId: browseNodeFreq[key].BrowseNodeId
+            //     });
+            // })
 
-            arr.sort((a, b) => {
-                return b.cnt - a.cnt;
-            });
+            // arr.sort((a, b) => {
+            //     return b.cnt - a.cnt;
+            // });
 
-            console.log(`Sorted Browse Node Frequencies: ${JSON.stringify(arr, null, 2)}`);
+            // console.log(`Sorted Browse Node Frequencies: ${JSON.stringify(arr, null, 2)}`);
 
             return {
                 uid: 'null',
                 itemsPurchased: rawItems.length,
                 browseNodes: browseNodeFreq
-            }
+            };
         });
     }
 };
@@ -124,7 +122,7 @@ let amazon = {
     getCandidateItems(keywords, numPages, depth) {
         let curPage = 1;
         let order = 0;
-        let Promise = [];
+        let promiseArray = [];
 
         while (curPage <= numPages) {
             promiseArray.push(amazon_client.itemSearch({
@@ -133,19 +131,18 @@ let amazon = {
                 "responseGroup": ["ItemAttributes", "BrowseNodes"],
                 "ItemPage": curPage
             }).then((result) => {
-                //console.log("RES:", JSON.stringify(res, null, 2));
-                var items = [];
-                for(var idx in res){
-                    var doubleCount = {};
-                    var browseNodeFreq = {};
-                    var item = res[idx];
-                    //console.log(`Item ${idx}: ASIN: ${item.ASIN[0]} Title: ${item.ItemAttributes[0].Title[0]}`);
+                let items = [];
+                for(let idx in result){
+                    let browseNodeFreq = {};
+                    let item = result[idx];
                     let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
+                    let ASIN = item.ASIN && item.ASIN[0];
                     if(browseNodes){
-                        nodeTraverse(browseNodes, browseNodeFreq, doubleCount, true, 0, depth);
+                        traverseItemNodes(browseNodes, browseNodeFreq, {}, true, 0, depth);
                     }
                     items.push({
                         title: item.ItemAttributes[0].Title[0],
+                        ASIN: ASIN,
                         browseNodes: browseNodeFreq,
                         order: order++
                     });
@@ -174,16 +171,18 @@ function browseNodeRecommend() {
     let rawItemInfo = require(purchaseHistory);
 
     // Build user profile from purchase history raw item lookups
-    return profiler.create(rawItemInfo, browseNodeDepth)
+    profiler.create(rawItemInfo, browseNodeDepth)
         .then((userProfile) => {
+            //console.log(`User profile: ${JSON.stringify(userProfile, null, 2)}`);
             // Get pages of items from search query
             return amazon.getCandidateItems(query, numItemPages, browseNodeDepth)
                 .then((candidateItems) => {
+                    console.log("here");
                     // Rank items based on cosine similarity to user profile
                     let ranking = recommend(userProfile, candidateItems);
                     console.log();
                     console.log("------- Recommendations -------")
-                    console.log(`${JSON.stringify(ranking, null, 2)}`);
+                    console.log(`${JSON.stringify(ranking.slice(0,10), null, 2)}`);
                 });
         });
 };
