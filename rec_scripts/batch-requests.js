@@ -75,7 +75,7 @@ let ASINs = [
   'B00CY9RQ2K',
   'B00O9GW8TC',
   'B01IM96BQM',
-  'B004HYK956',
+  'B004HYIAPM',
   'B00006IJJK'];
 
 function getBatches(ASINs) {

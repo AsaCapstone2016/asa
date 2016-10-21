@@ -121,10 +121,10 @@ let amazon = {
      */
     getCandidateItems(keywords, numPages, depth) {
         let curPage = 1;
-        let order = 0;
         let promiseArray = [];
 
         while (curPage <= numPages) {
+            const start = 10 * (curPage - 1);
             promiseArray.push(amazon_client.itemSearch({
                 "searchIndex": "All",
                 "keywords": keywords,
@@ -144,7 +144,7 @@ let amazon = {
                         title: item.ItemAttributes[0].Title[0],
                         ASIN: ASIN,
                         browseNodes: browseNodeFreq,
-                        order: order++
+                        order: start + parseInt(idx)
                     });
                 }
                 return items;
@@ -177,7 +177,6 @@ function browseNodeRecommend() {
             // Get pages of items from search query
             return amazon.getCandidateItems(query, numItemPages, browseNodeDepth)
                 .then((candidateItems) => {
-                    console.log("here");
                     // Rank items based on cosine similarity to user profile
                     let ranking = recommend(userProfile, candidateItems);
                     console.log();

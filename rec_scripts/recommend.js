@@ -46,6 +46,8 @@ let rank = function (profile, items) {
         idx++;
     });
 
+    //console.log(`prof vector: ${profileVector}`);
+
     // Calculate cosine similarity b/w an item and the profile
     items.forEach((item) => {
         // Create item vector
@@ -61,6 +63,9 @@ let rank = function (profile, items) {
         if(!cosineSim){
             cosineSim = 2;
         }
+        // if (cosineSim < 1) {
+        //     console.log(`item vector: ${itemVector}`);
+        // }
         result.push({
             item: item.title,
             ASIN: item.ASIN,
