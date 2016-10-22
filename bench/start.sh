@@ -1,1 +1,1 @@
-node tunnel.js & nodemon wrapper.js
+node tunnel.js & nodemon --watch ../ wrapper.js
