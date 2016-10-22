@@ -49,30 +49,31 @@ var facebookMessageSender = {
             element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
             element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
                 product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
+            element.buttons = [];
             if (product.HasVariations) {
-                element.buttons = [{
+                element.buttons.push({
                     type: 'postback',
                     title: "Select Options",
                     payload: JSON.stringify({
                         METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN[0]
                     })
-                }];
+                });
             }
             else {
-                element.buttons = [{
+                element.buttons.push({
                     type: "web_url",
                     url: product.purchaseUrl,
                     title: "Purchase",
                     webview_height_ratio: "TALL"
-                }];
+                });
             }
-            elements.buttons.push({
+            element.buttons.push({
                 type: 'postback',
                 title: "More Like This",
                 payload: JSON.stringify({
                     METHOD: "SIMILARITY_LOOKUP",
-                    ASIN: product.ParentASIN[0]
+                    ASIN: product.ASIN
                 })
             });
 
