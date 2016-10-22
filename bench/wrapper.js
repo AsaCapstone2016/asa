@@ -16,9 +16,11 @@ app.all('/', (req, res) => {
     stage: 'dev',
     params: req.params
   };
+  if (event.method === 'GET')
+    res.send(event.query['hub.challenge']);
+  else 
+    handler(event, context, fakeCallback);
   //console.log(prettyPrint(event));
-  handler(event, context, fakeCallback);
-  res.send(event.query['hub.challenge']);
 });
 
 app.listen(3000, () => {
