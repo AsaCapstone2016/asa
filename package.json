@@ -15,7 +15,8 @@
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
     "conversation-manager": "file:./core/conversation-manager",
-    "amazon": "file:./core/amazon"
+    "amazon": "file:./core/amazon",
+    "node-wit": "file:./core/node-wit"
   },
   "devDependencies": {
     "aws-sdk": "^2.6.11",
