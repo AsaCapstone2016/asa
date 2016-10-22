@@ -67,6 +67,14 @@ var facebookMessageSender = {
                     webview_height_ratio: "TALL"
                 }];
             }
+            elements.buttons.push({
+                type: 'postback',
+                title: "More Like This",
+                payload: JSON.stringify({
+                    METHOD: "SIMILARITY_LOOKUP",
+                    ASIN: product.ParentASIN[0]
+                })
+            });
 
             elements.push(element);
         });

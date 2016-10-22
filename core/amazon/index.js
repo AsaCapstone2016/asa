@@ -36,7 +36,7 @@ var amazonProduct = {
                     //Build virtual cart here
                     promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
                         .then((url) => {
-                            
+
                             if (url !== undefined) {
                                 curItem.cartCreated = true;
                                 curItem.purchaseUrl = url;
@@ -44,7 +44,7 @@ var amazonProduct = {
                                 curItem.cartCreated = false;
                                 curItem.purchaseUrl = curItem.DetailPageURL[0];
                             }
-                            
+
                         }));
                 } else {
                     // *** ERROR *** no ASIN
@@ -59,6 +59,36 @@ var amazonProduct = {
             });
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
+        });
+    },
+
+    similarityLookup: function (keyword) {
+        return amazon_client.similarityLookup({
+            "searchIndex": "All",
+            "keywords": keyword,
+            "responseGroup": ["ItemAttributes", "BrowseNodes"]
+        }).then(function (res) {
+            console.log(`RES: ${JSON.stringify(res, null, 2)}`);
+            var items = [];
+
+            for (var idx in res) {
+                var doubleCount = {};
+                var browseNodeFreq = {};
+                var item = res[idx];
+                //console.log(`Item ${idx}: ASIN: ${item.ASIN[0]} Title: ${item.ItemAttributes[0].Title[0]}`);
+                let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
+                if (browseNodes) {
+                    nodeTraverse(browseNodes, browseNodeFreq, doubleCount, true);
+                }
+                items.push({
+                    title: item.ItemAttributes[0].Title[0],
+                    browseNode: browseNodeFreq
+                });
+            }
+
+            return items;
+        }, function (err) {
+            console.log("ERR:", JSON.stringify(err, null, 2));
         });
     },
 
@@ -162,9 +192,9 @@ var amazonProduct = {
                         if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
                             var itemAttributes = {};
                             var variationAttributes = item.VariationAttributes && item.VariationAttributes[0]
-                            && item.VariationAttributes[0].VariationAttribute;
+                                && item.VariationAttributes[0].VariationAttribute;
 
-                            for(let variationAttributeIdx in variationAttributes){
+                            for (let variationAttributeIdx in variationAttributes) {
                                 let variationAttribute = variationAttributes[variationAttributeIdx];
                                 itemAttributes[variationAttribute.Name[0]] = variationAttribute.Value[0]
                             }
@@ -177,7 +207,7 @@ var amazonProduct = {
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
-                                            "price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            "price": item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
                                             && item.Offers[0].Offer[0].OfferListing[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price
@@ -195,7 +225,7 @@ var amazonProduct = {
                                     ref = ref[value];
                                 }
                             }
-                        }else{
+                        } else {
                             console.log("no item attributes");
                         }
                     }
