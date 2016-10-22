@@ -10,55 +10,32 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: "evanm-20"
 });
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers"];
+
 
 var amazonProduct = {
     itemSearch: function (keywords) {
         return amazon_client.itemSearch({
             "searchIndex": "All",
             "keywords": keywords,
-            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "OfferSummary"]
+            "responseGroup": itemResponseGroup
         }).then((result) => {
-            var promiseArray = [];
-            for (var itemIdx = 0; itemIdx < result.length; itemIdx++) {
-                let curItem = result[itemIdx];
-                //When item has ParentASIN and ParentASIN not same as ASIN, which means has options
-                if (curItem.ParentASIN !== undefined &&
-                    curItem.ParentASIN.length > 0 &&
-                    curItem.ASIN !== undefined &&
-                    curItem.ASIN != curItem.ParentASIN) {
-
-                    console.log(`Item #${itemIdx}:${curItem.ASIN} has variations`);
-                    curItem.HasVariations = true;
-                }
-                //When item doesn't have ParentASIN, which means has no options
-                else if (curItem.ASIN !== undefined && curItem.ASIN.length > 0) {
-                    console.log(`Item #${itemIdx}:${curItem.ASIN} has no variations`);
-                    //Build virtual cart here
-                    promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
-                        .then((url) => {
-                            
-                            if (url !== undefined) {
-                                curItem.cartCreated = true;
-                                curItem.purchaseUrl = url;
-                            } else {
-                                curItem.cartCreated = false;
-                                curItem.purchaseUrl = curItem.DetailPageURL[0];
-                            }
-                            
-                        }));
-                } else {
-                    // *** ERROR *** no ASIN
-                    console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
-                    curItem.cartCreated = false;
-                    curItem.purchaseUrl = "https://amazon.com";
-                }
-            }
-            return Promise.all(promiseArray).then(() => {
-                console.log('Done getting/building item search response');
-                return result;
-            });
+            console.log(`SEARCH RES: ${JSON.stringify(result, null, 2)}`);
+            return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
+        });
+    },
+
+    similarityLookup: function (ASIN) {
+        return amazon_client.similarityLookup({
+            "itemId": ASIN,
+            "responseGroup": itemResponseGroup
+        }).then(function (res) {
+            console.log(`RES: ${JSON.stringify(res, null, 2)}`);
+            return buildItemResponse(res);
+        }, function (err) {
+            console.log("ERR:", JSON.stringify(err, null, 2));
         });
     },
 
@@ -162,9 +139,9 @@ var amazonProduct = {
                         if (item.ItemAttributes !== undefined && item.ItemAttributes.length > 0) {
                             var itemAttributes = {};
                             var variationAttributes = item.VariationAttributes && item.VariationAttributes[0]
-                            && item.VariationAttributes[0].VariationAttribute;
+                                && item.VariationAttributes[0].VariationAttribute;
 
-                            for(let variationAttributeIdx in variationAttributes){
+                            for (let variationAttributeIdx in variationAttributes) {
                                 let variationAttribute = variationAttributes[variationAttributeIdx];
                                 itemAttributes[variationAttribute.Name[0]] = variationAttribute.Value[0]
                             }
@@ -177,7 +154,7 @@ var amazonProduct = {
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
-                                            "price" : item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            "price": item.Offers && item.Offers[0] && item.Offers[0].Offer
                                             && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
                                             && item.Offers[0].Offer[0].OfferListing[0]
                                             && item.Offers[0].Offer[0].OfferListing[0].Price
@@ -195,7 +172,7 @@ var amazonProduct = {
                                     ref = ref[value];
                                 }
                             }
-                        }else{
+                        } else {
                             console.log("no item attributes");
                         }
                     }
@@ -217,5 +194,47 @@ var amazonProduct = {
         });
     }
 };
+
+function buildItemResponse(items) {
+    var promiseArray = [];
+    for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+        let curItem = items[itemIdx];
+        //When item has ParentASIN and ParentASIN not same as ASIN, which means has options
+        if (curItem.ParentASIN !== undefined &&
+            curItem.ParentASIN.length > 0 &&
+            curItem.ASIN !== undefined &&
+            curItem.ASIN != curItem.ParentASIN) {
+
+            console.log(`Item #${itemIdx}:${curItem.ASIN} has variations`);
+            curItem.HasVariations = true;
+        }
+        //When item doesn't have ParentASIN, which means has no options
+        else if (curItem.ASIN !== undefined && curItem.ASIN.length > 0) {
+            console.log(`Item #${itemIdx}:${curItem.ASIN} has no variations`);
+            //Build virtual cart here
+            promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
+                .then((url) => {
+
+                    if (url !== undefined) {
+                        curItem.cartCreated = true;
+                        curItem.purchaseUrl = url;
+                    } else {
+                        curItem.cartCreated = false;
+                        curItem.purchaseUrl = curItem.DetailPageURL[0];
+                    }
+
+                }));
+        } else {
+            // *** ERROR *** no ASIN
+            console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
+            curItem.cartCreated = false;
+            curItem.purchaseUrl = "https://amazon.com";
+        }
+    }
+    return Promise.all(promiseArray).then(() => {
+        console.log('Done getting/building item search response');
+        return items;
+    });
+}
 
 module.exports = amazonProduct;

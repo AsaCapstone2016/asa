@@ -111,7 +111,7 @@ const actions = {
                         if (item.cartCreated) {
                             isCart = '1';
                         }
-                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${encodeURIComponent(item.purchaseUrl)}&ASIN=${item.ASIN}&is_cart=${isCart}`;
+                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${item.purchaseUrl}&ASIN=${item.ASIN}&is_cart=${isCart}`;
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
@@ -284,7 +284,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                         redirectUrl = `http://asin.info/a/${product.ASIN}`;
                                     }
 
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${encodeURIComponent(redirectUrl)}&ASIN=${product.ASIN}&is_cart=${isCart}`;
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
                                     
                                     // Send variations summary with cart redirect url
                                     console.log('URL WE WANT ' + modifiedUrl);
@@ -316,6 +316,13 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`ERROR resetting selected variations: ${error}`);
                         });
 
+                } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
+                    return amazon.similarityLookup(payload.ASIN)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => null);
+                        })
                 } else {
                     console.log("Unsupported postback method");
                 }
