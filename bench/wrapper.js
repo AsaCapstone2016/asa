@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser')
 
 let app = express();
-let handler = require('../handler').hello;
+let handler = require('../functions/fb-endpoint').facebookLambda;
 app.use(bodyParser.json());
 
 app.all('/', (req, res) => {
