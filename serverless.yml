@@ -19,7 +19,7 @@ provider:
 
 # you can overwrite defaults here
   stage: ${env:SLS_USER}
-  region: us-east-1
+  region: ${env:SLS_REGION}
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
