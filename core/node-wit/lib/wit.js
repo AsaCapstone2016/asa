@@ -119,38 +119,22 @@ function Wit(opts) {
         }
         confidence = confidence / Object.keys(request.entities).length;
 
-        console.log(`JSON RESPONSE BEFORE: ${JSON.stringify(json)}`);
-
         if (confidence < 0.8) {
           console.log(`AVERAGE CONFIDENCE ${confidence} is below threshold`);
-          json = Object.assign({},{
-            confidence: json.confidence,
-            type: 'msg',
-            msg: 'I don\'t understand.'
-          });
-          delete request.entities;
+          prevContext.notUnderstood = true;
+          return prevContext;
         } else {
           console.log(`AVERAGE CONFIDENCE ${confidence} is above threshold`);
         }
-
-        console.log(`CURRENT MESSAGE REQUEST IN WIT CLIENT: ${JSON.stringify(request)}`);
-        console.log(`JSON RESPONSE AFTER: ${JSON.stringify(json)}`);
       }
 
       if (json.type === 'msg') {
         throwIfActionMissing(actions, 'send');
 
-        console.log(`BEFORE RESPONSE BUILT: ${JSON.stringify(json)}`);
-
         var response = {
           text: json.msg,
           quickreplies: json.quickreplies
         };
-
-        console.log(`AFTER RESPONSE BUILT: ${JSON.stringify(json)}`);
-        console.log(`RESPONSE SENT TO SEND ACTION: ${JSON.stringify(response)}`);
-
-        console.log(`REQUEST SENT TO SEND ACTION: ${JSON.stringify(request)}`);
 
         return actions.send(request, response).then(function (ctx) {
           if (ctx) {

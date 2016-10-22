@@ -198,7 +198,16 @@ module.exports.handler = (message, sender, msgSender) => {
                 console.log(`MESSAGE content: ${text}`);
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        return sessionsDAO.updateContext(uid, ctx);
+                        console.log(`UPDATED CONTEXT: ${JSON.stringify(ctx)}`);
+                        if (ctx.notUnderstood !== undefined) {
+                            // handle misunderstood messages
+                            delete ctx.notUnderstood;
+                            messageSender.sendTypingMessage(uid);
+                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand what you're trying to say.")
+                                .then(sessionsDAO.updateContext(uid, ctx));
+                        } else {
+                            return sessionsDAO.updateContext(uid, ctx);
+                        }
                     }, (error) => {
                         console.log(`ERROR during runActions: ${error}`);
                     });
