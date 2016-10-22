@@ -304,6 +304,13 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`ERROR resetting selected variations: ${error}`);
                         });
 
+                } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
+                    return amazon.similarityLookup(payload.ASIN)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => null);
+                        })
                 } else {
                     console.log("Unsupported postback method");
                 }

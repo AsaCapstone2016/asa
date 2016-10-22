@@ -47,26 +47,40 @@ var facebookMessageSender = {
             element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
             element.item_url = product && product.DetailPageURL[0];
             element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
-            element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
-                product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
+            element.subtitle = product.Offers && product.Offers[0] && product.Offers[0].Offer
+                && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
+                && product.Offers[0].Offer[0].OfferListing[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0];
+            element.buttons = [];
             if (product.HasVariations) {
-                element.buttons = [{
+                element.buttons.push({
                     type: 'postback',
                     title: "Select Options",
                     payload: JSON.stringify({
                         METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN[0]
                     })
-                }];
+                });
             }
             else {
-                element.buttons = [{
+                element.buttons.push({
                     type: "web_url",
                     url: product.purchaseUrl,
                     title: "Purchase",
                     webview_height_ratio: "TALL"
-                }];
+                });
             }
+            element.buttons.push({
+                type: 'postback',
+                title: "Related Items",
+                payload: JSON.stringify({
+                    METHOD: "SIMILARITY_LOOKUP",
+                    ASIN: product.ASIN
+                })
+            });
 
             elements.push(element);
         });
