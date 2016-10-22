@@ -3,7 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser')
 
 let app = express();
-let handler = require('../functions/fb-endpoint.js').facebookLambda;
+let handler = require('../handler').hello;
 app.use(bodyParser.json());
 
 app.all('/', (req, res) => {
@@ -16,11 +16,11 @@ app.all('/', (req, res) => {
     stage: 'dev',
     params: req.params
   };
+  //console.log(prettyPrint(event));
   if (event.method === 'GET')
     res.send(event.query['hub.challenge']);
-  else 
-    handler(event, context, fakeCallback);
-  //console.log(prettyPrint(event));
+  else
+  handler(event, context, fakeCallback);
 });
 
 app.listen(3000, () => {
