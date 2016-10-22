@@ -10,7 +10,7 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: "evanm-20"
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "OfferSummary"];
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers"];
 
 
 var amazonProduct = {
