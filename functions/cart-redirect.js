@@ -12,10 +12,10 @@ var config = require('./../config');
 module.exports.cartRedirect = function (event, context, callback) {
     console.log(`PURCHASE REDIRECT EVENT ${JSON.stringify(event, null, 2)}`);
     console.log(`PURCHASE REDIRECT CONTEXT ${JSON.stringify(context, null, 2)}`);
-    let querystring = event.params.querystring;
+    let querystring = event.query;
     //Seems like the purchase url somehow generates another request to this url...? This is a fix tho
-    if (querystring['associate-id']) {
-        console.log(`Skipping this request`);
+    if (event.query['associate-id']) {
+        console.log(`SKIPPING THIS REQUEST`);
         return;
     }
 
@@ -23,12 +23,12 @@ module.exports.cartRedirect = function (event, context, callback) {
     let redirectUrl = querystring.redirect_url;
     let ASIN = querystring.ASIN;
     let isCartUrl = querystring.is_cart;
-    let isMobileRequest = event.params.header['CloudFront-Is-Mobile-Viewer'];
+    let isMobileRequest = event.headers['CloudFront-Is-Mobile-Viewer'];
 
     console.log(`redirect_url: ${redirectUrl}`);
     console.log(`is cart: ${isCartUrl}`);
     console.log(`is mobile: ${isMobileRequest}`);
-    
+
     if (isCartUrl === '1') {
         console.log("here");
         let cartParams = redirectUrl.substring(redirectUrl.indexOf("?") + 1);
