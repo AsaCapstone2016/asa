@@ -9,13 +9,13 @@
     "testbench:setup": "cd bench && ./setup.sh"
   },
   "dependencies": {
-    "cse498capstonewit": "^1.0.0-beta",
     "node-fetch": "^1.6.2",
     "database": "file:./core/database",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
     "conversation-manager": "file:./core/conversation-manager",
-    "amazon": "file:./core/amazon"
+    "amazon": "file:./core/amazon",
+    "node-wit": "file:./core/node-wit"
   },
   "devDependencies": {
     "aws-sdk": "^2.6.11",
