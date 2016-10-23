@@ -82,6 +82,7 @@ var amazonProduct = {
                 var variationKeys = json.variationKeys;
                 var parentTitle = json.parentTitle;
                 var map = json.map;
+                var conversational = json.conversational;
                 //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
                 //console.log("resolve map:", JSON.stringify(map, null, 2));
                 for (var i = 0; i < variationValues.length; i++) {
@@ -103,7 +104,8 @@ var amazonProduct = {
                         ASIN: ASIN,
                         variationKey: variationKeys[variationValues.length],
                         variationOptions: variationValues.length + 1 == variationKeys.length ? map : Object.keys(map),
-                        lastVariation: variationValues.length + 1 == variationKeys.length ? true : false
+                        lastVariation: variationValues.length + 1 == variationKeys.length ? true : false,
+                        conversational: conversational
                     });
                 }
             }, function (err) {
@@ -125,6 +127,7 @@ var amazonProduct = {
                 result[0].Variations[0].VariationDimensions[0].VariationDimension != undefined &&
                 result[0].Variations[0].VariationDimensions[0].VariationDimension.length > 0) {
 
+                var conversational = true;
                 var map = {};
                 var variationKeys = result[0].Variations[0].VariationDimensions[0].VariationDimension;
                 var parentTitle = result[0].ItemAttributes && result[0].ItemAttributes[0]
@@ -150,7 +153,13 @@ var amazonProduct = {
                                 var variation = variationKeys[variationIdx];
                                 var value = itemAttributes[variation];
                                 if (!(value in ref)) {
+                                    // Otherwise, add value to map
                                     if (variationIdx == variationKeys.length - 1) {
+                                        // Check if the last level variations are too numerous for selection through conversation
+                                        if (Object.keys(ref).length == 10) {
+                                            conversational = false;
+                                        }
+
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
@@ -165,6 +174,11 @@ var amazonProduct = {
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
                                     } else {
+                                        // Check if variation values are too long or too numerous for selection through conversation
+                                        if (value.length > 20 || Object.keys(ref).length == 9) {
+                                            conversational = false;
+                                        }
+
                                         ref[value] = {};
                                         ref = ref[value];
                                     }
@@ -179,6 +193,7 @@ var amazonProduct = {
 
 
                     return {
+                        conversational: conversational,
                         variationKeys: variationKeys,
                         map: map,
                         parentTitle: parentTitle
