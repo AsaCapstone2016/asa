@@ -155,11 +155,6 @@ var amazonProduct = {
                                 if (!(value in ref)) {
                                     // Otherwise, add value to map
                                     if (variationIdx == variationKeys.length - 1) {
-                                        // Check if the last level variations are too numerous for selection through conversation
-                                        if (Object.keys(ref).length == 10) {
-                                            conversational = false;
-                                        }
-
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
@@ -173,14 +168,19 @@ var amazonProduct = {
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
-                                    } else {
-                                        // Check if variation values are too long or too numerous for selection through conversation
-                                        if (value.length > 20 || Object.keys(ref).length == 9) {
+
+                                        // Check if the last level variations are too numerous for selection through conversation
+                                        if (Object.keys(ref).length > 10) {
                                             conversational = false;
                                         }
-
+                                    } else {
                                         ref[value] = {};
                                         ref = ref[value];
+
+                                        // Check if variation values are too long or too numerous for selection through conversation
+                                        if (value.length > 20 || Object.keys(ref).length > 9) {
+                                            conversational = false;
+                                        }
                                     }
                                 } else {
                                     ref = ref[value];
