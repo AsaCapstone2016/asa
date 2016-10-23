@@ -11,11 +11,6 @@ let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
-const TABLE_PREFIX = config.TABLE_PREFIX;
-
-// for dynamodb configuration
-let aws = require('aws-sdk');
-aws.config.update({region: 'us-east-1'});
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
