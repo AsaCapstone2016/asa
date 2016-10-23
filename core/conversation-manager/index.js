@@ -147,10 +147,21 @@ const actions = {
 
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((result) => {
-                            return messageSender.sendVariationSelectionPrompt(recipientId, result)
-                                .catch((error) => {
-                                    console.log(`ERROR sending variation prompt: ${error}`);
-                                });
+                            if (result.conversational) {
+                                return messageSender.sendVariationSelectionPrompt(recipientId, result)
+                                    .catch((error) => {
+                                        console.log(`ERROR sending variation prompt: ${error}`);
+                                    });
+                            } else {
+                                // Send message to user explaining they should go to Amazon to select variations
+                                let itemLink = `http://asin.info/a/${context.parentASIN}`;
+                                delete context.parentASIN;
+                                delete context.selectedVariations;
+                                return messageSender.outsourceVariationSelection(recipientId, itemLink)
+                                    .catch((error) => {
+                                        console.log(`ERROR sending outsourcing message for variation selection: ${error}`);
+                                    })
+                            }
                         }, (error) => {
                             console.log(`ERROR sending variation prompt: ${error}`);
                         })

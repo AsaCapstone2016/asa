@@ -102,6 +102,40 @@ var facebookMessageSender = {
     },
 
     /**
+     * Tell the user they should select item options on Amazon
+     * @param recipient_id
+     * @param item_link Link to the parent itme on Amazon
+     */
+    outsourceVariationSelection: function (recipient_id, item_link) {
+        console.log(`SEND offload variation prompt: ${item_link}`);
+
+        let offloadMsg = "The options for this item are too complex to select here...";
+
+        let buttons = [{
+            type: 'web_url',
+            url: item_link,
+            title: 'Go to Amazon',
+            webview_height_ratio: 'TALL'
+        }];
+
+        let json = {
+            recipient: {id: recipient_id},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: offloadMsg,
+                        buttons: buttons
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    /**
      *
      * @param recipient_id
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
