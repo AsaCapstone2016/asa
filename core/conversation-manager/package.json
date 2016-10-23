@@ -10,7 +10,6 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.6.7",
-    "cse498capstonewit": "^1.0.0-beta",
     "facebook-message-sender": "file:../facebook-message-sender",
     "node-wit": "file:../node-wit"
   }

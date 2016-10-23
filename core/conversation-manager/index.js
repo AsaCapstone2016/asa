@@ -1,8 +1,6 @@
 'use strict';
 
 let amazon = require('amazon');
-// let Wit = require('cse498capstonewit').Wit;
-// let log = require('cse498capstonewit').log;
 
 let Wit = require('node-wit').Wit;
 let log = require('node-wit').log;

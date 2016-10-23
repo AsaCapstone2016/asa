@@ -9,7 +9,6 @@
     "testbench:setup": "cd bench && ./setup.sh"
   },
   "dependencies": {
-    "cse498capstonewit": "^1.0.0-beta",
     "node-fetch": "^1.6.2",
     "database": "file:./core/database",
     "facebook-event-converter": "file:./core/facebook-event-converter",
