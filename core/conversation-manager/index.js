@@ -1,8 +1,9 @@
 'use strict';
 
 let amazon = require('amazon');
-let Wit = require('cse498capstonewit').Wit;
-let log = require('cse498capstonewit').log;
+
+let Wit = require('node-wit').Wit;
+let log = require('node-wit').log;
 
 // database access objects
 let searchQueryDAO = require('database').searchQueryDAO;
@@ -10,11 +11,6 @@ let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
-const TABLE_PREFIX = config.TABLE_PREFIX;
-
-// for dynamodb configuration
-let aws = require('aws-sdk');
-aws.config.update({region: 'us-east-1'});
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
@@ -108,7 +104,7 @@ const actions = {
                         if (item.cartCreated) {
                             isCart = '1';
                         }
-                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${encodeURIComponent(item.purchaseUrl)}&ASIN=${item.ASIN}&is_cart=${isCart}`;
+                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${item.purchaseUrl}&ASIN=${item.ASIN}&is_cart=${isCart}`;
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
@@ -195,7 +191,17 @@ module.exports.handler = (message, sender, msgSender) => {
                 console.log(`MESSAGE content: ${text}`);
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        return sessionsDAO.updateContext(uid, ctx);
+                        console.log(`UPDATED CONTEXT: ${JSON.stringify(ctx)}`);
+                        if (ctx.notUnderstood !== undefined) {
+                            // handle misunderstood messages
+                            delete ctx.notUnderstood;
+                            messageSender.sendTypingMessage(uid);
+                            console.log(`SEND I don't understand message`);
+                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
+                                .then(sessionsDAO.updateContext(uid, ctx));
+                        } else {
+                            return sessionsDAO.updateContext(uid, ctx);
+                        }
                     }, (error) => {
                         console.log(`ERROR during runActions: ${error}`);
                     });
@@ -272,7 +278,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                         redirectUrl = `http://asin.info/a/${product.ASIN}`;
                                     }
 
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${encodeURIComponent(redirectUrl)}&ASIN=${product.ASIN}&is_cart=${isCart}`;
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
                                     
                                     // Send variations summary with cart redirect url
                                     console.log('URL WE WANT ' + modifiedUrl);
@@ -304,6 +310,13 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`ERROR resetting selected variations: ${error}`);
                         });
 
+                } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
+                    return amazon.similarityLookup(payload.ASIN)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => null);
+                        })
                 } else {
                     console.log("Unsupported postback method");
                 }

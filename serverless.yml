@@ -19,7 +19,7 @@ provider:
 
 # you can overwrite defaults here
   stage: ${env:SLS_USER}
-  region: us-east-1
+  region: ${env:SLS_REGION}
 
 # you can add statements to the Lambda function's IAM Role here
   iamRoleStatements:
@@ -36,11 +36,13 @@ provider:
 # you can add packaging information here
 package:
   include:
-    - node_modules
     - functions
+    - node_modules
     - config.json
   exclude:
-    - tests
+    - bench
+    - core
+    - test
     - asa-wit-app.zip
 #  artifact: my-service-code.zip
 
