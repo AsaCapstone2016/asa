@@ -201,7 +201,8 @@ module.exports.handler = (message, sender, msgSender) => {
                             // handle misunderstood messages
                             delete ctx.notUnderstood;
                             messageSender.sendTypingMessage(uid);
-                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand what you're trying to say.")
+                            console.log(`SEND I don't understand message`);
+                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
                                 .then(sessionsDAO.updateContext(uid, ctx));
                         } else {
                             return sessionsDAO.updateContext(uid, ctx);

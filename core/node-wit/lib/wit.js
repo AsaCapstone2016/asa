@@ -114,10 +114,12 @@ function Wit(opts) {
       // For 'I don't understand' message
       if (request.entities !== undefined) {
         let confidence = 0;
-        for (var entity in request.entities) {
-          confidence += request.entities[entity][0]['confidence'];
+        if (Object.keys(request.entities).length > 0) {
+          for (var entity in request.entities) {
+            confidence += request.entities[entity][0]['confidence'];
+          }
+          confidence = confidence / Object.keys(request.entities).length;
         }
-        confidence = confidence / Object.keys(request.entities).length;
 
         if (confidence < 0.8) {
           console.log(`AVERAGE CONFIDENCE ${confidence} is below threshold`);
