@@ -11,11 +11,6 @@ let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
-const TABLE_PREFIX = config.TABLE_PREFIX;
-
-// for dynamodb configuration
-let aws = require('aws-sdk');
-aws.config.update({region: 'us-east-1'});
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
@@ -201,7 +196,8 @@ module.exports.handler = (message, sender, msgSender) => {
                             // handle misunderstood messages
                             delete ctx.notUnderstood;
                             messageSender.sendTypingMessage(uid);
-                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand what you're trying to say.")
+                            console.log(`SEND I don't understand message`);
+                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
                                 .then(sessionsDAO.updateContext(uid, ctx));
                         } else {
                             return sessionsDAO.updateContext(uid, ctx);
