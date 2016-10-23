@@ -36,11 +36,13 @@ provider:
 # you can add packaging information here
 package:
   include:
-    - node_modules
     - functions
+    - node_modules
     - config.json
   exclude:
-    - tests
+    - bench
+    - core
+    - test
     - asa-wit-app.zip
 #  artifact: my-service-code.zip
 
