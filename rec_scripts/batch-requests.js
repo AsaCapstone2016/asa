@@ -2,6 +2,7 @@
 
 var amazon_api = require("amazon-product-api");
 var config = require('./../config');
+var Q = require('q');
 
 var amazon_client = amazon_api.createClient({
   awsId: config.AWS_ID,
@@ -36,11 +37,17 @@ function getItem(ASIN) {
 }
 
 function getItemsBatched(ASINs) {
-  return amazon_client.itemLookup({
-    "ItemId": ASINs,
-    "IdType": "ASIN",
-    "ResponseGroup": ["ItemAttributes","BrowseNodes"]
-  })
+    return amazon_client.itemLookup({
+        "ItemId": ASINs,
+        "IdType": "ASIN",
+        "ResponseGroup": ["ItemAttributes","BrowseNodes"]
+    }).then(function(res){
+        return res;
+    }
+    // , function(err){
+    //     console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
+    // }
+);
 }
 
 function getTitle(product) {
@@ -61,22 +68,18 @@ function getBrowseNodes(product) {
 
 let wait = time => new Promise(f => setTimeout(f, time));
 
-let ASINs = [ 
-  'B000L2DSLK',
-  '193223604X',
-  'B00008URUS',
-  '091514560X',
-  'B00BUIG73U',
-  'B0094092XI',
-  '053849882X',
-  'B00E9I1FPI',
-  'B00IQS8E5Q',
-  '1118102274',
-  'B00CY9RQ2K',
-  'B00O9GW8TC',
-  'B01IM96BQM',
-  'B004HYIAPM',
-  'B00006IJJK'];
+let ASINs = [
+    //Video Game
+    'B01LOP8EZC',
+    'B00KVQYJR8',
+    'B01IPARS7Y',
+    'B00SXEOO1Q',
+    'B00X87BLK0',
+    'B0088MVPFQ',
+    'B01BCMBRJ2',
+    'B01C93CWU6',
+    'B01KOFZOYW'
+];
 
 function getBatches(ASINs) {
   let results = [];
@@ -93,6 +96,14 @@ getBatches(ASINs).forEach(query => {
 });
 
 let items = [];
+
+// Q.allSettled(promises).spread(responses => {
+//     console.log(responses);
+//     // responses.forEach(response => {
+//     //     console.log(response.state);
+//     // })
+// }).done();
+
 Promise.all(promises).then(responses => {
   responses.forEach(response => {
     response.forEach(item => {
@@ -101,5 +112,5 @@ Promise.all(promises).then(responses => {
   })
   console.log(prettyPrint(items));
 }).catch(err => {
-  console.log('error: ', prettyPrint(err))
+  console.log('error: ', prettyPrint(err));
 })

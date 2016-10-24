@@ -4,9 +4,12 @@ console.log();
 let config = require("./../config");
 let amazon_api = require('amazon-product-api');
 let amazon_client = amazon_api.createClient({
-    awsId: config.AWS_ID,
-    awsSecret: config.AWS_SECRET,
-    awsTag: "evanm-20"
+    // awsId: config.AWS_ID,
+    // awsSecret: config.AWS_SECRET,
+    // awsTag: "evanm-20"
+    awsId: 'AKIAI6DW7DEA2U3CC4PA',
+    awsSecret: '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',
+    awsTag: "liyimin2-20"
 });
 let recommend = require("./recommend");
 
@@ -31,7 +34,7 @@ console.log();
  * @param  Int      maxLevel            [max level to traverse]
  */
 function traverseItemNodes(nodes, browseNodeFreq, doubleCountArray, doubleCount, curLevel, maxLevel) {
-    if(curLevel > maxLevel) return;
+    if(curLevel >= maxLevel) return;
     for(let idx in nodes) {
         let browseNode = nodes[idx];
         //if(browseNode.Name && browseNode.Name[0]){
@@ -44,12 +47,11 @@ function traverseItemNodes(nodes, browseNodeFreq, doubleCountArray, doubleCount,
             }
             if(doubleCount || !(browseNode.Name[0] in doubleCountArray)){
                 doubleCountArray[browseNode.Name[0]] = 1;
-                // browseNodeFreq[browseNode.Name[0]].cnt += 1 * (1 - curLevel/maxLevel);
-                browseNodeFreq[browseNode.Name[0]].cnt += 1;
+                browseNodeFreq[browseNode.Name[0]].cnt += 1 * (1 - curLevel/maxLevel);
+                //browseNodeFreq[browseNode.Name[0]].cnt += 1;
                 browseNodeFreq[browseNode.Name[0]].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
             }
         }
-
 
         // if(browseNode.Ancestors && browseNode.Ancestors[0] &&
         if(!browseNode.IsCategoryRoot && browseNode.Ancestors && browseNode.Ancestors[0] &&
@@ -189,19 +191,16 @@ function browseNodeRecommend() {
                     console.log();
                     console.log("------- Recommendations -------")
                     //console.log(`${JSON.stringify(ranking.slice(0,10), null, 2)}`);
-                    console.log(`${JSON.stringify(ranking, null, 2)}`);
+                    //console.log(`${JSON.stringify(ranking, null, 2)}`);
+                    console.log("------- First Page -------")
+                    for(var idx = 0; idx < ranking.length; ++idx){
+                        console.log(`${JSON.stringify(ranking[idx], null, 2)}`);
+                        if(idx == 9) console.log("------- First Page End -------")
+                    }
+                }, (err) => {
+                    console.log(`${JSON.stringify(err, null, 2)}`);
                 });
         });
 };
 
 browseNodeRecommend();
-
-// amazon_client.itemSearch({
-//     "searchIndex": "HomeGarden",
-//     "keywords": "cook",
-//     "responseGroup": ["ItemAttributes", "BrowseNodes", "SearchBins"],
-// }).then(function(res){
-//     console.log(`RES: ${JSON.stringify(res, null, 2)}`);
-// }, function(res){
-//     console.log(`RES: ${JSON.stringify(res, null, 2)}`);
-// });
