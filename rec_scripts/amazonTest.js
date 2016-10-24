@@ -42,6 +42,51 @@ function nodeTraverse(browseNodes, browseNodeFreq, doubleCountArray, doubleCount
             nodeTraverse(browseNode.Ancestors[0].BrowseNode, browseNodeFreq, doubleCountArray, doubleCount, curLevel+1, maxLevel);
         }
 
+        //Traverse the children node
+        // if(browseNode.Children && browseNode.Children[0] &&
+        // browseNode.Children[0].BrowseNode && browseNode.Children[0].BrowseNode[0]){
+        //     nodeTraverse(browseNode.Children[0].BrowseNode, browseNodeFreq, doubleCountArray, doubleCount, curLevel-1, maxLevel);
+        // }
+    }
+}
+
+var totalBrowseNodes = {}
+
+function merge(browseNode){
+
+}
+
+function singleNodeTraverse(browseNodes, browseNodeFreq){
+    for(var idx in browseNodes){
+        var browseNode = browseNodes[idx];
+        //if(browseNode.Name && browseNode.Name[0]){
+        if(!browseNode.IsCategoryRoot && browseNode.Name && browseNode.Name[0]){
+            if(!(browseNode.Name[0] in browseNodeFreq)){
+                browseNodeFreq[browseNode.Name[0]] = {
+                    cnt: 0,
+                    BrowseNodeId: []
+                }
+            }
+        }else if(browseNode.IsCategoryRoot && browseNode.Name && browseNode.Name[0]){
+            var rootNode = browseNode.Ancestors && browseNode.Ancestors[0] &&
+                browseNode.Ancestors[0].BrowseNode && browseNode.Ancestors[0].BrowseNode[0];
+            if(rootNode.name && rootNode.name[0]){
+                console.log(`BrowseNode: ${JSON.stringify()}`)
+                merge({
+                    name: rootNode.name[0],
+                    childrenFreq: browseNodeFreq
+                })
+            }
+            console.log(JSON.stringify(rootNode, null, 2));
+            console.log(rootNode.Name);
+        }
+        //if(browseNode.Ancestors && browseNode.Ancestors[0] &&
+        if(!browseNode.IsCategoryRoot && browseNode.Ancestors && browseNode.Ancestors[0] &&
+            browseNode.Ancestors[0].BrowseNode && browseNode.Ancestors[0].BrowseNode[0]){
+            singleNodeTraverse(browseNode.Ancestors[0].BrowseNode, browseNodeFreq);
+        }
+
+        //Traverse the children node
         // if(browseNode.Children && browseNode.Children[0] &&
         // browseNode.Children[0].BrowseNode && browseNode.Children[0].BrowseNode[0]){
         //     nodeTraverse(browseNode.Children[0].BrowseNode, browseNodeFreq, doubleCountArray, doubleCount, curLevel-1, maxLevel);
@@ -147,13 +192,34 @@ function browseNodeItemLookUp(ASIN){
         var browseNodeFreq = {};
         let item = res[0];
         let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
-        //console.log("BrowseNodes:",JSON.stringify(browseNodes, null, 2));
+        console.log("BrowseNodes:",JSON.stringify(browseNodes, null, 2));
         var ASIN = item.ASIN && item.ASIN[0];
         var title = item.ItemAttributes && item.ItemAttributes[0] && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title;
         console.log(`Title:  ${title}\nASIN: ${ASIN}`);
 
         var doubleCount = {};
-        nodeTraverse(browseNodes, browseNodeFreq, doubleCount, true, 0, 10);
+        nodeTraverse(browseNodes, browseNodeFreq, doubleCount, true, 0, 50);
+        return browseNodeFreq;
+    }, function(err){
+        return `ERR: ${JSON.stringify(err, null, 2)}`;
+    })
+}
+
+function singleBrowseNodeItemLookUp(ASIN){
+    return amazon_client.itemLookup({
+        "ItemId": ASIN,
+        "IdType": "ASIN",
+        "ResponseGroup": ["ItemAttributes","BrowseNodes"]
+    }).then(function(res){
+        var browseNodeFreq = {};
+        let item = res[0];
+        let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
+        //console.log("BrowseNodes:",JSON.stringify(browseNodes, null, 2));
+        var ASIN = item.ASIN && item.ASIN[0];
+        var title = item.ItemAttributes && item.ItemAttributes[0] && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title;
+        //console.log(`Title:  ${title}\nASIN: ${ASIN}`);
+
+        singleNodeTraverse(browseNodes, browseNodeFreq);
         return browseNodeFreq;
     }, function(err){
         return `ERR: ${JSON.stringify(err, null, 2)}`;
@@ -246,4 +312,9 @@ function similaritySearch(){
     });
 }
 
-similaritySearch();
+// similaritySearch();
+singleBrowseNodeItemLookUp('B00PM0DMG2').then(function(res){
+    //console.log(`RES:  ${JSON.stringify(res, null, 2)}`);
+}, function(err){
+    console.log(`ERR:  ${JSON.stringify(err, null, 2)}`);
+});
