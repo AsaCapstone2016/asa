@@ -16,6 +16,8 @@ var uuid = require('node-uuid');
 
 var learnMore = 'Learn more at https://wit.ai/docs/quickstart';
 
+const CONFIDENCE_THRESHOLD = 0.4;
+
 function Wit(opts) {
   var _this = this;
 
@@ -121,7 +123,7 @@ function Wit(opts) {
           confidence = confidence / Object.keys(request.entities).length;
         }
 
-        if (confidence < 0.8) {
+        if (confidence < CONFIDENCE_THRESHOLD) {
           console.log(`AVERAGE CONFIDENCE ${confidence} is below threshold`);
           prevContext.notUnderstood = true;
           return prevContext;
