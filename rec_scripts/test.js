@@ -1,13 +1,13 @@
 var amazon_api = require("amazon-product-api");
 var fuzzy = require('fuzzy');
 
-var config = require('./config');
+var config = require('../config');
 var userProfile = require('./userprofile');
 
 var amazon_client = amazon_api.createClient({
-    awsId: config.AWS_ID,
-    awsSecret: config.AWS_SECRET,
-    awsTag: "evanm-20"
+  awsId: config.AWS_ID,
+  awsSecret: config.AWS_SECRET,
+  awsTag: "evanm-20"
 });
 
 
@@ -124,16 +124,19 @@ function getItemsInNode(browseNodeTitle, userProfile) {
 }
 
 function recommendMeSome(query, userProfile) {
-  console.log('User asked for recommendations for query: ', query);
   let purchaseHistoryNodes = Object.keys(userProfile);
   let intersections = fuzzy.filter(query, purchaseHistoryNodes);
+  Object.keys(userProfile).forEach(browseNodeTitle => {
+    let maxKey = userProfile[browseNodeTitle].length;
+  });
   if (intersections.length > 0) {
     let intersectionBrowseNodeTitle = intersections[0].string;
     let similarItems = Object.keys(userProfile[intersectionBrowseNodeTitle]);
     //let itemASIN = randomItem(userProfile[intersectionBrowseNodeTitle]);
     similarItemsToItem(similarItems).then(items => {
       let itemTitles = items.map(item => getTitle(item));
-      console.log('Similar items: ', prettyPrint(itemTitles));
+      let itemTitle = itemTitles[Math.floor(Math.random()*itemTitles.length)];
+      console.log('Recommendation: ', itemTitle);
     }).catch(error => {
       console.log('ERROR FINDING SIMILAR SHIT', prettyPrint(error));
     });
@@ -191,9 +194,31 @@ function buildBoughtItems() {
   });
 }
 
+function printBoughtItems() {
+  let items = [
+    'The Lord Of The Rings: The Fellowship Of The Ring',
+    'Harry Potter and the Cursed Child, Parts 1 & 2, Special Rehearsal Edition Script',
+    'The Lightning Thief (Percy Jackson and the Olympians, Book 1)',
+    'The Fountainhead',
+    'Atlas Shrugged',
+    'How to Win Friends & Influence People',
+    'The Lord of the Rings: The Return of the King',
+    'Eragon (Inheritance, Book 1)',
+    'Fifty Shades of Grey (Unrated)',
+    'Twilight',
+    'Bridge to Terabithia',
+    'Magic Tree House Boxed Set, Books 1-4: Dinosaurs Before Dark, The Knight at Dawn, Mummies in the Morning, and Pirates Past Noon',
+    'The Spiderwick Chronicles',
+  ];
+  items.forEach(item => {
+    console.log('Bought: ', item);
+  });
+}
+
 
 
 
 //buildProfile(); // node test.js > userProfile.json COMMENT OUT REQUIRE AT TOP
 //buildBoughtItems();
+printBoughtItems();
 recommendMeSome('fantasy', userProfile);

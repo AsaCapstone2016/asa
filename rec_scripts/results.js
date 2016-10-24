@@ -1,3 +1,4 @@
+----------User Profile----------
 User Profile:  {
   "Movies": {
     "B002WXLJ58": 2,
@@ -93,19 +94,7 @@ User Profile:  {
     "B009LL295I": 1
   }
 }
-User asked for recommendations for query:  fantasy
-Similar items:  [
-  "Twilight Saga: Eclipse",
-  "Harry Potter and the Deathly Hallows, Part 2",
-  "Ender's Game (The Ender Quintet)",
-  "The Twilight Saga: Eclipse - Extended Edition (Plus Bonus Feature)",
-  "The Twilight Saga:  New Moon",
-  "The Lord Of The Rings: The Fellowship Of The Ring",
-  "The Hobbit: The Battle of the Five Armies (Extended Edition)",
-  "Lord of the Rings (1978)",
-  "The Twilight Saga: New Moon - Extended Edition (Plus Bonus Features)",
-  "The Hobbit: The Battle of The Five Armies"
-]
+----------Purchase History----------
 Bought:  The Lord Of The Rings: The Fellowship Of The Ring
 Bought:  Harry Potter and the Cursed Child, Parts 1 & 2, Special Rehearsal Edition Script
 Bought:  The Lightning Thief (Percy Jackson and the Olympians, Book 1)
@@ -119,3 +108,17 @@ Bought:  Twilight
 Bought:  Bridge to Terabithia
 Bought:  Magic Tree House Boxed Set, Books 1-4: Dinosaurs Before Dark, The Knight at Dawn, Mummies in the Morning, and Pirates Past Noon
 Bought:  The Spiderwick Chronicles
+
+----------Recommendations----------
+Similar items:  [
+  "Twilight Saga: Eclipse",
+  "Harry Potter and the Deathly Hallows, Part 2",
+  "Ender's Game (The Ender Quintet)",
+  "The Twilight Saga: Eclipse - Extended Edition (Plus Bonus Feature)",
+  "The Twilight Saga:  New Moon",
+  "The Lord Of The Rings: The Fellowship Of The Ring",
+  "The Hobbit: The Battle of the Five Armies (Extended Edition)",
+  "Lord of the Rings (1978)",
+  "The Twilight Saga: New Moon - Extended Edition (Plus Bonus Features)",
+  "The Hobbit: The Battle of The Five Armies"
+]
