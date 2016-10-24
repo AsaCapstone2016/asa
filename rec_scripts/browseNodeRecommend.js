@@ -4,12 +4,9 @@ console.log();
 let config = require("./../config");
 let amazon_api = require('amazon-product-api');
 let amazon_client = amazon_api.createClient({
-    // awsId: config.AWS_ID,
-    // awsSecret: config.AWS_SECRET,
-    // awsTag: "evanm-20"
-    awsId: 'AKIAI6DW7DEA2U3CC4PA',
-    awsSecret: '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',
-    awsTag: "liyimin2-20"
+    awsId: config.AWS_ID,
+    awsSecret: config.AWS_SECRET,
+    awsTag: "evanm-20"
 });
 let recommend = require("./recommend");
 
