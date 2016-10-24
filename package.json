@@ -6,7 +6,8 @@
     "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
     "testbench": "cd bench && ./start.sh",
-    "testbench:setup": "cd bench && ./setup.sh"
+    "testbench:setup": "cd bench && ./setup.sh",
+    "testbench:destroy": "cd bench && ./kill.sh"
   },
   "dependencies": {
     "node-fetch": "^1.6.2",
