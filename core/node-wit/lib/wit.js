@@ -16,7 +16,7 @@ var uuid = require('node-uuid');
 
 var learnMore = 'Learn more at https://wit.ai/docs/quickstart';
 
-const CONFIDENCE_THRESHOLD = 0.6;
+const CONFIDENCE_THRESHOLD = 0.4;
 
 function Wit(opts) {
   var _this = this;
