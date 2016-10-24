@@ -44,11 +44,14 @@ function traverseItemNodes(nodes, browseNodeFreq, doubleCountArray, doubleCount,
             }
             if(doubleCount || !(browseNode.Name[0] in doubleCountArray)){
                 doubleCountArray[browseNode.Name[0]] = 1;
+                // browseNodeFreq[browseNode.Name[0]].cnt += 1 * (1 - curLevel/maxLevel);
                 browseNodeFreq[browseNode.Name[0]].cnt += 1;
                 browseNodeFreq[browseNode.Name[0]].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
             }
         }
-        
+
+
+        // if(browseNode.Ancestors && browseNode.Ancestors[0] &&
         if(!browseNode.IsCategoryRoot && browseNode.Ancestors && browseNode.Ancestors[0] &&
         browseNode.Ancestors[0].BrowseNode && browseNode.Ancestors[0].BrowseNode[0]){
             traverseItemNodes(browseNode.Ancestors[0].BrowseNode, browseNodeFreq, doubleCountArray, doubleCount, curLevel+1, maxLevel);
@@ -103,6 +106,10 @@ let profiler = {
             // });
 
             // console.log(`Sorted Browse Node Frequencies: ${JSON.stringify(arr, null, 2)}`);
+
+            console.log(`------- User profile detail-------`);
+            console.log(`Browse Node Freq: ${JSON.stringify(browseNodeFreq, null, 2)}`);
+
 
             return {
                 uid: 'null',
@@ -167,7 +174,7 @@ let amazon = {
 };
 
 function browseNodeRecommend() {
-    
+
     let rawItemInfo = require(purchaseHistory);
 
     // Build user profile from purchase history raw item lookups
@@ -181,9 +188,20 @@ function browseNodeRecommend() {
                     let ranking = recommend(userProfile, candidateItems);
                     console.log();
                     console.log("------- Recommendations -------")
-                    console.log(`${JSON.stringify(ranking.slice(0,10), null, 2)}`);
+                    //console.log(`${JSON.stringify(ranking.slice(0,10), null, 2)}`);
+                    console.log(`${JSON.stringify(ranking, null, 2)}`);
                 });
         });
 };
 
 browseNodeRecommend();
+
+// amazon_client.itemSearch({
+//     "searchIndex": "HomeGarden",
+//     "keywords": "cook",
+//     "responseGroup": ["ItemAttributes", "BrowseNodes", "SearchBins"],
+// }).then(function(res){
+//     console.log(`RES: ${JSON.stringify(res, null, 2)}`);
+// }, function(res){
+//     console.log(`RES: ${JSON.stringify(res, null, 2)}`);
+// });
