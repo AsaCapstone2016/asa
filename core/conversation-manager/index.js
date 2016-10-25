@@ -52,51 +52,59 @@ const actions = {
             });
     },
     checkQuery(request) {
-        let entities = request.entities;
-        let context = actions.storeKeywords(request);
+        return actions.storeKeywords(request)
+            .then((context) => {
+                delete context.no_keywords;
+                let entities = request.entities;
 
-        if ('keywords' in context) {
-            if ('intent' in entities && entities.intent.value === 'search') {
-                // Search intent AND keywords -> perform search
-                context.run_search = true;
-                delete context.missing_keywords;
-                delete context.missing_search_intent;
-            } else {
-                // Keywords but no search intent -> confirm desire to search
-                context.missing_search_intent = true;
-                delete context.run_search;
-                delete context.missing_keywords;
-            }
-        } else {
-            // Search intent but no keywords -> ask for keywords
-            context.missing_keywords = true;
-            delete context.run_search;
-            delete context.missing_search_intent;
-        }
-        return context;
+                if ('keywords' in context) {
+                    if ('intent' in entities && entities.intent[0].value === 'search') {
+                        // Search intent AND keywords -> perform search
+                        context.run_search = true;
+                        delete context.missing_keywords;
+                        delete context.missing_search_intent;
+                    } else {
+                        // Keywords but no search intent -> confirm desire to search
+                        context.missing_search_intent = true;
+                        delete context.run_search;
+                        delete context.missing_keywords;
+                    }
+                } else {
+                    // Search intent but no keywords -> ask for keywords
+                    context.missing_keywords = true;
+                    delete context.run_search;
+                    delete context.missing_search_intent;
+                }
+                return context;
+            }, (error) => {
+                console.log(`ERROR in checkQuery: ${error}`);
+            });
     },
     storeKeywords(request) {
-        let entities = request.entities;
-        let context = request.context;
+        return new Promise((resolve, reject) => {
+            let entities = request.entities;
+            let context = request.context;
 
-        // If the context has the missing_keywords flag, delete it
-        delete context.missing_keywords;
+            // If the context has the missing_keywords flag, delete it
+            delete context.missing_keywords;
 
-        if ('search_query' in entities) {
-            // Grab the keywords
-            let keywords = [];
-            entities.search_query.forEach((keyword) => {
-                keywords.push(keyword.value);
-            });
-            context.keywords = keywords.join(' ');
-            context.run_search = true;
-            delete context.no_keywords;
-        } else {
-            // No keywords found
-            context.no_keywords = true;
-            delete context.keywords;
-        }
-        return context;
+            if ('search_query' in entities) {
+                // Grab the keywords
+                let keywords = [];
+                entities.search_query.forEach((keyword) => {
+                    keywords.push(keyword.value);
+                });
+                context.keywords = keywords.join(' ');
+                context.run_search = true;
+                delete context.no_keywords;
+            } else {
+                // No keywords found
+                context.no_keywords = true;
+                delete context.keywords;
+                delete context.run_search;
+            }
+            return resolve(context);
+        })
     },
     search(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
@@ -107,8 +115,9 @@ const actions = {
 
                 let entities = request.entities;
                 let context = request.context;
+                const keywords = context.keywords;
                 return new Promise((resolve, reject) => {
-                    console.log(`SEARCH: ${context.keywords}`);
+                    console.log(`SEARCH: ${keywords}`);
                     // Log search event
                     searchQueryDAO.addItem(recipientId, keywords);
                     // Search Amazon with keywords
@@ -204,7 +213,7 @@ const actions = {
             });
     },
     clearContext(request) {
-        return {};
+        return new Promise((resolve, reject) => resolve({}));
     }
 };
 
