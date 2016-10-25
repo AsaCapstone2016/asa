@@ -51,6 +51,45 @@ const actions = {
                 }
             });
     },
+    checkQuery(request) {
+        let entities = request.entities;
+        let context = actions.storeKeywords(request);
+        // Check for search keywords
+        if ('keywords' in context) {
+            // Check for search intent
+            if ('intent' in entities && entities.intent.value === 'search') {
+                context.run_search = true;
+                delete context.missing_keywords;
+                delete context.missing_search_intent;
+            } else {
+                context.missing_search_intent = true;
+                delete context.run_search;
+                delete context.missing_keywords;
+            }
+        } else {
+            delete context.no_keywords;
+            context.missing_keywords = true;
+            delete context.run_search;
+            delete context.missing_search_intent;
+        }
+        return context;
+    },
+    storeKeywords(request) {
+        let entities = request.entities;
+        let context = request.context;
+        if ('search_query' in entities) {
+            let keywords = [];
+            entities.search_query.forEach((keyword) => {
+                keywords.push(keyword.value);
+            });
+            context.keywords = keywords.join(' ');
+            delete context.missing_keywords;
+        } else {
+            context.no_keywords = true;
+            delete context.keywords;
+        }
+        return context;
+    },
     search(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
@@ -61,28 +100,17 @@ const actions = {
                 let entities = request.entities;
                 let context = request.context;
                 return new Promise((resolve, reject) => {
-                    if ('search_query' in entities) {
-
-                        let keywords = [];
-                        entities.search_query.forEach((query) => {
-                            keywords.push(query.value);
+                    console.log(`SEARCH: ${context.keywords}`);
+                    // Log search event
+                    searchQueryDAO.addItem(recipientId, keywords);
+                    // Search Amazon with keywords
+                    return amazon.itemSearch(keywords)
+                        .then((json) => {
+                            context.items = json;
+                            delete context.run_search;
+                            delete context.missing_search_intent;
+                            return resolve(context);
                         });
-                        keywords = keywords.join(' ');
-
-                        console.log(`SEARCH: ${keywords}`);
-                        searchQueryDAO.addItem(recipientId, keywords);
-
-                        return amazon.itemSearch(keywords)
-                            .then((json) => {
-                                context.items = json;
-                                delete context.missing_keywords;
-                                return resolve(context);
-                            });
-                    } else {
-                        context.missing_keywords = true;
-                        delete context.items;
-                        return resolve(context);
-                    }
                 });
 
             }, (error) => {
@@ -96,9 +124,10 @@ const actions = {
 
                 messageSender.sendTypingMessage(recipientId);
 
+                let context = request.context;
+                const items = context.items;
                 if (recipientId) {
                     console.log(`SEND LIST OF ITEMS`);
-                    const items = request.context.items;
                     items.forEach((item)=> {
                         let isCart = '0';
                         if (item.cartCreated) {
@@ -108,8 +137,8 @@ const actions = {
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
-                            delete request.context.items;
-                            return request.context;
+                            delete context.items;
+                            return context;
                         });
                 }
 
@@ -170,6 +199,9 @@ const actions = {
                         });
                 });
             });
+    },
+    clearContext(request) {
+        return {};
     }
 };
 
