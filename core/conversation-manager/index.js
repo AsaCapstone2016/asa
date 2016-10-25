@@ -146,19 +146,14 @@ const actions = {
                 console.log(`ERROR in sendSearchResults action: ${error}`);
             });
     },
-    stopSelectingVariations(request) {
+    stopSearchProcess(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 return messageSender.sendTextMessage(recipientId, "Let me know if you need anything else!");
             })
             .then(() => {
-                return new Promise((resolve, reject) => {
-                    let context = request.context;
-                    delete context.selectedVariations;
-                    delete context.parentASIN;
-                    return resolve(context);
-                });
+                return actions.clearContext(request);
             }, (error) => {
                 console.log(`ERROR stopping variation selection: ${error}`);
             })
