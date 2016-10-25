@@ -106,6 +106,14 @@ const actions = {
             return resolve(context);
         })
     },
+    confirmSearch(request) {
+        return new Promise((resolve, reject) => {
+            let context = request.context;
+            context.run_search = true;
+            delete context.missing_search_intent;
+            return resolve(context);
+        });
+    },
     search(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
@@ -247,9 +255,9 @@ module.exports.handler = (message, sender, msgSender) => {
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
                         console.log(`UPDATED CONTEXT: ${JSON.stringify(ctx)}`);
-                        if (ctx.notUnderstood !== undefined) {
+                        if (ctx.not_understood !== undefined) {
                             // handle misunderstood messages
-                            delete ctx.notUnderstood;
+                            delete ctx.not_understood;
                             messageSender.sendTypingMessage(uid);
                             console.log(`SEND I don't understand message`);
                             return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
