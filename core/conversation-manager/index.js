@@ -54,20 +54,21 @@ const actions = {
     checkQuery(request) {
         let entities = request.entities;
         let context = actions.storeKeywords(request);
-        // Check for search keywords
+        
         if ('keywords' in context) {
-            // Check for search intent
             if ('intent' in entities && entities.intent.value === 'search') {
+                // Search intent AND keywords -> perform search
                 context.run_search = true;
                 delete context.missing_keywords;
                 delete context.missing_search_intent;
             } else {
+                // Keywords but no search intent -> confirm desire to search
                 context.missing_search_intent = true;
                 delete context.run_search;
                 delete context.missing_keywords;
             }
         } else {
-            delete context.no_keywords;
+            // Search intent but no keywords -> ask for keywords
             context.missing_keywords = true;
             delete context.run_search;
             delete context.missing_search_intent;
@@ -77,14 +78,20 @@ const actions = {
     storeKeywords(request) {
         let entities = request.entities;
         let context = request.context;
+
+        // If the context has the missing_keywords flag, delete it
+        delete context.missing_keywords;
+
         if ('search_query' in entities) {
+            // Grab the keywords
             let keywords = [];
             entities.search_query.forEach((keyword) => {
                 keywords.push(keyword.value);
             });
             context.keywords = keywords.join(' ');
-            delete context.missing_keywords;
+            delete context.no_keywords;
         } else {
+            // No keywords found
             context.no_keywords = true;
             delete context.keywords;
         }
