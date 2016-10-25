@@ -54,7 +54,7 @@ const actions = {
     checkQuery(request) {
         let entities = request.entities;
         let context = actions.storeKeywords(request);
-        
+
         if ('keywords' in context) {
             if ('intent' in entities && entities.intent.value === 'search') {
                 // Search intent AND keywords -> perform search
@@ -89,6 +89,7 @@ const actions = {
                 keywords.push(keyword.value);
             });
             context.keywords = keywords.join(' ');
+            context.run_search = true;
             delete context.no_keywords;
         } else {
             // No keywords found
