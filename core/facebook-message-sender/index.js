@@ -9,7 +9,8 @@ var facebookMessageSender = {
     //          recipientId: ID of person to send message to.
     //          text: message of text
     //        }
-    sendTextMessage: function (recipient_id, message) {
+    sendTextMessage: function (recipient_id, message, quick_replies = []) {
+
         var json = {
             recipient: {
                 id: recipient_id
@@ -18,6 +19,19 @@ var facebookMessageSender = {
                 text: message
             }
         };
+
+        for (let i = 0; i < quick_replies.length; i++) {
+            quick_replies[i] = {
+                content_type: 'text',
+                title: quick_replies[i],
+                payload: quick_replies[i]
+            };
+        }
+
+        if (quick_replies.length > 0) {
+            json.message.quick_replies = quick_replies;
+        }
+
         return callSendAPI(json);
     },
 
