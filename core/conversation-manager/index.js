@@ -23,8 +23,10 @@ const actions = {
 
                 if (recipientId) {
                     const msg = response.text;
+                    const quickreplies = response.quickreplies;
                     console.log(`SEND "${msg}" to ${recipientId}`);
-                    return messageSender.sendTextMessage(recipientId, msg)
+                    console.log(`With quick replies: ${JSON.stringify(quickreplies)}`);
+                    return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
 

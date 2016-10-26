@@ -9,7 +9,9 @@ var facebookMessageSender = {
     //          recipientId: ID of person to send message to.
     //          text: message of text
     //        }
-    sendTextMessage: function (recipient_id, message, quick_replies = []) {
+    sendTextMessage: function (recipient_id, message, quick_replies) {
+        // Quick reply field defaults to empty array
+        quick_replies = quick_replies === undefined ? [] : quick_replies;
 
         var json = {
             recipient: {
@@ -20,13 +22,13 @@ var facebookMessageSender = {
             }
         };
 
-        for (let i = 0; i < quick_replies.length; i++) {
-            quick_replies[i] = {
+        quick_replies = quick_replies.map(text => {
+            return {
                 content_type: 'text',
-                title: quick_replies[i],
-                payload: quick_replies[i]
-            };
-        }
+                title: text,
+                payload: text
+            }
+        });
 
         if (quick_replies.length > 0) {
             json.message.quick_replies = quick_replies;
