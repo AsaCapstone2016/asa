@@ -124,11 +124,8 @@ function Wit(opts) {
         }
 
         if (confidence < CONFIDENCE_THRESHOLD) {
-          console.log(`AVERAGE CONFIDENCE ${confidence} is below threshold`);
-          prevContext.notUnderstood = true;
+          prevContext.not_understood = true;
           return prevContext;
-        } else {
-          console.log(`AVERAGE CONFIDENCE ${confidence} is above threshold`);
         }
       }
 
@@ -150,6 +147,7 @@ function Wit(opts) {
           return _this.converse(sessionId, null, prevContext).then(continueRunActions(sessionId, currentRequest, message, prevContext, i - 1));
         });
       } else if (json.type === 'action') {
+        logger.debug(`ACTION: ${json.action}`);
         throwIfActionMissing(actions, json.action);
         return actions[json.action](request).then(function (ctx) {
           var nextContext = ctx || {};
@@ -166,7 +164,6 @@ function Wit(opts) {
   };
 
   this.runActions = function (sessionId, message, context, maxSteps) {
-    console.log(`IN RUN ACTIONS: ${JSON.stringify(message)}`);
     var _this2 = this;
 
     if (!actions) throwMustHaveActions();

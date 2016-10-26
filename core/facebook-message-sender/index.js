@@ -9,7 +9,10 @@ var facebookMessageSender = {
     //          recipientId: ID of person to send message to.
     //          text: message of text
     //        }
-    sendTextMessage: function (recipient_id, message) {
+    sendTextMessage: function (recipient_id, message, quick_replies) {
+        // Quick reply field defaults to empty array
+        quick_replies = quick_replies === undefined ? [] : quick_replies;
+
         var json = {
             recipient: {
                 id: recipient_id
@@ -18,6 +21,19 @@ var facebookMessageSender = {
                 text: message
             }
         };
+
+        quick_replies = quick_replies.map(text => {
+            return {
+                content_type: 'text',
+                title: text,
+                payload: text
+            }
+        });
+
+        if (quick_replies.length > 0) {
+            json.message.quick_replies = quick_replies;
+        }
+
         return callSendAPI(json);
     },
 
@@ -107,7 +123,6 @@ var facebookMessageSender = {
      * @param item_link Link to the parent itme on Amazon
      */
     outsourceVariationSelection: function (recipient_id, item_link) {
-        console.log(`SEND offload variation prompt: ${item_link}`);
 
         let offloadMsg = "The options for this item are too complex to select here...";
 
@@ -141,7 +156,7 @@ var facebookMessageSender = {
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
     sendVariationSelectionPrompt: function (recipient_id, variation_results) {
-        console.log(`SEND variation prompt: ${JSON.stringify(variation_results)}`);
+        
         if (variation_results.lastVariation) {
             return facebookMessageSender.sendLastVariationSelectionPrompt(recipient_id, variation_results);
         }
@@ -243,7 +258,7 @@ var facebookMessageSender = {
      * variationValues, purchaseUrl, price }
      */
     sendVariationSummary: function (recipientId, product) {
-        console.log(`Product to summarize: ${JSON.stringify(product)}`);
+        
         var elements = [];
 
         var element = {};
@@ -289,7 +304,6 @@ var facebookMessageSender = {
 };
 
 function callSendAPI(messageData) {
-    console.log(`messageData: ${JSON.stringify(messageData)}`);
 
     var qs = 'access_token=' + encodeURIComponent(config.FB_PAGE_TOKEN);
 
@@ -305,7 +319,6 @@ function callSendAPI(messageData) {
             if (json.error && json.error.message) {
                 throw new Error(json.error.message);
             }
-            //console.log(json);
         });
 }
 
