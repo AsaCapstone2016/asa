@@ -1,3 +1,4 @@
+'use strict';
 const ngrok = require('ngrok');
 const AWS = require('aws-sdk');
 const apigateway = new AWS.APIGateway({region: process.env.SLS_REGION});
