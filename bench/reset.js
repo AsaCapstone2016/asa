@@ -79,4 +79,4 @@ function reset() {
   deleteStack();
 }
 
-reset();
+//reset();
