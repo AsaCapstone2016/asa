@@ -124,11 +124,8 @@ function Wit(opts) {
         }
 
         if (confidence < CONFIDENCE_THRESHOLD) {
-          console.log(`AVERAGE CONFIDENCE ${confidence} is below threshold`);
           prevContext.not_understood = true;
           return prevContext;
-        } else {
-          console.log(`AVERAGE CONFIDENCE ${confidence} is above threshold`);
         }
       }
 
@@ -150,10 +147,9 @@ function Wit(opts) {
           return _this.converse(sessionId, null, prevContext).then(continueRunActions(sessionId, currentRequest, message, prevContext, i - 1));
         });
       } else if (json.type === 'action') {
-        console.log(`ACTION: ${json.action}`);
+        logger.debug(`ACTION: ${json.action}`);
         throwIfActionMissing(actions, json.action);
         return actions[json.action](request).then(function (ctx) {
-          console.log(`CONTEXT after ${json.action}: ${JSON.stringify(ctx, null, 2)}`);
           var nextContext = ctx || {};
           if (currentRequest !== _this._sessions[sessionId]) {
             return nextContext;
@@ -168,7 +164,6 @@ function Wit(opts) {
   };
 
   this.runActions = function (sessionId, message, context, maxSteps) {
-    console.log(`IN RUN ACTIONS: ${JSON.stringify(message)}`);
     var _this2 = this;
 
     if (!actions) throwMustHaveActions();
@@ -218,7 +213,6 @@ var makeWitResponseHandler = function makeWitResponseHandler(logger, endpoint) {
       return error(err);
     }
 
-    console.log(`WIT response: ${JSON.stringify(json)}`);
     logger.debug('[' + endpoint + '] Response: ' + JSON.stringify(json));
     return json;
   };

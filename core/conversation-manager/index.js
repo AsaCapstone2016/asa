@@ -24,8 +24,6 @@ const actions = {
                 if (recipientId) {
                     const msg = response.text;
                     const quickreplies = response.quickreplies;
-                    console.log(`SEND "${msg}" to ${recipientId}`);
-                    console.log(`With quick replies: ${JSON.stringify(quickreplies)}`);
                     return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
@@ -45,7 +43,6 @@ const actions = {
                     msg += " Try saying...\n\n";
                     msg += " • I want to buy something\n";
                     msg += " • Can you find Ocarina of Time?";
-                    console.log(`SEND help message to ${recipientId}`);
                     return messageSender.sendTextMessage(recipientId, msg)
                         .then(() => {
                             return request.context;
@@ -127,7 +124,6 @@ const actions = {
                 let context = request.context;
                 const keywords = context.keywords;
                 return new Promise((resolve, reject) => {
-                    console.log(`SEARCH: ${keywords}`);
                     // Log search event
                     searchQueryDAO.addItem(recipientId, keywords);
                     // Search Amazon with keywords
@@ -154,7 +150,6 @@ const actions = {
                 let context = request.context;
                 const items = context.items;
                 if (recipientId) {
-                    console.log(`SEND LIST OF ITEMS`);
                     items.forEach((item)=> {
                         let isCart = '0';
                         if (item.cartCreated) {
@@ -242,7 +237,7 @@ module.exports.handler = (message, sender, msgSender) => {
     return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
 
-            console.log(`SESSION: ${JSON.stringify(session)}`);
+            //console.log(`SESSION before handler: ${JSON.stringify(session)}`);
 
             messageSender = msgSender;
 
@@ -253,15 +248,14 @@ module.exports.handler = (message, sender, msgSender) => {
             if (message.content.action === 'text') {
                 // Handle text messages from the user
                 let text = message.content.payload;
-                console.log(`MESSAGE content: ${text}`);
+                //console.log(`MESSAGE: ${text}`);
+
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        console.log(`UPDATED CONTEXT: ${JSON.stringify(ctx)}`);
                         if (ctx.not_understood !== undefined) {
                             // handle misunderstood messages
                             delete ctx.not_understood;
                             messageSender.sendTypingMessage(uid);
-                            console.log(`SEND I don't understand message`);
                             return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
                                 .then(sessionsDAO.updateContext(uid, ctx));
                         } else {
@@ -274,13 +268,13 @@ module.exports.handler = (message, sender, msgSender) => {
             } else if (message.content.action === 'postback') {
                 // Handle button presses and quick replies
                 let payload = JSON.parse(message.content.payload);
-                console.log(`POSTBACK: ${JSON.stringify(payload)}`);
+                //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
                     // User selected the 'Get Started' button on first conversation initiation
                     return actions.sendHelpMessage(session)
                         .then((success) => {
-                            console.log('CONVERSATION INITIATED and help message sent');
+                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
                         }, (error) => {
                             console.log(`ERROR sending help message on GET_STARTED: ${error}`);
                         });
@@ -331,7 +325,6 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.selectedVariations.push(payload.VARIATION_VALUE);
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((product) => {
-                            console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
                                     let isCart = '1';
@@ -346,7 +339,6 @@ module.exports.handler = (message, sender, msgSender) => {
                                     let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
                                     
                                     // Send variations summary with cart redirect url
-                                    console.log('URL WE WANT ' + modifiedUrl);
                                     product.purchaseUrl = modifiedUrl;
 
                                     product.parentASIN = context.parentASIN;
@@ -383,7 +375,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                 .then((ctx) => null);
                         })
                 } else {
-                    console.log("Unsupported postback method");
+                    console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
 
             }

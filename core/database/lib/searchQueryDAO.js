@@ -28,7 +28,6 @@ var searchQueryDAO = {
             }
         };
 
-        console.log('Inserting into db with params: ' + JSON.stringify(params, null, 2));
         documentClient.put(params, function (err, data) {
             if (err) {
                 console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
