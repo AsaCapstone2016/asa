@@ -22,11 +22,11 @@ var facebookMessageSender = {
             }
         };
 
-        quick_replies = quick_replies.map(text => {
+        quick_replies = quick_replies.map(reply => {
             return {
                 content_type: 'text',
-                title: text,
-                payload: text
+                title: reply.text,
+                payload: reply.payload
             }
         });
 
