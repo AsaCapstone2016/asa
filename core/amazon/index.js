@@ -10,13 +10,20 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: "evanm-20"
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers"];
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers", "SearchBins"];
 
 
 var amazonProduct = {
-    itemSearch: function (keywords) {
+    /**
+     * params: {
+     *      index: 'Books',
+     *      browseNodes: [4,1]
+     * }
+     */
+    itemSearch: function (keywords, params) {
+        const index = params.index !== undefined ? params.index : 'All';
         return amazon_client.itemSearch({
-            "searchIndex": "All",
+            "searchIndex": index,
             "keywords": keywords,
             "responseGroup": itemResponseGroup
         }).then((result) => {
@@ -55,6 +62,37 @@ var amazonProduct = {
             console.log(`ERROR creating cart for ${ASIN}: ${error}`);
             return undefined;
         });
+    },
+
+    /**
+     * searchResults: raw itemSearch results with search bins
+     * numIndices: number of indices to return
+     * 
+     * returns: array with index name for top numIndices indices
+     */
+    topRelevantSearchIndices: function (searchResults, numIndices) {
+
+    },
+
+    /**
+     * Array with filter info including browse node bins
+     * [
+     *      {
+     *          name: <filter name>,
+     *          bins: [
+     *              {name: <bin name>, value: <bin value>}
+     *          ]
+     *      },
+     *      {
+     *          name: <filter name>,
+     *          bins: [
+     *              {name: <bin name>, value: <bin value>}
+     *          ]
+     *      }
+     * ]
+     */
+    getFilterInfo: function (searchResults) {
+
     },
 
     variationPick: function (ASIN, variationValues, variationMap) {
