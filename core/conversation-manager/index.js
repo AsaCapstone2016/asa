@@ -105,6 +105,7 @@ const actions = {
                 // No keywords found
                 context.no_keywords = true;
                 delete context.keywords;
+                delete context.query_params;
                 delete context.run_search;
             }
             return resolve(context);
@@ -128,13 +129,15 @@ const actions = {
                 let entities = request.entities;
                 let context = request.context;
                 const keywords = context.keywords;
+                context.query_params = {};
                 return new Promise((resolve, reject) => {
                     // Log search event
                     searchQueryDAO.addItem(recipientId, keywords);
                     // Search Amazon with keywords
-                    return amazon.itemSearch(keywords)
+                    return amazon.itemSearch(keywords, context.query_params)
                         .then((json) => {
                             context.items = json;
+                            context.indices = amazon.topRelevantSearchIndices(json, 4);
                             delete context.run_search;
                             delete context.missing_search_intent;
                             return resolve(context);
@@ -172,6 +175,88 @@ const actions = {
             }, (error) => {
                 console.log(`ERROR in sendSearchResults action: ${error}`);
             });
+    },
+    sendSearchIndexPrompt(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+                if (recipientId) {
+                    const quickreplies = context.indices.map(index => {
+                        return {
+                            text: index,
+                            payload: JSON.stringify({
+                                METHOD: "CHOOSE_INDEX",
+                                index: index
+                            })
+                        };
+                    });
+                    return messageSender.sendTextMessage(recipientId, "Search under:", quickreplies)
+                        .then(() => {
+                            delete context.indices;
+                            return context;
+                        })
+                }
+            }, (error) => {
+                console.log(`ERROR in sendSearchIndexPrompt action: ${error}`);
+            })
+    },
+    sendFilterByPrompt(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+                if (recipientId) {
+                    let quickreplies = context.filters.map(filter => {
+                        return {
+                            text: filter.name,
+                            payload: JSON.stringify({
+                                METHOD: "FILTER_BY",
+                                filter: filter.name,
+                                bins: filter.bins
+                            })
+                        };
+                    });
+                    quickreplies.push({
+                        text: 'Clear Filters',
+                        payload: JSON.stringify({
+                            METHOD: "CLEAR_FILTERS"
+                        })
+                    });
+                    return messageSender.sendTextMessage(recipientId, "Filter by:", quickreplies)
+                        .then(() => {
+                            delete context.filters;
+                            return context;
+                        })
+                }
+            }, (error) => {
+                console.log(`ERROR in sendFilterByPrompt action: ${error}`);
+            })
+    },
+    sendSearchBinPrompt(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+                if (recipientId) {
+                    const quickreplies = context.bins.map(bin => {
+                        return {
+                            text: bin.name,
+                            payload: JSON.stringify({
+                                METHOD: "CHOOSE_BIN",
+                                bin: bin.value
+                            })
+                        };
+                    });
+                    return messageSender.sendTextMessage(recipientId, "Add a filter:", quickreplies)
+                        .then(() => {
+                            delete context.bins;
+                            return context;
+                        })
+                }
+            }, (error) => {
+                console.log(`ERROR in sendSearchBinPrompt action: ${error}`);
+            })
     },
     stopSearchProcess(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
@@ -283,6 +368,7 @@ module.exports.handler = (message, sender, msgSender) => {
                         }, (error) => {
                             console.log(`ERROR sending help message on GET_STARTED: ${error}`);
                         });
+
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
                     context.parentASIN = payload.ASIN;
@@ -378,7 +464,76 @@ module.exports.handler = (message, sender, msgSender) => {
                             context.items = items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => null);
-                        })
+                        });
+
+                } else if (payload.METHOD === "CHOOSE_INDEX") {
+                    // User selected a search index to narrow search results, rerun search in this index
+                    console.log(`CHOOSE_INDEX: ${payload.index}`);
+                    context.query_params.index = payload.index;
+                    context.query_params.bins = [];
+                    return amazon.itemSearch(context.keywords, context.query_params)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => {
+                                    context = ctx;
+                                    session.context = context;
+                                    
+                                    context.filters = amazon.getFilterInfo(items);
+                                    return actions.sendFilterByPrompt(session)
+                                        .then((ctx2) => {
+                                            return sessionsDAO.updateContext(uid, ctx2);
+                                        });
+                                });
+                        });
+
+                } else if (payload.METHOD === "FILTER_BY") {
+                    // User wants to filter by either "Brand Name", "Price Range", or "Category"
+                    // Send the bins available under that filter
+                    console.log(`FILTER_BY: ${payload.filter}`);
+                    context.bins = JSON.parse(payload.bins);
+                    return actions.sendSearchBinPrompt(session)
+                        .then((ctx) => null);
+
+                } else if (payload.METHOD === "CHOOSE_BIN") {
+                    // User selected a bin in a search filter, send new search results
+                    console.log(`CHOOSE_BIN: ${payload.bin}`);
+                    context.query_params.bins.push(payload.bin);
+                    return amazon.itemSearch(context.keywords, context.query_params)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => {
+                                    context = ctx;
+                                    session.context = context;
+
+                                    context.filters = amazon.getFilterInfo(items);
+                                    return actions.sendFilterByPrompt(session)
+                                        .then((ctx2) => {
+                                            return sessionsDAO.updateContext(uid, ctx2);
+                                        });
+                                });
+                        });
+
+                } else if (payload.METHOD === "CLEAR_FILTERS") {
+                    console.log(`CLEAR_FILTERS`);
+                    context.query_params = {};
+                    return amazon.itemSearch(context.keywords, context.query_params)
+                        .then((items) => {
+                            context.items = items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => {
+                                    context = ctx;
+                                    session.context = context;
+
+                                    context.indices = amazon.topRelevantSearchIndices(items, 4);
+                                    return actions.sendSearchIndexPrompt(session)
+                                        .then((ctx2) => {
+                                            return sessionsDAO.updateContext(uid, ctx2);
+                                        });
+                                });
+                        });
+                
                 } else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
