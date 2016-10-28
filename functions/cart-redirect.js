@@ -32,8 +32,13 @@ module.exports.cartRedirect = function (event, context, callback) {
     if (isCartUrl === '1') {
         console.log("here");
         let cartParams = redirectUrl.substring(redirectUrl.indexOf("?") + 1);
+        let hmacStart = cartParams.indexOf("hmac=") + 5;
+        let hmacENd = cartParams.indexOf("&SubscriptionId");
+        let hmac = encodeURIComponent(cartParams.slice(hmacStart, hmacENd));
+        cartParams = cartParams.slice(0, hmacStart) + hmac + cartParams.slice(hmacENd);
         if (isMobileRequest === 'true') {
             console.log("here again");
+            //redirectUrl = `https://www.amazon.com/gp/aw/rcart?${encodeURIComponent(cartParams)}`;
             redirectUrl = `https://www.amazon.com/gp/aw/rcart?${cartParams}`;
         } else {
             redirectUrl = `https://www.amazon.com/gp/cart/aws-merge.html?${cartParams}`;
@@ -43,4 +48,4 @@ module.exports.cartRedirect = function (event, context, callback) {
         console.log(`PURCHASE REDIRECTED - ${redirectUrl}`);
         context.succeed({location: redirectUrl});
     });
-}; 
+};
