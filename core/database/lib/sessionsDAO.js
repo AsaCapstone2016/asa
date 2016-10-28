@@ -28,11 +28,9 @@ var sessionsDAO = {
             .then((data) => {
                 if (Object.keys(data).length != 0) {
                     // if session exists, grab it
-                    console.log('SESSION exists!');
                     return data.Item;
                 } else {
                     // if session does not exist, create it
-                    console.log('SESSION does not exist!');
                     let params = {
                         TableName: tableName,
                         Item: {

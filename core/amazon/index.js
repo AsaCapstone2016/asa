@@ -20,7 +20,6 @@ var amazonProduct = {
             "keywords": keywords,
             "responseGroup": itemResponseGroup
         }).then((result) => {
-            console.log(`SEARCH RES: ${JSON.stringify(result, null, 2)}`);
             return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
@@ -31,11 +30,10 @@ var amazonProduct = {
         return amazon_client.similarityLookup({
             "itemId": ASIN,
             "responseGroup": itemResponseGroup
-        }).then(function (res) {
-            console.log(`RES: ${JSON.stringify(res, null, 2)}`);
-            return buildItemResponse(res);
-        }, function (err) {
-            console.log("ERR:", JSON.stringify(err, null, 2));
+        }).then((result) => {
+            return buildItemResponse(result);
+        }, (error) => {
+            console.log(`ERROR finding similar items: ${error}`);
         });
     },
 
@@ -43,20 +41,18 @@ var amazonProduct = {
         return amazon_client.cartCreate({
             "Item.1.ASIN": ASIN,
             "Item.1.Quantity": quantity
-        }).then(function (result) {
+        }).then((result) => {
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
                 if (result.PurchaseURL !== undefined) {
-                    console.log(`${ASIN} cart url: ${result.PurchaseURL[0]}`);
                     return result.PurchaseURL[0];
                 }
                 else if (result.MobileCartURL !== undefined) {
-                    console.log(`${ASIN} cart url: ${result.MobileCartURL[0]}`);
                     return result.MobileCartURL[0];
                 }
             }
-        }, function (err) {
+        }, (error) => {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
-            console.log(`ERROR creating cart for ${ASIN}`);
+            console.log(`ERROR creating cart for ${ASIN}: ${error}`);
             return undefined;
         });
     },
@@ -67,27 +63,20 @@ var amazonProduct = {
                 if (variationMap === null) {
                     amazonProduct.variationFind(ASIN)
                         .then(function (result) {
-                            console.log(`got variations map: ${JSON.stringify(result)}`);
                             inResolve(result);
                         }, function (err) {
-                            console.log("didn't get variation map...");
                             inReject(err);
                         });
                 } else {
-                    console.log(`Already have variation map for ${ASIN}`);
                     inResolve(variationMap);
                 }
             }).then(function (json) {
-                //console.log("JSON:", JSON.stringify(json, null, 2));
                 var variationKeys = json.variationKeys;
                 var parentTitle = json.parentTitle;
                 var map = json.map;
                 var conversational = json.conversational;
-                //console.log("resolve variationKeys:", JSON.stringify(variationKeys, null, 2));
-                //console.log("resolve map:", JSON.stringify(map, null, 2));
                 for (var i = 0; i < variationValues.length; i++) {
                     map = map[variationValues[i]];
-                    //console.log(`Map after idx ${i}: ${JSON.stringify(map)}`);
                 }
                 if (variationValues.length === variationKeys.length) {
                     if (map.ASIN !== undefined) {
@@ -120,7 +109,6 @@ var amazonProduct = {
             "IdType": "ASIN",
             "ResponseGroup": ["ItemAttributes", "Variations", "VariationOffers"]
         }).then(function (result) {
-            //console.log("VARIATION_FIND:", JSON.stringify(result, null, 2));
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
                 result[0].Variations[0].VariationDimensions !== undefined &&
                 result[0].Variations[0].VariationDimensions.length > 0 &&
@@ -219,13 +207,10 @@ function buildItemResponse(items) {
             curItem.ParentASIN.length > 0 &&
             curItem.ASIN !== undefined &&
             curItem.ASIN != curItem.ParentASIN) {
-
-            console.log(`Item #${itemIdx}:${curItem.ASIN} has variations`);
             curItem.HasVariations = true;
         }
         //When item doesn't have ParentASIN, which means has no options
         else if (curItem.ASIN !== undefined && curItem.ASIN.length > 0) {
-            console.log(`Item #${itemIdx}:${curItem.ASIN} has no variations`);
             //Build virtual cart here
             promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
                 .then((url) => {
@@ -247,7 +232,6 @@ function buildItemResponse(items) {
         }
     }
     return Promise.all(promiseArray).then(() => {
-        console.log('Done getting/building item search response');
         return items;
     });
 }

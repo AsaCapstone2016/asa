@@ -23,8 +23,8 @@ const actions = {
 
                 if (recipientId) {
                     const msg = response.text;
-                    console.log(`SEND "${msg}" to ${recipientId}`);
-                    return messageSender.sendTextMessage(recipientId, msg)
+                    const quickreplies = response.quickreplies;
+                    return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
 
@@ -43,13 +43,75 @@ const actions = {
                     msg += " Try saying...\n\n";
                     msg += " • I want to buy something\n";
                     msg += " • Can you find Ocarina of Time?";
-                    console.log(`SEND help message to ${recipientId}`);
                     return messageSender.sendTextMessage(recipientId, msg)
                         .then(() => {
                             return request.context;
                         });
                 }
             });
+    },
+    checkQuery(request) {
+        return actions.storeKeywords(request)
+            .then((context) => {
+                delete context.no_keywords;
+                let entities = request.entities;
+
+                if ('keywords' in context) {
+                    if ('intent' in entities && entities.intent[0].value === 'search') {
+                        // Search intent AND keywords -> perform search
+                        context.run_search = true;
+                        delete context.missing_keywords;
+                        delete context.missing_search_intent;
+                    } else {
+                        // Keywords but no search intent -> confirm desire to search
+                        context.missing_search_intent = true;
+                        delete context.run_search;
+                        delete context.missing_keywords;
+                    }
+                } else {
+                    // Search intent but no keywords -> ask for keywords
+                    context.missing_keywords = true;
+                    delete context.run_search;
+                    delete context.missing_search_intent;
+                }
+                return context;
+            }, (error) => {
+                console.log(`ERROR in checkQuery: ${error}`);
+            });
+    },
+    storeKeywords(request) {
+        return new Promise((resolve, reject) => {
+            let entities = request.entities;
+            let context = request.context;
+
+            // If the context has the missing_keywords flag, delete it
+            delete context.missing_keywords;
+
+            if ('search_query' in entities) {
+                // Grab the keywords
+                let keywords = [];
+                entities.search_query.forEach((keyword) => {
+                    keywords.push(keyword.value);
+                });
+                context.keywords = keywords.join(' ');
+                context.run_search = true;
+                delete context.no_keywords;
+            } else {
+                // No keywords found
+                context.no_keywords = true;
+                delete context.keywords;
+                delete context.run_search;
+            }
+            return resolve(context);
+        })
+    },
+    confirmSearch(request) {
+        return new Promise((resolve, reject) => {
+            let context = request.context;
+            context.run_search = true;
+            delete context.missing_search_intent;
+            return resolve(context);
+        });
     },
     search(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
@@ -60,29 +122,18 @@ const actions = {
 
                 let entities = request.entities;
                 let context = request.context;
+                const keywords = context.keywords;
                 return new Promise((resolve, reject) => {
-                    if ('search_query' in entities) {
-
-                        let keywords = [];
-                        entities.search_query.forEach((query) => {
-                            keywords.push(query.value);
+                    // Log search event
+                    searchQueryDAO.addItem(recipientId, keywords);
+                    // Search Amazon with keywords
+                    return amazon.itemSearch(keywords)
+                        .then((json) => {
+                            context.items = json;
+                            delete context.run_search;
+                            delete context.missing_search_intent;
+                            return resolve(context);
                         });
-                        keywords = keywords.join(' ');
-
-                        console.log(`SEARCH: ${keywords}`);
-                        searchQueryDAO.addItem(recipientId, keywords);
-
-                        return amazon.itemSearch(keywords)
-                            .then((json) => {
-                                context.items = json;
-                                delete context.missing_keywords;
-                                return resolve(context);
-                            });
-                    } else {
-                        context.missing_keywords = true;
-                        delete context.items;
-                        return resolve(context);
-                    }
                 });
 
             }, (error) => {
@@ -96,9 +147,9 @@ const actions = {
 
                 messageSender.sendTypingMessage(recipientId);
 
+                let context = request.context;
+                const items = context.items;
                 if (recipientId) {
-                    console.log(`SEND LIST OF ITEMS`);
-                    const items = request.context.items;
                     items.forEach((item)=> {
                         let isCart = '0';
                         if (item.cartCreated) {
@@ -108,8 +159,8 @@ const actions = {
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
-                            delete request.context.items;
-                            return request.context;
+                            delete context.items;
+                            return context;
                         });
                 }
 
@@ -117,19 +168,14 @@ const actions = {
                 console.log(`ERROR in sendSearchResults action: ${error}`);
             });
     },
-    stopSelectingVariations(request) {
+    stopSearchProcess(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 return messageSender.sendTextMessage(recipientId, "Let me know if you need anything else!");
             })
             .then(() => {
-                return new Promise((resolve, reject) => {
-                    let context = request.context;
-                    delete context.selectedVariations;
-                    delete context.parentASIN;
-                    return resolve(context);
-                });
+                return actions.clearContext(request);
             }, (error) => {
                 console.log(`ERROR stopping variation selection: ${error}`);
             })
@@ -170,6 +216,9 @@ const actions = {
                         });
                 });
             });
+    },
+    clearContext(request) {
+        return new Promise((resolve, reject) => resolve({}));
     }
 };
 
@@ -188,7 +237,7 @@ module.exports.handler = (message, sender, msgSender) => {
     return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
 
-            console.log(`SESSION: ${JSON.stringify(session)}`);
+            //console.log(`SESSION before handler: ${JSON.stringify(session)}`);
 
             messageSender = msgSender;
 
@@ -199,15 +248,14 @@ module.exports.handler = (message, sender, msgSender) => {
             if (message.content.action === 'text') {
                 // Handle text messages from the user
                 let text = message.content.payload;
-                console.log(`MESSAGE content: ${text}`);
+                //console.log(`MESSAGE: ${text}`);
+
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        console.log(`UPDATED CONTEXT: ${JSON.stringify(ctx)}`);
-                        if (ctx.notUnderstood !== undefined) {
+                        if (ctx.not_understood !== undefined) {
                             // handle misunderstood messages
-                            delete ctx.notUnderstood;
+                            delete ctx.not_understood;
                             messageSender.sendTypingMessage(uid);
-                            console.log(`SEND I don't understand message`);
                             return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
                                 .then(sessionsDAO.updateContext(uid, ctx));
                         } else {
@@ -220,13 +268,13 @@ module.exports.handler = (message, sender, msgSender) => {
             } else if (message.content.action === 'postback') {
                 // Handle button presses and quick replies
                 let payload = JSON.parse(message.content.payload);
-                console.log(`POSTBACK: ${JSON.stringify(payload)}`);
+                //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
                     // User selected the 'Get Started' button on first conversation initiation
                     return actions.sendHelpMessage(session)
                         .then((success) => {
-                            console.log('CONVERSATION INITIATED and help message sent');
+                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
                         }, (error) => {
                             console.log(`ERROR sending help message on GET_STARTED: ${error}`);
                         });
@@ -277,7 +325,6 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.selectedVariations.push(payload.VARIATION_VALUE);
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((product) => {
-                            console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cartUrl) => {
                                     let isCart = '1';
@@ -292,7 +339,6 @@ module.exports.handler = (message, sender, msgSender) => {
                                     let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
                                     
                                     // Send variations summary with cart redirect url
-                                    console.log('URL WE WANT ' + modifiedUrl);
                                     product.purchaseUrl = modifiedUrl;
 
                                     product.parentASIN = context.parentASIN;
@@ -329,7 +375,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                 .then((ctx) => null);
                         })
                 } else {
-                    console.log("Unsupported postback method");
+                    console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
 
             }
