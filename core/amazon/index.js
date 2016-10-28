@@ -73,12 +73,16 @@ var amazonProduct = {
      */
     topRelevantSearchIndices: function (searchResults, numIndices) {
         let filterList = this.getFilterInfo(searchResults);
-        filterList.forEach((filter)=>{
-            if(filter.bins.length > numIndices){
-                filter.bins = filter.bins.slice(0, numIndices);
-            }
-        })
-        return filterList;
+        let indexList = [];
+        if (filterList[0].name == "Categories") {
+            indexList = filterList[0].bins.map(index => {
+                return index.value;
+            });
+            // Grab only the first 'numIndices' search indices
+            // Array.slice does not error if the stop index is past the end of the array
+            indexList = indexList.slice(0, numIndices);
+        }
+        return indexList;
     },
 
     /**
@@ -100,24 +104,17 @@ var amazonProduct = {
      */
     getFilterInfo: function (searchResults) {
         //console.log(JSON.stringify(searchResults, null, 2));
-        //return searchResults;
-        let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
-        //return searchBinSet;
+        let searchBinSets = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
         let filterList = [];
-        searchBinSet.forEach((searchBin)=>{
+        searchBinSets.forEach((set) => {
             let filter = {};
-            filter.name = searchBin.$.NarrowBy;
+            filter.name = set.$.NarrowBy;
             filter.bins = [];
-            let bins = searchBin.Bin;
+            let bins = set.Bin;
             bins.forEach((bin)=>{
                 let binObj = {};
                 binObj.name = bin.BinName && bin.BinName[0];
-                binObj.value = {};
-                bin.BinParameter.forEach((param)=>{
-                    let key = param.Name && param.Name[0];
-                    let value = param.Value && param.Value[0];
-                    binObj.value[key] = value;
-                });
+                binObj.value = bin.BinParameter && bin.BinParameter[0] && bin.BinParameter[0].Value && bin.BinParameter[0].Value[0];
                 filter.bins.push(binObj);
             })
             filterList.push(filter);
