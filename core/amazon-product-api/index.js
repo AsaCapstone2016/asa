@@ -46,6 +46,7 @@ var runQuery = function (credentials, method) {
                     });
                 } else {
                     parseXML(body, function (err, resp) {
+                        //console.log(JSON.stringify(resp, null, 2));
                         if (err) {
                             failure(err);
                         } else {
@@ -57,8 +58,8 @@ var runQuery = function (credentials, method) {
                                     failure(respObj.Items[0].Request[0].Errors);
                                 } else if (respObj.Items[0].Item) {
                                     success(
-                                        respObj.Items[0].Item,
-                                        respObj.Items
+                                        //respObj.Items[0].Item,
+                                        respObj.Items[0]
                                     );
                                 }
                             } else if (respObj.BrowseNodes && respObj.BrowseNodes.length > 0) {
@@ -67,8 +68,8 @@ var runQuery = function (credentials, method) {
                                     failure(respObj.BrowseNodes[0].Request[0].Errors);
                                 } else if (respObj.BrowseNodes[0].BrowseNode) {
                                     success(
-                                        respObj.BrowseNodes[0].BrowseNode,
-                                        respObj.BrowseNodes
+                                        respObj.BrowseNodes[0].BrowseNode
+                                        //respObj.BrowseNodes
                                     );
                                 }
                             } else if (respObj.Cart && respObj.Cart.length > 0){

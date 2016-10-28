@@ -27,7 +27,7 @@ var amazonProduct = {
             "keywords": keywords,
             "responseGroup": itemResponseGroup
         }).then((result) => {
-            return buildItemResponse(result);
+            return buildItemResponse(result.Item);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
         });
@@ -38,6 +38,7 @@ var amazonProduct = {
             "itemId": ASIN,
             "responseGroup": itemResponseGroup
         }).then((result) => {
+            result = result.Item;
             return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR finding similar items: ${error}`);
@@ -67,11 +68,17 @@ var amazonProduct = {
     /**
      * searchResults: raw itemSearch results with search bins
      * numIndices: number of indices to return
-     * 
+     *
      * returns: array with index name for top numIndices indices
      */
     topRelevantSearchIndices: function (searchResults, numIndices) {
-
+        let filterList = this.getFilterInfo(searchResults);
+        filterList.forEach((filter)=>{
+            if(filter.bins.length > numIndices){
+                filter.bins = filter.bins.slice(0, numIndices);
+            }
+        })
+        return filterList;
     },
 
     /**
@@ -92,7 +99,30 @@ var amazonProduct = {
      * ]
      */
     getFilterInfo: function (searchResults) {
-
+        //console.log(JSON.stringify(searchResults, null, 2));
+        //return searchResults;
+        let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
+        //return searchBinSet;
+        let filterList = [];
+        searchBinSet.forEach((searchBin)=>{
+            let filter = {};
+            filter.name = searchBin.$.NarrowBy;
+            filter.bins = [];
+            let bins = searchBin.Bin;
+            bins.forEach((bin)=>{
+                let binObj = {};
+                binObj.name = bin.BinName && bin.BinName[0];
+                binObj.value = {};
+                bin.BinParameter.forEach((param)=>{
+                    let key = param.Name && param.Name[0];
+                    let value = param.Value && param.Value[0];
+                    binObj.value[key] = value;
+                });
+                filter.bins.push(binObj);
+            })
+            filterList.push(filter);
+        });
+        return filterList;
     },
 
     variationPick: function (ASIN, variationValues, variationMap) {
@@ -147,6 +177,7 @@ var amazonProduct = {
             "IdType": "ASIN",
             "ResponseGroup": ["ItemAttributes", "Variations", "VariationOffers"]
         }).then(function (result) {
+            result = result.Item;
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
                 result[0].Variations[0].VariationDimensions !== undefined &&
                 result[0].Variations[0].VariationDimensions.length > 0 &&
