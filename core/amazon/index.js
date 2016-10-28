@@ -39,7 +39,7 @@ var amazonProduct = {
             "responseGroup": itemResponseGroup
         }).then((result) => {
             result = result.Item;
-            return buildItemResponse(result);
+            return buildItemResponse(result.Item);
         }, (error) => {
             console.log(`ERROR finding similar items: ${error}`);
         });
@@ -304,5 +304,6 @@ function buildItemResponse(items) {
         return items;
     });
 }
+
 
 module.exports = amazonProduct;
