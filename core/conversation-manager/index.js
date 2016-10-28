@@ -23,12 +23,15 @@ const actions = {
 
                 if (recipientId) {
                     const msg = response.text;
-                    const quickreplies = response.quickreplies.map(text => {
-                        return {
-                            text: text,
-                            payload: text
-                        };
-                    });
+                    let quickreplies = response.quickreplies;
+                    if (quickreplies !== undefined) {
+                        quickreplies = quickreplies.map(text => {
+                            return {
+                                text: text,
+                                payload: text
+                            };
+                        });
+                    }
                     return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
