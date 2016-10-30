@@ -4,7 +4,8 @@
 'use strict';
 
 var amazon_api = require("amazon-product-api");
-var config = require('./../../config');
+// var config = require('./../../config');
+var config = require('./config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,
     awsSecret: config.AWS_SECRET,
@@ -99,10 +100,8 @@ var amazonProduct = {
      * ]
      */
     getFilterInfo: function (searchResults) {
-        //console.log(JSON.stringify(searchResults, null, 2));
-        //return searchResults;
-        let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
-        //return searchBinSet;
+        // let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
+        let searchBinSet = searchResults.SearchBinSet;
         let filterList = [];
         searchBinSet.forEach((searchBin)=>{
             let filter = {};
@@ -267,7 +266,13 @@ var amazonProduct = {
     }
 };
 
-function buildItemResponse(items) {
+function buildItemResponse(result) {
+    let items = result.Item;
+    //This is the raw search bin sets data
+    let searchBinSets = result.SearchBinSets[0];
+    //This is the formatted search bin data
+    let searchBin = getFilterInfo(searchBinSets);
+
     var promiseArray = [];
     for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
         let curItem = items[itemIdx];

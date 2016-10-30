@@ -59,7 +59,10 @@ var runQuery = function (credentials, method) {
                                 } else if (respObj.Items[0].Item) {
                                     success(
                                         //respObj.Items[0].Item,
-                                        respObj.Items[0]
+                                        {
+                                            "Item": respObj.Items[0].Item,
+                                            "SearchBinSets": respObj.Items[0].SearchBinSets
+                                        }
                                     );
                                 }
                             } else if (respObj.BrowseNodes && respObj.BrowseNodes.length > 0) {
