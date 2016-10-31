@@ -78,7 +78,7 @@ var amazonProduct = {
         let indexList = [];
         if (filterList[0].name == "Categories") {
             indexList = filterList[0].bins.map(index => {
-                return index.value;
+                return index.params[0].value;
             });
             // Grab only the first 'numIndices' search indices
             // Array.slice does not error if the stop index is past the end of the array
@@ -118,7 +118,12 @@ var amazonProduct = {
             bins.forEach((bin)=>{
                 let binObj = {};
                 binObj.name = bin.BinName && bin.BinName[0];
-                binObj.value = bin.BinParameter && bin.BinParameter[0] && bin.BinParameter[0].Value && bin.BinParameter[0].Value[0];
+                binObj.params = bin.BinParameter.map(param => {
+                    return {
+                        type: param.Name[0],
+                        value: param.Value[0]
+                    }
+                });
                 filter.bins.push(binObj);
             })
             filterList.push(filter);
