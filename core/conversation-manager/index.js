@@ -140,7 +140,7 @@ const actions = {
                     return amazon.itemSearch(keywords, context.query_params)
                         .then((result) => {
                             context.items = result.Items;
-                            context.indices = amazon.topRelevantSearchIndices(result, 4);
+                            context.bins = amazon.topRelevantSearchIndices(result, 4);
                             delete context.run_search;
                             delete context.missing_search_intent;
                             return resolve(context);
@@ -179,29 +179,30 @@ const actions = {
                 console.log(`ERROR in sendSearchResults action: ${error}`);
             });
     },
-    sendSearchIndexPrompt(request) {
+    sendAddFilterPrompt(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 let context = request.context;
                 if (recipientId) {
-                    const quickreplies = context.indices.map(index => {
+                    const quickreplies = context.bins.map(bin => {
                         return {
-                            text: index,
+                            text: bin.name.slice(0, 20),
                             payload: JSON.stringify({
-                                METHOD: "CHOOSE_INDEX",
-                                index: index
+                                METHOD: "ADD_FILTER",
+                                params: bin.params
                             })
                         };
                     });
-                    return messageSender.sendTextMessage(recipientId, "Keep looking under", quickreplies)
+                    let prompt = context.bins[0].params[0].type === "SearchIndex" ? "Keep looking under" : "Add a filter";
+                    return messageSender.sendTextMessage(recipientId, prompt, quickreplies)
                         .then(() => {
-                            delete context.indices;
+                            delete context.bins;
                             return context;
                         })
                 }
             }, (error) => {
-                console.log(`ERROR in sendSearchIndexPrompt action: ${error}`);
+                console.log(`ERROR in sendAddFilterPrompt action: ${error}`);
             })
     },
     sendFilterByPrompt(request) {
@@ -211,8 +212,9 @@ const actions = {
                 let context = request.context;
                 if (recipientId) {
                     let quickreplies = context.filters.map(filter => {
+
                         return {
-                            text: filter.name,
+                            text: filter.name === "Subject" ? "Category" : filter.name,
                             payload: JSON.stringify({
                                 METHOD: "FILTER_BY",
                                 filter: filter.name,
@@ -234,31 +236,6 @@ const actions = {
                 }
             }, (error) => {
                 console.log(`ERROR in sendFilterByPrompt action: ${error}`);
-            })
-    },
-    sendSearchBinPrompt(request) {
-        return sessionsDAO.getSessionFromSessionId(request.sessionId)
-            .then((session) => {
-                let recipientId = session.uid;
-                let context = request.context;
-                if (recipientId) {
-                    const quickreplies = context.bins.map(bin => {
-                        return {
-                            text: bin.name.slice(0, 20),
-                            payload: JSON.stringify({
-                                METHOD: "CHOOSE_BIN",
-                                bin: bin.value
-                            })
-                        };
-                    });
-                    return messageSender.sendTextMessage(recipientId, "Add a filter", quickreplies.slice(0, 10))
-                        .then(() => {
-                            delete context.bins;
-                            return context;
-                        })
-                }
-            }, (error) => {
-                console.log(`ERROR in sendSearchBinPrompt action: ${error}`);
             })
     },
     stopSearchProcess(request) {
@@ -473,44 +450,31 @@ module.exports.handler = (message, sender, msgSender) => {
                                 .then((ctx) => null);
                         });
 
-                } else if (payload.METHOD === "CHOOSE_INDEX") {
-                    // User selected a search index to narrow search results, rerun search in this index
-
-                    messageSender.sendTypingMessage(uid);
-                    
-                    context.query_params.index = payload.index;
-                    context.query_params.bins = [];
-                    return amazon.itemSearch(context.keywords, context.query_params)
-                        .then((result) => {
-                            context.items = result.Items;
-                            return actions.sendSearchResults(session)
-                                .then((ctx) => {
-                                    context = ctx;
-                                    session.context = context;
-                                    
-                                    context.filters = amazon.getFilterInfo(result);
-                                    return actions.sendFilterByPrompt(session)
-                                        .then((ctx2) => {
-                                            return sessionsDAO.updateContext(uid, ctx2);
-                                        });
-                                });
-                        });
-
                 } else if (payload.METHOD === "FILTER_BY") {
                     // User wants to filter by either "Brand Name", "Price Range", "Subject", or "Percent Off"
                     // Send the bins available under that filter
                     
                     context.bins = payload.bins;
-                    return actions.sendSearchBinPrompt(session)
+                    return actions.sendAddFilterPrompt(session)
                         .then((ctx) => null);
 
-                } else if (payload.METHOD === "CHOOSE_BIN") {
-                    // User selected a bin in a search filter, send new search results
-                    
+                } else if (payload.METHOD === "ADD_FILTER") {
+                    /* User selected a new filter
+                     * 
+                     * Filters are either
+                     *      - a search index
+                     *      - a bin under the filter categories (see above)
+                    */
                     messageSender.sendTypingMessage(uid);
 
-                    context.query_params.bins.push(payload.bin);
-                    return amazon.itemSearch(context.keywords, context.query_params)
+                    // Add the bin parameters to the search query
+                    let params = context.query_params;
+                    payload.params.forEach(param => {
+                        (params[param.type] = params[param.type] || []).push(param.value);
+                    });
+
+                    // Run query with updated parameters
+                    return amazon.itemSearch(context.keywords, params)
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
@@ -530,7 +494,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     // User wants to clear all the fiters they have selected up to this point including the search index
 
                     messageSender.sendTypingMessage(uid);
-                    
+
                     context.query_params = {};
                     return amazon.itemSearch(context.keywords, context.query_params)
                         .then((result) => {
@@ -540,8 +504,8 @@ module.exports.handler = (message, sender, msgSender) => {
                                     context = ctx;
                                     session.context = context;
 
-                                    context.indices = amazon.topRelevantSearchIndices(result, 4);
-                                    return actions.sendSearchIndexPrompt(session)
+                                    context.bins = amazon.topRelevantSearchIndices(result, 4);
+                                    return actions.sendAddFilterPrompt(session)
                                         .then((ctx2) => {
                                             return sessionsDAO.updateContext(uid, ctx2);
                                         });
