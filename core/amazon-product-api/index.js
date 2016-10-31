@@ -57,13 +57,15 @@ var runQuery = function (credentials, method) {
                                 if (respObj.Items[0].Request && respObj.Items[0].Request.length > 0 && respObj.Items[0].Request[0].Errors) {
                                     failure(respObj.Items[0].Request[0].Errors);
                                 } else if (respObj.Items[0].Item) {
-                                    success(
-                                        //respObj.Items[0].Item,
-                                        {
-                                            "Item": respObj.Items[0].Item,
-                                            "SearchBinSets": respObj.Items[0].SearchBinSets
-                                        }
-                                    );
+                                    var result = {
+                                        "Items": respObj.Items[0].Item
+                                    };
+
+                                    if (respObj.Items[0].SearchBinSets && respObj.Items[0].SearchBinSets.length > 0) {
+                                        result.SearchBinSets = respObj.Items[0].SearchBinSets[0].SearchBinSet;
+                                    }
+
+                                    success(result);
                                 }
                             } else if (respObj.BrowseNodes && respObj.BrowseNodes.length > 0) {
                                 // Request Error
