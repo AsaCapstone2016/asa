@@ -52,12 +52,13 @@ var amazonProduct = {
     },
 
     createCart: function (ASIN, quantity) {
+
+        let cartObject = {url: undefined, price: undefined};
         return amazon_client.cartCreate({
             "Item.1.ASIN": ASIN,
             "Item.1.Quantity": quantity
         }).then((result) => {
 
-            let cartObject = {};
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
                 if (result.PurchaseURL !== undefined) {
                     cartObject.url = result.PurchaseURL[0];
@@ -68,13 +69,13 @@ var amazonProduct = {
 
                 cartObject.price = result.SubTotal && result.SubTotal[0] && result.SubTotal[0].FormattedPrice
                     && result.SubTotal[0].FormattedPrice[0];
-
-                return cartObject;
             }
+
+            return cartObject;
         }, (error) => {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
             console.log(`ERROR creating cart for ${ASIN}: ${error}`);
-            return {url: undefined, price: undefined};
+            return cartObject;
         });
     },
 
