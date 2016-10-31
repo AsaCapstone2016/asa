@@ -399,7 +399,6 @@ module.exports.handler = (message, sender, msgSender) => {
                         .then((product) => {
                             return amazon.createCart(product.ASIN, 1)
                                 .then((cart) => {
-                                    console.log(JSON.stringify(cart, null, 2));
                                     let cartUrl = cart.url;
                                     let isCart = '1';
                                     let redirectUrl = cartUrl;
