@@ -138,9 +138,9 @@ const actions = {
                     searchQueryDAO.addItem(recipientId, keywords);
                     // Search Amazon with keywords
                     return amazon.itemSearch(keywords, context.query_params)
-                        .then((json) => {
-                            context.items = json;
-                            context.indices = amazon.topRelevantSearchIndices(json, 4);
+                        .then((result) => {
+                            context.items = result.Items;
+                            context.indices = amazon.topRelevantSearchIndices(result, 4);
                             delete context.run_search;
                             delete context.missing_search_intent;
                             return resolve(context);
@@ -251,7 +251,7 @@ const actions = {
                             })
                         };
                     });
-                    return messageSender.sendTextMessage(recipientId, "Add a filter:", quickreplies)
+                    return messageSender.sendTextMessage(recipientId, "Add a filter:", quickreplies.slice(0, 10))
                         .then(() => {
                             delete context.bins;
                             return context;
@@ -463,8 +463,8 @@ module.exports.handler = (message, sender, msgSender) => {
 
                 } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
                     return amazon.similarityLookup(payload.ASIN)
-                        .then((items) => {
-                            context.items = items;
+                        .then((result) => {
+                            context.items = result.Items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => null);
                         });
@@ -475,14 +475,14 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.query_params.index = payload.index;
                     context.query_params.bins = [];
                     return amazon.itemSearch(context.keywords, context.query_params)
-                        .then((items) => {
-                            context.items = items;
+                        .then((result) => {
+                            context.items = result.Items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
                                     session.context = context;
                                     
-                                    context.filters = amazon.getFilterInfo(items);
+                                    context.filters = amazon.getFilterInfo(result);
                                     return actions.sendFilterByPrompt(session)
                                         .then((ctx2) => {
                                             return sessionsDAO.updateContext(uid, ctx2);
@@ -503,14 +503,14 @@ module.exports.handler = (message, sender, msgSender) => {
                     console.log(`CHOOSE_BIN: ${payload.bin}`);
                     context.query_params.bins.push(payload.bin);
                     return amazon.itemSearch(context.keywords, context.query_params)
-                        .then((items) => {
-                            context.items = items;
+                        .then((result) => {
+                            context.items = result.Items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
                                     session.context = context;
 
-                                    context.filters = amazon.getFilterInfo(items);
+                                    context.filters = amazon.getFilterInfo(result);
                                     return actions.sendFilterByPrompt(session)
                                         .then((ctx2) => {
                                             return sessionsDAO.updateContext(uid, ctx2);
@@ -522,14 +522,14 @@ module.exports.handler = (message, sender, msgSender) => {
                     console.log(`CLEAR_FILTERS`);
                     context.query_params = {};
                     return amazon.itemSearch(context.keywords, context.query_params)
-                        .then((items) => {
-                            context.items = items;
+                        .then((result) => {
+                            context.items = result.Items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
                                     session.context = context;
 
-                                    context.indices = amazon.topRelevantSearchIndices(items, 4);
+                                    context.indices = amazon.topRelevantSearchIndices(result, 4);
                                     return actions.sendSearchIndexPrompt(session)
                                         .then((ctx2) => {
                                             return sessionsDAO.updateContext(uid, ctx2);
