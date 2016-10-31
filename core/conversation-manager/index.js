@@ -398,7 +398,9 @@ module.exports.handler = (message, sender, msgSender) => {
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((product) => {
                             return amazon.createCart(product.ASIN, 1)
-                                .then((cartUrl) => {
+                                .then((cart) => {
+                                    console.log(JSON.stringify(cart, null, 2));
+                                    let cartUrl = cart.url;
                                     let isCart = '1';
                                     let redirectUrl = cartUrl;
 
@@ -409,10 +411,10 @@ module.exports.handler = (message, sender, msgSender) => {
                                     }
 
                                     let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
-                                    
+
                                     // Send variations summary with cart redirect url
                                     product.purchaseUrl = modifiedUrl;
-
+                                    product.price = cart.price || product.price;
                                     product.parentASIN = context.parentASIN;
                                     return messageSender.sendVariationSummary(uid, product)
                                         .catch((error) => {
@@ -454,7 +456,7 @@ module.exports.handler = (message, sender, msgSender) => {
                 } else if (payload.METHOD === "FILTER_BY") {
                     // User wants to filter by either "Brand Name", "Price Range", "Subject", or "Percent Off"
                     // Send the bins available under that filter
-                    
+
                     context.bins = payload.bins;
                     return actions.sendAddFilterPrompt(session)
                         .then((ctx) => null);
@@ -465,7 +467,7 @@ module.exports.handler = (message, sender, msgSender) => {
                      * Filters are either
                      *      - a search index
                      *      - a bin under the filter categories (see above)
-                    */
+                     */
                     messageSender.sendTypingMessage(uid);
 
                     // Add the bin parameters to the search query
@@ -512,7 +514,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                         });
                                 });
                         });
-                
+
                 } else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }

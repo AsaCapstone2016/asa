@@ -10,7 +10,7 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: config.AWS_TAG
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "SearchBins"];
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"];
 
 
 var amazonProduct = {
@@ -32,7 +32,7 @@ var amazonProduct = {
         Object.keys(params).forEach(key => {
             search_params[key] = params[key];
         });
-        
+
         return amazon_client.itemSearch(search_params).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
@@ -56,18 +56,25 @@ var amazonProduct = {
             "Item.1.ASIN": ASIN,
             "Item.1.Quantity": quantity
         }).then((result) => {
+
+            let cartObject = {};
             if (result.CartItems !== undefined && result.CartItems.length > 0) {
                 if (result.PurchaseURL !== undefined) {
-                    return result.PurchaseURL[0];
+                    cartObject.url = result.PurchaseURL[0];
                 }
                 else if (result.MobileCartURL !== undefined) {
-                    return result.MobileCartURL[0];
+                    cartObject.url = result.MobileCartURL[0];
                 }
+
+                cartObject.price = result.SubTotal && result.SubTotal[0] && result.SubTotal[0].FormattedPrice
+                    && result.SubTotal[0].FormattedPrice[0];
+
+                return cartObject;
             }
         }, (error) => {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
             console.log(`ERROR creating cart for ${ASIN}: ${error}`);
-            return undefined;
+            return {url: undefined, price: undefined};
         });
     },
 
@@ -115,7 +122,7 @@ var amazonProduct = {
             filter.name = set.$.NarrowBy;
             filter.bins = [];
             let bins = set.Bin;
-            bins.forEach((bin)=>{
+            bins.forEach((bin)=> {
                 let binObj = {};
                 binObj.name = bin.BinName && bin.BinName[0];
                 binObj.params = bin.BinParameter.map(param => {
@@ -221,10 +228,17 @@ var amazonProduct = {
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
-                                            "price": item.ItemAttributes && item.ItemAttributes[0]
+                                            "price": (item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].ListPrice && item.ItemAttributes[0].ListPrice[0]
                                             && item.ItemAttributes[0].ListPrice[0].FormattedPrice
-                                            && item.ItemAttributes[0].ListPrice[0].FormattedPrice[0],
+                                            && item.ItemAttributes[0].ListPrice[0].FormattedPrice[0]) ||
+                                            (item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
+                                            && item.Offers[0].Offer[0].OfferListing[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]),
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
@@ -287,11 +301,14 @@ function buildItemResponse(result) {
         else if (curItem.ASIN !== undefined && curItem.ASIN.length > 0) {
             //Build virtual cart here
             promiseArray.push(amazonProduct.createCart(curItem.ASIN, 1)
-                .then((url) => {
+                .then((cart) => {
+                    let url = cart.url;
+                    let price = cart.price;
 
                     if (url !== undefined) {
                         curItem.cartCreated = true;
                         curItem.purchaseUrl = url;
+                        curItem.price = cart.price;
                     } else {
                         curItem.cartCreated = false;
                         curItem.purchaseUrl = curItem.DetailPageURL[0];

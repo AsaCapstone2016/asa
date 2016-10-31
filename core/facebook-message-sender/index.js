@@ -73,10 +73,16 @@ var facebookMessageSender = {
                 && product.ImageSets[0].ImageSet[0].LargeImage[0].URL[0])
                 || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg';
 
-            element.subtitle = product.ItemAttributes && product.ItemAttributes[0]
+            element.subtitle = product.price || (product.ItemAttributes && product.ItemAttributes[0]
                 && product.ItemAttributes[0].ListPrice && product.ItemAttributes[0].ListPrice[0]
                 && product.ItemAttributes[0].ListPrice[0].FormattedPrice
-                && product.ItemAttributes[0].ListPrice[0].FormattedPrice[0];
+                && product.ItemAttributes[0].ListPrice[0].FormattedPrice[0]) || (product.Offers && product.Offers[0]
+                && product.Offers[0].Offer && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
+                && product.Offers[0].Offer[0].OfferListing[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]);
             element.buttons = [];
             if (product.HasVariations) {
                 element.buttons.push({
