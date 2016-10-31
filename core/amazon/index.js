@@ -4,8 +4,7 @@
 'use strict';
 
 var amazon_api = require("amazon-product-api");
-// var config = require('./../../config');
-var config = require('./config');
+var config = require('./../../config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,
     awsSecret: config.AWS_SECRET,
@@ -22,13 +21,16 @@ var amazonProduct = {
      * }
      */
     itemSearch: function (keywords, params) {
-        const index = params.index !== undefined ? params.index : 'All';
+        const index = params !== undefined && params.index !== undefined ? params.index : 'All';
+        const nodes = params !== undefined && params.bins !== undefined ? params.bins : [];
+        
         return amazon_client.itemSearch({
             "searchIndex": index,
             "keywords": keywords,
-            "responseGroup": itemResponseGroup
+            "responseGroup": itemResponseGroup,
+            "browseNode": nodes
         }).then((result) => {
-            return buildItemResponse(result.Item);
+            return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
         });
@@ -39,8 +41,7 @@ var amazonProduct = {
             "itemId": ASIN,
             "responseGroup": itemResponseGroup
         }).then((result) => {
-            result = result.Item;
-            return buildItemResponse(result.Item);
+            return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR finding similar items: ${error}`);
         });
@@ -106,7 +107,7 @@ var amazonProduct = {
     getFilterInfo: function (searchResults) {
 
         // let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
-        let searchBinSet = searchResults.SearchBinSet;
+        let searchBinSets = searchResults.SearchBinSets;
 
         let filterList = [];
         searchBinSets.forEach((set) => {
@@ -177,7 +178,7 @@ var amazonProduct = {
             "IdType": "ASIN",
             "ResponseGroup": ["ItemAttributes", "Variations", "VariationOffers"]
         }).then(function (result) {
-            result = result.Item;
+            result = result.Items;
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
                 result[0].Variations[0].VariationDimensions !== undefined &&
                 result[0].Variations[0].VariationDimensions.length > 0 &&
@@ -268,11 +269,7 @@ var amazonProduct = {
 };
 
 function buildItemResponse(result) {
-    let items = result.Item;
-    //This is the raw search bin sets data
-    let searchBinSets = result.SearchBinSets[0];
-    //This is the formatted search bin data
-    let searchBin = getFilterInfo(searchBinSets);
+    let items = result.Items;
 
     var promiseArray = [];
     for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
@@ -307,7 +304,7 @@ function buildItemResponse(result) {
         }
     }
     return Promise.all(promiseArray).then(() => {
-        return items;
+        return result;
     });
 }
 
