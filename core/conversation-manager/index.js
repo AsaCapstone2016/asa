@@ -194,7 +194,7 @@ const actions = {
                             })
                         };
                     });
-                    return messageSender.sendTextMessage(recipientId, "Search under:", quickreplies)
+                    return messageSender.sendTextMessage(recipientId, "Keep looking under", quickreplies)
                         .then(() => {
                             delete context.indices;
                             return context;
@@ -226,7 +226,7 @@ const actions = {
                             METHOD: "CLEAR_FILTERS"
                         })
                     });
-                    return messageSender.sendTextMessage(recipientId, "Filter by:", quickreplies)
+                    return messageSender.sendTextMessage(recipientId, "Choose a type of filter", quickreplies)
                         .then(() => {
                             delete context.filters;
                             return context;
@@ -244,14 +244,14 @@ const actions = {
                 if (recipientId) {
                     const quickreplies = context.bins.map(bin => {
                         return {
-                            text: bin.name,
+                            text: bin.name.slice(0, 20),
                             payload: JSON.stringify({
                                 METHOD: "CHOOSE_BIN",
                                 bin: bin.value
                             })
                         };
                     });
-                    return messageSender.sendTextMessage(recipientId, "Add a filter:", quickreplies.slice(0, 10))
+                    return messageSender.sendTextMessage(recipientId, "Add a filter", quickreplies.slice(0, 10))
                         .then(() => {
                             delete context.bins;
                             return context;
@@ -462,6 +462,10 @@ module.exports.handler = (message, sender, msgSender) => {
                         });
 
                 } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
+                    // User wants to see the items related to a specific item based on other user's purchases
+
+                    messageSender.sendTypingMessage(uid);
+
                     return amazon.similarityLookup(payload.ASIN)
                         .then((result) => {
                             context.items = result.Items;
@@ -471,7 +475,9 @@ module.exports.handler = (message, sender, msgSender) => {
 
                 } else if (payload.METHOD === "CHOOSE_INDEX") {
                     // User selected a search index to narrow search results, rerun search in this index
-                    console.log(`CHOOSE_INDEX: ${payload.index}`);
+
+                    messageSender.sendTypingMessage(uid);
+                    
                     context.query_params.index = payload.index;
                     context.query_params.bins = [];
                     return amazon.itemSearch(context.keywords, context.query_params)
@@ -491,16 +497,18 @@ module.exports.handler = (message, sender, msgSender) => {
                         });
 
                 } else if (payload.METHOD === "FILTER_BY") {
-                    // User wants to filter by either "Brand Name", "Price Range", or "Category"
+                    // User wants to filter by either "Brand Name", "Price Range", "Subject", or "Percent Off"
                     // Send the bins available under that filter
-                    console.log(`FILTER_BY: ${payload.filter}`);
-                    context.bins = JSON.parse(payload.bins);
+                    
+                    context.bins = payload.bins;
                     return actions.sendSearchBinPrompt(session)
                         .then((ctx) => null);
 
                 } else if (payload.METHOD === "CHOOSE_BIN") {
                     // User selected a bin in a search filter, send new search results
-                    console.log(`CHOOSE_BIN: ${payload.bin}`);
+                    
+                    messageSender.sendTypingMessage(uid);
+
                     context.query_params.bins.push(payload.bin);
                     return amazon.itemSearch(context.keywords, context.query_params)
                         .then((result) => {
@@ -519,7 +527,10 @@ module.exports.handler = (message, sender, msgSender) => {
                         });
 
                 } else if (payload.METHOD === "CLEAR_FILTERS") {
-                    console.log(`CLEAR_FILTERS`);
+                    // User wants to clear all the fiters they have selected up to this point including the search index
+
+                    messageSender.sendTypingMessage(uid);
+                    
                     context.query_params = {};
                     return amazon.itemSearch(context.keywords, context.query_params)
                         .then((result) => {
