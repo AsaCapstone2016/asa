@@ -12,7 +12,7 @@ var facebookMessageSender = {
     sendTextMessage: function (recipient_id, message, quick_replies) {
         // Quick reply field defaults to empty array
         quick_replies = quick_replies === undefined ? [] : quick_replies;
-        
+
         if (quick_replies.length > 10) {
             console.log(`ERROR: trying to send more than 10 quick replies ${JSON.stringify(quick_replies, null, 2)}`);
         }
@@ -66,15 +66,17 @@ var facebookMessageSender = {
             var element = {};
             element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
             element.item_url = product && product.DetailPageURL[0];
-            element.image_url = product && product.ImageSets && product.ImageSets[0] && product.ImageSets[0].ImageSet && product.ImageSets[0].ImageSet[0] && product.ImageSets[0].ImageSet[0].SmallImage && product.ImageSets[0].ImageSet[0].LargeImage[0] && product.ImageSets[0].ImageSet[0].LargeImage[0].URL[0] || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg'; 
+            element.image_url = (product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0])
+                || (product && product.ImageSets && product.ImageSets[0] && product.ImageSets[0].ImageSet
+                && product.ImageSets[0].ImageSet[0] && product.ImageSets[0].ImageSet[0].SmallImage
+                && product.ImageSets[0].ImageSet[0].LargeImage[0]
+                && product.ImageSets[0].ImageSet[0].LargeImage[0].URL[0])
+                || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg';
 
-            element.subtitle = product.Offers && product.Offers[0] && product.Offers[0].Offer
-                && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
-                && product.Offers[0].Offer[0].OfferListing[0]
-                && product.Offers[0].Offer[0].OfferListing[0].Price
-                && product.Offers[0].Offer[0].OfferListing[0].Price[0]
-                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
-                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0];
+            element.subtitle = product.ItemAttributes && product.ItemAttributes[0]
+                && product.ItemAttributes[0].ListPrice && product.ItemAttributes[0].ListPrice[0]
+                && product.ItemAttributes[0].ListPrice[0].FormattedPrice
+                && product.ItemAttributes[0].ListPrice[0].FormattedPrice[0];
             element.buttons = [];
             if (product.HasVariations) {
                 element.buttons.push({
@@ -161,7 +163,7 @@ var facebookMessageSender = {
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
     sendVariationSelectionPrompt: function (recipient_id, variation_results) {
-        
+
         if (variation_results.lastVariation) {
             return facebookMessageSender.sendLastVariationSelectionPrompt(recipient_id, variation_results);
         }
@@ -263,7 +265,7 @@ var facebookMessageSender = {
      * variationValues, purchaseUrl, price }
      */
     sendVariationSummary: function (recipientId, product) {
-        
+
         var elements = [];
 
         var element = {};

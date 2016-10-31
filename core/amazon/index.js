@@ -10,7 +10,7 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: config.AWS_TAG
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers", "SearchBins"];
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "SearchBins"];
 
 
 var amazonProduct = {
@@ -221,13 +221,10 @@ var amazonProduct = {
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
-                                            "price": item.Offers && item.Offers[0] && item.Offers[0].Offer
-                                            && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
-                                            && item.Offers[0].Offer[0].OfferListing[0]
-                                            && item.Offers[0].Offer[0].OfferListing[0].Price
-                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0]
-                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
-                                            && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0],
+                                            "price": item.ItemAttributes && item.ItemAttributes[0]
+                                            && item.ItemAttributes[0].ListPrice && item.ItemAttributes[0].ListPrice[0]
+                                            && item.ItemAttributes[0].ListPrice[0].FormattedPrice
+                                            && item.ItemAttributes[0].ListPrice[0].FormattedPrice[0],
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
                                         }
