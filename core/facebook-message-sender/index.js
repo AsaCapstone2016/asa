@@ -62,7 +62,8 @@ var facebookMessageSender = {
             var element = {};
             element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
             element.item_url = product && product.DetailPageURL[0];
-            element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
+            element.image_url = product && product.ImageSets && product.ImageSets[0] && product.ImageSets[0].ImageSet && product.ImageSets[0].ImageSet[0] && product.ImageSets[0].ImageSet[0].SmallImage && product.ImageSets[0].ImageSet[0].LargeImage[0] && product.ImageSets[0].ImageSet[0].LargeImage[0].URL[0] || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg'; 
+
             element.subtitle = product.Offers && product.Offers[0] && product.Offers[0].Offer
                 && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
                 && product.Offers[0].Offer[0].OfferListing[0]
