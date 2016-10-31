@@ -58,7 +58,7 @@ var runQuery = function (credentials, method) {
                                     failure(respObj.Items[0].Request[0].Errors);
                                 } else if (respObj.Items[0].Item) {
                                     var result = {
-                                        "Items": respObj.Items[0].Item
+                                        Items: respObj.Items[0].Item
                                     };
 
                                     if (respObj.Items[0].SearchBinSets && respObj.Items[0].SearchBinSets.length > 0) {

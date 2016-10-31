@@ -12,6 +12,10 @@ var facebookMessageSender = {
     sendTextMessage: function (recipient_id, message, quick_replies) {
         // Quick reply field defaults to empty array
         quick_replies = quick_replies === undefined ? [] : quick_replies;
+        
+        if (quick_replies.length > 10) {
+            console.log(`ERROR: trying to send more than 10 quick replies ${JSON.stringify(quick_replies, null, 2)}`);
+        }
 
         var json = {
             recipient: {
