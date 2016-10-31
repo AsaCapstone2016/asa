@@ -8,7 +8,7 @@ var config = require('./../../config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,
     awsSecret: config.AWS_SECRET,
-    awsTag: "evanm-20"
+    awsTag: config.AWS_TAG
 });
 var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers", "SearchBins"];
 
@@ -305,7 +305,7 @@ function buildItemResponse(result) {
             // *** ERROR *** no ASIN
             console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
             curItem.cartCreated = false;
-            curItem.purchaseUrl = "https://amazon.com";
+            curItem.purchaseUrl = `https://amazon.com/?tag=${config.AWS_TAG}`;
         }
     }
     return Promise.all(promiseArray).then(() => {

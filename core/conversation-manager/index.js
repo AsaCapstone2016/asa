@@ -11,6 +11,7 @@ let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
+const ASSOCIATE_TAG = config.AWS_TAG;
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
@@ -270,7 +271,7 @@ const actions = {
                                     });
                             } else {
                                 // Send message to user explaining they should go to Amazon to select variations
-                                let itemLink = `http://asin.info/a/${context.parentASIN}`;
+                                let itemLink = `http://amazon.com/dp/${context.parentASIN}/?tag=${ASSOCIATE_TAG}`;
                                 delete context.parentASIN;
                                 delete context.selectedVariations;
                                 return messageSender.outsourceVariationSelection(recipientId, itemLink)
@@ -404,7 +405,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                     // If the cart wasn't created, the purchase link should send them to the Amazon page for the specific item
                                     if (cartUrl === undefined) {
                                         isCart = '0';
-                                        redirectUrl = `http://asin.info/a/${product.ASIN}`;
+                                        redirectUrl = `http://amazon.com/dp/${product.parentASIN}/?tag=${ASSOCIATE_TAG}`;
                                     }
 
                                     let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
