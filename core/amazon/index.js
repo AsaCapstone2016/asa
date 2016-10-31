@@ -8,18 +8,32 @@ var config = require('./../../config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,
     awsSecret: config.AWS_SECRET,
-    awsTag: "evanm-20"
+    awsTag: config.AWS_TAG
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers"];
+var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "Offers", "SearchBins"];
 
 
 var amazonProduct = {
-    itemSearch: function (keywords) {
-        return amazon_client.itemSearch({
+    /**
+     * params: {
+     *      index: 'Books',
+     *      browseNodes: [4,1]
+     * }
+     */
+    itemSearch: function (keywords, params) {
+        params = params || {};
+
+        let search_params = {
             "searchIndex": "All",
             "keywords": keywords,
             "responseGroup": itemResponseGroup
-        }).then((result) => {
+        };
+
+        Object.keys(params).forEach(key => {
+            search_params[key] = params[key];
+        });
+        
+        return amazon_client.itemSearch(search_params).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
@@ -55,6 +69,66 @@ var amazonProduct = {
             console.log(`ERROR creating cart for ${ASIN}: ${error}`);
             return undefined;
         });
+    },
+
+    /**
+     * searchResults: raw itemSearch results with search bins
+     * numIndices: number of indices to return
+     *
+     * returns: array of filter results for the first 'numIndices' entries only if the filter name is "Categories"
+     */
+    topRelevantSearchIndices: function (searchResults, numIndices) {
+        let filterList = this.getFilterInfo(searchResults);
+        let indexList = [];
+        if (filterList[0].name == "Categories") {
+            // Grab only the first 'numIndices' search indices
+            // Array.slice does not error if the stop index is past the end of the array
+            indexList = filterList[0].bins.slice(0, numIndices);
+        }
+        return indexList;
+    },
+
+    /**
+     * Array with filter info
+     * [
+     *      {
+     *          name: <filter name>,
+     *          bins: [
+     *              {
+     *                  name: <bin name>,
+     *                  params: [
+     *                      {type: <param type>, value: <param value>}
+     *                  ]
+     *              }
+     *          ]
+     *      }
+     * ]
+     */
+    getFilterInfo: function (searchResults) {
+
+        // let searchBinSet = searchResults.SearchBinSets && searchResults.SearchBinSets[0] && searchResults.SearchBinSets[0].SearchBinSet;
+        let searchBinSets = searchResults.SearchBinSets;
+
+        let filterList = [];
+        searchBinSets.forEach((set) => {
+            let filter = {};
+            filter.name = set.$.NarrowBy;
+            filter.bins = [];
+            let bins = set.Bin;
+            bins.forEach((bin)=>{
+                let binObj = {};
+                binObj.name = bin.BinName && bin.BinName[0];
+                binObj.params = bin.BinParameter.map(param => {
+                    return {
+                        type: param.Name[0],
+                        value: param.Value[0]
+                    }
+                });
+                filter.bins.push(binObj);
+            })
+            filterList.push(filter);
+        });
+        return filterList;
     },
 
     variationPick: function (ASIN, variationValues, variationMap) {
@@ -109,6 +183,7 @@ var amazonProduct = {
             "IdType": "ASIN",
             "ResponseGroup": ["ItemAttributes", "Variations", "VariationOffers"]
         }).then(function (result) {
+            result = result.Items;
             if (result[0].Variations !== undefined && result[0].Variations.length > 0 &&
                 result[0].Variations[0].VariationDimensions !== undefined &&
                 result[0].Variations[0].VariationDimensions.length > 0 &&
@@ -198,7 +273,9 @@ var amazonProduct = {
     }
 };
 
-function buildItemResponse(items) {
+function buildItemResponse(result) {
+    let items = result.Items;
+
     var promiseArray = [];
     for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
         let curItem = items[itemIdx];
@@ -228,12 +305,13 @@ function buildItemResponse(items) {
             // *** ERROR *** no ASIN
             console.log(`Item #${itemIdx} has no ASIN: `, JSON.stringify(curItem, null, 2));
             curItem.cartCreated = false;
-            curItem.purchaseUrl = "https://amazon.com";
+            curItem.purchaseUrl = `https://amazon.com/?tag=${config.AWS_TAG}`;
         }
     }
     return Promise.all(promiseArray).then(() => {
-        return items;
+        return result;
     });
 }
+
 
 module.exports = amazonProduct;

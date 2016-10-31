@@ -86,7 +86,7 @@ var sessionsDAO = {
 
         return docClient.update(params).promise()
             .then((success) => {
-                console.log(`Updated context for ${uid} to ${JSON.stringify(ctx)}`);
+                console.log(`Updated context for ${uid} to ${JSON.stringify(ctx, null, 2)}`);
             }, (error) => {
                 console.log(`ERROR updating context: ${error}`);
             });
