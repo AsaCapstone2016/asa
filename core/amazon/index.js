@@ -21,7 +21,7 @@ var amazonProduct = {
      * }
      */
     itemSearch: function (keywords, params) {
-        params = params !== undefined ? params : {};
+        params = params || {};
 
         let search_params = {
             "searchIndex": "All",
@@ -29,12 +29,9 @@ var amazonProduct = {
             "responseGroup": itemResponseGroup
         };
 
-        if (params.index) search_params.searchIndex = params.index;
-        if (params.nodes) search_params.browseNode = params.nodes;
-        if (params.brand) search_params.brand = params.brand;
-        if (params.minPrice) search_params.minimumPrice = params.minPrice;
-        if (params.maxPrice) search_params.maximumPrice = params.maxPrice;
-        if (params.minPercentOff) search_params.minPercentageOff = params.minPercentOff;
+        Object.keys(params).forEach(key => {
+            search_params[key] = params[key];
+        });
         
         return amazon_client.itemSearch(search_params).then((result) => {
             return buildItemResponse(result);
@@ -78,35 +75,31 @@ var amazonProduct = {
      * searchResults: raw itemSearch results with search bins
      * numIndices: number of indices to return
      *
-     * returns: array with index name for top numIndices indices
+     * returns: array of filter results for the first 'numIndices' entries only if the filter name is "Categories"
      */
     topRelevantSearchIndices: function (searchResults, numIndices) {
         let filterList = this.getFilterInfo(searchResults);
         let indexList = [];
         if (filterList[0].name == "Categories") {
-            indexList = filterList[0].bins.map(index => {
-                return index.params[0].value;
-            });
             // Grab only the first 'numIndices' search indices
             // Array.slice does not error if the stop index is past the end of the array
-            indexList = indexList.slice(0, numIndices);
+            indexList = filterList[0].bins.slice(0, numIndices);
         }
         return indexList;
     },
 
     /**
-     * Array with filter info including browse node bins
+     * Array with filter info
      * [
      *      {
      *          name: <filter name>,
      *          bins: [
-     *              {name: <bin name>, value: <bin value>}
-     *          ]
-     *      },
-     *      {
-     *          name: <filter name>,
-     *          bins: [
-     *              {name: <bin name>, value: <bin value>}
+     *              {
+     *                  name: <bin name>,
+     *                  params: [
+     *                      {type: <param type>, value: <param value>}
+     *                  ]
+     *              }
      *          ]
      *      }
      * ]
