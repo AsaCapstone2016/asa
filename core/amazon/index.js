@@ -21,15 +21,22 @@ var amazonProduct = {
      * }
      */
     itemSearch: function (keywords, params) {
-        const index = params !== undefined && params.index !== undefined ? params.index : 'All';
-        const nodes = params !== undefined && params.bins !== undefined ? params.bins : [];
-        
-        return amazon_client.itemSearch({
-            "searchIndex": index,
+        params = params !== undefined ? params : {};
+
+        let search_params = {
+            "searchIndex": "All",
             "keywords": keywords,
-            "responseGroup": itemResponseGroup,
-            "browseNode": nodes
-        }).then((result) => {
+            "responseGroup": itemResponseGroup
+        };
+
+        if (params.index) search_params.searchIndex = params.index;
+        if (params.nodes) search_params.browseNode = params.nodes;
+        if (params.brand) search_params.brand = params.brand;
+        if (params.minPrice) search_params.minimumPrice = params.minPrice;
+        if (params.maxPrice) search_params.maximumPrice = params.maxPrice;
+        if (params.minPercentOff) search_params.minPercentageOff = params.minPercentOff;
+        
+        return amazon_client.itemSearch(search_params).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
