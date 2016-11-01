@@ -4,22 +4,25 @@
   "scripts": {
     "update-modules": "npm install core/database && npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
     "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
-    "lint": "eslint ./** --ext .js"
+    "lint": "eslint ./** --ext .js",
+    "testbench": "npm run update-modules && cd bench && ./start.sh",
+    "testbench:setup": "cd bench && ./setup.sh",
+    "testbench:destroy": "cd bench && ./kill.sh"
   },
   "dependencies": {
     "amazon": "file:./core/amazon",
-    "compute-cosine-distance": "^1.0.0",
-    "conversation-manager": "file:./core/conversation-manager",
-    "cse498capstonewit": "^1.0.0-beta",
     "database": "file:./core/database",
+    "conversation-manager": "file:./core/conversation-manager",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
-    "fuzzy": "^0.1.3",
+    "compute-cosine-distance": "^1.0.0",
     "node-fetch": "^1.6.2"
   },
   "devDependencies": {
-    "csv-parse": "^1.1.7",
+    "body-parser": "^1.15.2",
     "eslint": "^3.7.1",
-    "fs": "0.0.1-security"
+    "express": "^4.14.0",
+    "ngrok": "^2.2.3",
+    "nodemon": "^1.11.0"
   }
 }

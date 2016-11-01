@@ -9,7 +9,14 @@ var facebookMessageSender = {
     //          recipientId: ID of person to send message to.
     //          text: message of text
     //        }
-    sendTextMessage: function (recipient_id, message) {
+    sendTextMessage: function (recipient_id, message, quick_replies) {
+        // Quick reply field defaults to empty array
+        quick_replies = quick_replies === undefined ? [] : quick_replies;
+
+        if (quick_replies.length > 10) {
+            console.log(`ERROR: trying to send more than 10 quick replies ${JSON.stringify(quick_replies, null, 2)}`);
+        }
+
         var json = {
             recipient: {
                 id: recipient_id
@@ -18,6 +25,19 @@ var facebookMessageSender = {
                 text: message
             }
         };
+
+        quick_replies = quick_replies.map(reply => {
+            return {
+                content_type: 'text',
+                title: reply.text,
+                payload: reply.payload
+            }
+        });
+
+        if (quick_replies.length > 0) {
+            json.message.quick_replies = quick_replies;
+        }
+
         return callSendAPI(json);
     },
 
@@ -46,27 +66,50 @@ var facebookMessageSender = {
             var element = {};
             element.title = product && product.ItemAttributes[0] && product.ItemAttributes[0].Title[0];
             element.item_url = product && product.DetailPageURL[0];
-            element.image_url = product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0];
-            element.subtitle = product && product.OfferSummary && product.OfferSummary[0] &&
-                product.OfferSummary[0].LowestNewPrice && product.OfferSummary[0].LowestNewPrice[0].FormattedPrice[0];
+            element.image_url = (product && product.LargeImage && product.LargeImage[0] && product.LargeImage[0].URL[0])
+                || (product && product.ImageSets && product.ImageSets[0] && product.ImageSets[0].ImageSet
+                && product.ImageSets[0].ImageSet[0] && product.ImageSets[0].ImageSet[0].SmallImage
+                && product.ImageSets[0].ImageSet[0].LargeImage[0]
+                && product.ImageSets[0].ImageSet[0].LargeImage[0].URL[0])
+                || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg';
+
+            element.subtitle = product.price || (product.ItemAttributes && product.ItemAttributes[0]
+                && product.ItemAttributes[0].ListPrice && product.ItemAttributes[0].ListPrice[0]
+                && product.ItemAttributes[0].ListPrice[0].FormattedPrice
+                && product.ItemAttributes[0].ListPrice[0].FormattedPrice[0]) || (product.Offers && product.Offers[0]
+                && product.Offers[0].Offer && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
+                && product.Offers[0].Offer[0].OfferListing[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0]
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
+                && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]);
+            element.buttons = [];
             if (product.HasVariations) {
-                element.buttons = [{
+                element.buttons.push({
                     type: 'postback',
                     title: "Select Options",
                     payload: JSON.stringify({
                         METHOD: "SELECT_VARIATIONS",
                         ASIN: product.ParentASIN[0]
                     })
-                }];
+                });
             }
             else {
-                element.buttons = [{
+                element.buttons.push({
                     type: "web_url",
-                    url: product.cartUrl,
+                    url: product.purchaseUrl,
                     title: "Purchase",
                     webview_height_ratio: "TALL"
-                }];
+                });
             }
+            element.buttons.push({
+                type: 'postback',
+                title: "Related Items",
+                payload: JSON.stringify({
+                    METHOD: "SIMILARITY_LOOKUP",
+                    ASIN: product.ASIN
+                })
+            });
 
             elements.push(element);
         });
@@ -88,12 +131,45 @@ var facebookMessageSender = {
     },
 
     /**
+     * Tell the user they should select item options on Amazon
+     * @param recipient_id
+     * @param item_link Link to the parent itme on Amazon
+     */
+    outsourceVariationSelection: function (recipient_id, item_link) {
+
+        let offloadMsg = "The options for this item are too complex to select here...";
+
+        let buttons = [{
+            type: 'web_url',
+            url: item_link,
+            title: 'Go to Amazon',
+            webview_height_ratio: 'TALL'
+        }];
+
+        let json = {
+            recipient: {id: recipient_id},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: offloadMsg,
+                        buttons: buttons
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    /**
      *
      * @param recipient_id
      * @param variation_array [{ title:'sfsd', ASIN: asin }]
      */
     sendVariationSelectionPrompt: function (recipient_id, variation_results) {
-        console.log(`SEND variation prompt: ${JSON.stringify(variation_results)}`);
+
         if (variation_results.lastVariation) {
             return facebookMessageSender.sendLastVariationSelectionPrompt(recipient_id, variation_results);
         }
@@ -192,10 +268,10 @@ var facebookMessageSender = {
      *
      * @param recipientId
      * @param product the single result that we are sending. { parentTitle, imageUrl (LARGE), variationNames,
-     * variationValues, cartUrl, price }
+     * variationValues, purchaseUrl, price }
      */
     sendVariationSummary: function (recipientId, product) {
-        console.log(`Product to summarize: ${JSON.stringify(product)}`);
+
         var elements = [];
 
         var element = {};
@@ -209,7 +285,7 @@ var facebookMessageSender = {
 
         element.buttons = [{
             type: "web_url",
-            url: product.cartUrl,
+            url: product.purchaseUrl,
             title: "Purchase",
             webview_height_ratio: "TALL"
         }, {
@@ -241,7 +317,6 @@ var facebookMessageSender = {
 };
 
 function callSendAPI(messageData) {
-    console.log(`messageData: ${JSON.stringify(messageData)}`);
 
     var qs = 'access_token=' + encodeURIComponent(config.FB_PAGE_TOKEN);
 
@@ -257,7 +332,6 @@ function callSendAPI(messageData) {
             if (json.error && json.error.message) {
                 throw new Error(json.error.message);
             }
-            //console.log(json);
         });
 }
 

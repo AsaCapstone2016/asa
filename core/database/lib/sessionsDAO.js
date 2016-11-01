@@ -28,11 +28,9 @@ var sessionsDAO = {
             .then((data) => {
                 if (Object.keys(data).length != 0) {
                     // if session exists, grab it
-                    console.log('SESSION exists!');
                     return data.Item;
                 } else {
                     // if session does not exist, create it
-                    console.log('SESSION does not exist!');
                     let params = {
                         TableName: tableName,
                         Item: {
@@ -88,7 +86,7 @@ var sessionsDAO = {
 
         return docClient.update(params).promise()
             .then((success) => {
-                console.log(`Updated context for ${uid} to ${JSON.stringify(ctx)}`);
+                console.log(`Updated context for ${uid} to ${JSON.stringify(ctx, null, 2)}`);
             }, (error) => {
                 console.log(`ERROR updating context: ${error}`);
             });

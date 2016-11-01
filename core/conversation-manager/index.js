@@ -1,8 +1,9 @@
 'use strict';
 
 let amazon = require('amazon');
-let Wit = require('cse498capstonewit').Wit;
-let log = require('cse498capstonewit').log;
+
+let Wit = require('node-wit').Wit;
+let log = require('node-wit').log;
 
 // database access objects
 let searchQueryDAO = require('database').searchQueryDAO;
@@ -10,11 +11,7 @@ let sessionsDAO = require('database').sessionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
-const TABLE_PREFIX = config.TABLE_PREFIX;
-
-// for dynamodb configuration
-let aws = require('aws-sdk');
-aws.config.update({region: 'us-east-1'});
+const ASSOCIATE_TAG = config.AWS_TAG;
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
@@ -27,8 +24,16 @@ const actions = {
 
                 if (recipientId) {
                     const msg = response.text;
-                    console.log(`SEND "${msg}" to ${recipientId}`);
-                    return messageSender.sendTextMessage(recipientId, msg)
+                    let quickreplies = response.quickreplies;
+                    if (quickreplies !== undefined) {
+                        quickreplies = quickreplies.map(text => {
+                            return {
+                                text: text,
+                                payload: text
+                            };
+                        });
+                    }
+                    return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
 
@@ -47,13 +52,76 @@ const actions = {
                     msg += " Try saying...\n\n";
                     msg += " • I want to buy something\n";
                     msg += " • Can you find Ocarina of Time?";
-                    console.log(`SEND help message to ${recipientId}`);
                     return messageSender.sendTextMessage(recipientId, msg)
                         .then(() => {
                             return request.context;
                         });
                 }
             });
+    },
+    checkQuery(request) {
+        return actions.storeKeywords(request)
+            .then((context) => {
+                delete context.no_keywords;
+                let entities = request.entities;
+
+                if ('keywords' in context) {
+                    if ('intent' in entities && entities.intent[0].value === 'search') {
+                        // Search intent AND keywords -> perform search
+                        context.run_search = true;
+                        delete context.missing_keywords;
+                        delete context.missing_search_intent;
+                    } else {
+                        // Keywords but no search intent -> confirm desire to search
+                        context.missing_search_intent = true;
+                        delete context.run_search;
+                        delete context.missing_keywords;
+                    }
+                } else {
+                    // Search intent but no keywords -> ask for keywords
+                    context.missing_keywords = true;
+                    delete context.run_search;
+                    delete context.missing_search_intent;
+                }
+                return context;
+            }, (error) => {
+                console.log(`ERROR in checkQuery: ${error}`);
+            });
+    },
+    storeKeywords(request) {
+        return new Promise((resolve, reject) => {
+            let entities = request.entities;
+            let context = request.context;
+
+            // If the context has the missing_keywords flag, delete it
+            delete context.missing_keywords;
+
+            if ('search_query' in entities) {
+                // Grab the keywords
+                let keywords = [];
+                entities.search_query.forEach((keyword) => {
+                    keywords.push(keyword.value);
+                });
+                context.keywords = keywords.join(' ');
+                context.run_search = true;
+                delete context.no_keywords;
+            } else {
+                // No keywords found
+                context.no_keywords = true;
+                delete context.keywords;
+                delete context.query_params;
+                delete context.run_search;
+            }
+            return resolve(context);
+        })
+    },
+    confirmSearch(request) {
+        return new Promise((resolve, reject) => {
+            let context = request.context;
+            context.run_search = true;
+            delete context.missing_search_intent;
+            return resolve(context);
+        });
     },
     search(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
@@ -64,29 +132,20 @@ const actions = {
 
                 let entities = request.entities;
                 let context = request.context;
+                const keywords = context.keywords;
+                context.query_params = {};
                 return new Promise((resolve, reject) => {
-                    if ('search_query' in entities) {
-
-                        let keywords = [];
-                        entities.search_query.forEach((query) => {
-                            keywords.push(query.value);
+                    // Log search event
+                    searchQueryDAO.addItem(recipientId, keywords);
+                    // Search Amazon with keywords
+                    return amazon.itemSearch(keywords, context.query_params)
+                        .then((result) => {
+                            context.items = result.Items;
+                            context.bins = amazon.topRelevantSearchIndices(result, 4);
+                            delete context.run_search;
+                            delete context.missing_search_intent;
+                            return resolve(context);
                         });
-                        keywords = keywords.join(' ');
-
-                        console.log(`SEARCH: ${keywords}`);
-                        searchQueryDAO.addItem(recipientId, keywords);
-
-                        return amazon.itemSearch(keywords)
-                            .then((json) => {
-                                context.items = json;
-                                delete context.missing_keywords;
-                                return resolve(context);
-                            });
-                    } else {
-                        context.missing_keywords = true;
-                        delete context.items;
-                        return resolve(context);
-                    }
                 });
 
             }, (error) => {
@@ -100,17 +159,20 @@ const actions = {
 
                 messageSender.sendTypingMessage(recipientId);
 
+                let context = request.context;
+                const items = context.items;
                 if (recipientId) {
-                    console.log(`SEND LIST OF ITEMS`);
-                    const items = request.context.items;
                     items.forEach((item)=> {
-
-                        item.cartUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&cart_url=${encodeURIComponent(item.cartUrl)}&ASIN=${item.ASIN}`;
+                        let isCart = '0';
+                        if (item.cartCreated) {
+                            isCart = '1';
+                        }
+                        item.purchaseUrl = `${config.CART_REDIRECT_URL}?user_id=${recipientId}&redirect_url=${item.purchaseUrl}&ASIN=${item.ASIN}&is_cart=${isCart}`;
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
-                            delete request.context.items;
-                            return request.context;
+                            delete context.items;
+                            return context;
                         });
                 }
 
@@ -118,19 +180,73 @@ const actions = {
                 console.log(`ERROR in sendSearchResults action: ${error}`);
             });
     },
-    stopSelectingVariations(request) {
+    sendAddFilterPrompt(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+                if (recipientId) {
+                    const quickreplies = context.bins.map(bin => {
+                        return {
+                            text: bin.name.slice(0, 20),
+                            payload: JSON.stringify({
+                                METHOD: "ADD_FILTER",
+                                params: bin.params
+                            })
+                        };
+                    });
+                    let prompt = context.bins[0].params[0].type === "SearchIndex" ? "Keep looking under" : "Add a filter";
+                    return messageSender.sendTextMessage(recipientId, prompt, quickreplies)
+                        .then(() => {
+                            delete context.bins;
+                            return context;
+                        })
+                }
+            }, (error) => {
+                console.log(`ERROR in sendAddFilterPrompt action: ${error}`);
+            })
+    },
+    sendFilterByPrompt(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+                if (recipientId) {
+                    let quickreplies = context.filters.map(filter => {
+
+                        return {
+                            text: filter.name === "Subject" ? "Category" : filter.name,
+                            payload: JSON.stringify({
+                                METHOD: "FILTER_BY",
+                                filter: filter.name,
+                                bins: filter.bins
+                            })
+                        };
+                    });
+                    quickreplies.push({
+                        text: 'Clear Filters',
+                        payload: JSON.stringify({
+                            METHOD: "CLEAR_FILTERS"
+                        })
+                    });
+                    return messageSender.sendTextMessage(recipientId, "Choose a type of filter", quickreplies)
+                        .then(() => {
+                            delete context.filters;
+                            return context;
+                        })
+                }
+            }, (error) => {
+                console.log(`ERROR in sendFilterByPrompt action: ${error}`);
+            })
+    },
+    stopSearchProcess(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 return messageSender.sendTextMessage(recipientId, "Let me know if you need anything else!");
             })
             .then(() => {
-                return new Promise((resolve, reject) => {
-                    let context = request.context;
-                    delete context.selectedVariations;
-                    delete context.parentASIN;
-                    return resolve(context);
-                });
+                return actions.clearContext(request);
             }, (error) => {
                 console.log(`ERROR stopping variation selection: ${error}`);
             })
@@ -148,10 +264,21 @@ const actions = {
 
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((result) => {
-                            return messageSender.sendVariationSelectionPrompt(recipientId, result)
-                                .catch((error) => {
-                                    console.log(`ERROR sending variation prompt: ${error}`);
-                                });
+                            if (result.conversational) {
+                                return messageSender.sendVariationSelectionPrompt(recipientId, result)
+                                    .catch((error) => {
+                                        console.log(`ERROR sending variation prompt: ${error}`);
+                                    });
+                            } else {
+                                // Send message to user explaining they should go to Amazon to select variations
+                                let itemLink = `http://amazon.com/dp/${context.parentASIN}/?tag=${ASSOCIATE_TAG}`;
+                                delete context.parentASIN;
+                                delete context.selectedVariations;
+                                return messageSender.outsourceVariationSelection(recipientId, itemLink)
+                                    .catch((error) => {
+                                        console.log(`ERROR sending outsourcing message for variation selection: ${error}`);
+                                    })
+                            }
                         }, (error) => {
                             console.log(`ERROR sending variation prompt: ${error}`);
                         })
@@ -160,6 +287,9 @@ const actions = {
                         });
                 });
             });
+    },
+    clearContext(request) {
+        return new Promise((resolve, reject) => resolve({}));
     }
 };
 
@@ -178,7 +308,7 @@ module.exports.handler = (message, sender, msgSender) => {
     return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
 
-            console.log(`SESSION: ${JSON.stringify(session)}`);
+            //console.log(`SESSION before handler: ${JSON.stringify(session)}`);
 
             messageSender = msgSender;
 
@@ -189,10 +319,19 @@ module.exports.handler = (message, sender, msgSender) => {
             if (message.content.action === 'text') {
                 // Handle text messages from the user
                 let text = message.content.payload;
-                console.log(`MESSAGE content: ${text}`);
+                //console.log(`MESSAGE: ${text}`);
+
                 return witClient.runActions(sessionId, text, context)
                     .then((ctx) => {
-                        return sessionsDAO.updateContext(uid, ctx);
+                        if (ctx.not_understood !== undefined) {
+                            // handle misunderstood messages
+                            delete ctx.not_understood;
+                            messageSender.sendTypingMessage(uid);
+                            return messageSender.sendTextMessage(uid, "I'm sorry, I don't understand that")
+                                .then(sessionsDAO.updateContext(uid, ctx));
+                        } else {
+                            return sessionsDAO.updateContext(uid, ctx);
+                        }
                     }, (error) => {
                         console.log(`ERROR during runActions: ${error}`);
                     });
@@ -200,16 +339,17 @@ module.exports.handler = (message, sender, msgSender) => {
             } else if (message.content.action === 'postback') {
                 // Handle button presses and quick replies
                 let payload = JSON.parse(message.content.payload);
-                console.log(`POSTBACK: ${JSON.stringify(payload)}`);
+                //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
                     // User selected the 'Get Started' button on first conversation initiation
                     return actions.sendHelpMessage(session)
                         .then((success) => {
-                            console.log('CONVERSATION INITIATED and help message sent');
+                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
                         }, (error) => {
                             console.log(`ERROR sending help message on GET_STARTED: ${error}`);
                         });
+
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
                     context.parentASIN = payload.ASIN;
@@ -257,13 +397,23 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.selectedVariations.push(payload.VARIATION_VALUE);
                     return amazon.variationPick(context.parentASIN, context.selectedVariations, null)
                         .then((product) => {
-                            console.log(`Specific product after variation selection: ${JSON.stringify(product)}`);
                             return amazon.createCart(product.ASIN, 1)
-                                .then((cartUrl) => {
-                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&cart_url=${encodeURIComponent(cartUrl)}&ASIN=${product.ASIN}`;
-                                    console.log('URL WE WANT ' + modifiedUrl);
-                                    product.cartUrl = modifiedUrl;
+                                .then((cart) => {
+                                    let cartUrl = cart.url;
+                                    let isCart = '1';
+                                    let redirectUrl = cartUrl;
 
+                                    // If the cart wasn't created, the purchase link should send them to the Amazon page for the specific item
+                                    if (cartUrl === undefined) {
+                                        isCart = '0';
+                                        redirectUrl = `http://amazon.com/dp/${product.parentASIN}/?tag=${ASSOCIATE_TAG}`;
+                                    }
+
+                                    let modifiedUrl = `${config.CART_REDIRECT_URL}?user_id=${uid}&redirect_url=${redirectUrl}&ASIN=${product.ASIN}&is_cart=${isCart}`;
+
+                                    // Send variations summary with cart redirect url
+                                    product.purchaseUrl = modifiedUrl;
+                                    product.price = cart.price || product.price;
                                     product.parentASIN = context.parentASIN;
                                     return messageSender.sendVariationSummary(uid, product)
                                         .catch((error) => {
@@ -290,8 +440,82 @@ module.exports.handler = (message, sender, msgSender) => {
                             console.log(`ERROR resetting selected variations: ${error}`);
                         });
 
+                } else if (payload.METHOD === "SIMILARITY_LOOKUP") {
+                    // User wants to see the items related to a specific item based on other user's purchases
+
+                    messageSender.sendTypingMessage(uid);
+
+                    return amazon.similarityLookup(payload.ASIN)
+                        .then((result) => {
+                            context.items = result.Items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => null);
+                        });
+
+                } else if (payload.METHOD === "FILTER_BY") {
+                    // User wants to filter by either "Brand Name", "Price Range", "Subject", or "Percent Off"
+                    // Send the bins available under that filter
+
+                    context.bins = payload.bins;
+                    return actions.sendAddFilterPrompt(session)
+                        .then((ctx) => null);
+
+                } else if (payload.METHOD === "ADD_FILTER") {
+                    /* User selected a new filter
+                     * 
+                     * Filters are either
+                     *      - a search index
+                     *      - a bin under the filter categories (see above)
+                     */
+                    messageSender.sendTypingMessage(uid);
+
+                    // Add the bin parameters to the search query
+                    let params = context.query_params;
+                    payload.params.forEach(param => {
+                        (params[param.type] = params[param.type] || []).push(param.value);
+                    });
+
+                    // Run query with updated parameters
+                    return amazon.itemSearch(context.keywords, params)
+                        .then((result) => {
+                            context.items = result.Items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => {
+                                    context = ctx;
+                                    session.context = context;
+
+                                    context.filters = amazon.getFilterInfo(result);
+                                    return actions.sendFilterByPrompt(session)
+                                        .then((ctx2) => {
+                                            return sessionsDAO.updateContext(uid, ctx2);
+                                        });
+                                });
+                        });
+
+                } else if (payload.METHOD === "CLEAR_FILTERS") {
+                    // User wants to clear all the fiters they have selected up to this point including the search index
+
+                    messageSender.sendTypingMessage(uid);
+
+                    context.query_params = {};
+                    return amazon.itemSearch(context.keywords, context.query_params)
+                        .then((result) => {
+                            context.items = result.Items;
+                            return actions.sendSearchResults(session)
+                                .then((ctx) => {
+                                    context = ctx;
+                                    session.context = context;
+
+                                    context.bins = amazon.topRelevantSearchIndices(result, 4);
+                                    return actions.sendAddFilterPrompt(session)
+                                        .then((ctx2) => {
+                                            return sessionsDAO.updateContext(uid, ctx2);
+                                        });
+                                });
+                        });
+
                 } else {
-                    console.log("Unsupported postback method");
+                    console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
 
             }
