@@ -1,6 +1,7 @@
 'use strict';
 
 /**
+ * Incorporate information about an item purchased by a user into that user's profile. 
  * 
  * @param userid Platform specific identifier string for a user
  * @param platform Name of the platform ('fb', 'slack')

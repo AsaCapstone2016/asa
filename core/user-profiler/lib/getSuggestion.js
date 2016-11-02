@@ -1,6 +1,7 @@
 'use strict';
 
 /**
+ * Suggest items a user may be interested in.
  * 
  * @param userid Platform specific identifier string for a user
  * @param platform Name of the platform ('fb', 'slack')

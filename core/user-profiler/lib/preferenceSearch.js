@@ -1,10 +1,11 @@
 'use strict';
 
 /**
+ * Find the items in a category which are the most relevant to a user
  * 
  * @param userid Platform specific identifier string for a user
  * @param platform Name of the platform ('fb', 'slack')
- * @param query Object with search query parameters
+ * @param query Object with search query parameters which defines the "category"
  */
 function queryAgainstUserProfile(userid, platform, query) {
 
