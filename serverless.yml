@@ -67,6 +67,12 @@ functions:
           path: cart-redirect
           method: get
           integration: lambda
+  reminderPoll:
+    handler: functions/reminderPoll.reminderPoll
+    timeout: 100
+    events:
+      - schedule: rate(1 minute)
+      - enabled: true
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
