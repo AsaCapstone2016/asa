@@ -2,7 +2,7 @@
   "name": "application-name",
   "version": "0.0.1",
   "scripts": {
-    "update-modules": "npm install core/database && npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
+    "update-modules": "npm install core/database && npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon && npm install core/user-profiler",
     "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
     "testbench": "npm run update-modules && cd bench && ./start.sh",
@@ -15,7 +15,7 @@
     "conversation-manager": "file:./core/conversation-manager",
     "facebook-event-converter": "file:./core/facebook-event-converter",
     "facebook-message-sender": "file:./core/facebook-message-sender",
-    "compute-cosine-distance": "^1.0.0",
+    "user-profiler": "file:./core/user-profiler",
     "node-fetch": "^1.6.2"
   },
   "devDependencies": {
