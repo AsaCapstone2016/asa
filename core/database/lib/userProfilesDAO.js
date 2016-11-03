@@ -9,7 +9,10 @@ let docClient = new aws.DynamoDB.DocumentClient();
 const tableName = `${config.TABLE_PREFIX}UserProfiles`;
 
 var userProfilesDAO = {
-	getUserProfile: (uid) => {
+	getUserProfile: (uid, platform) => {
+		// construct compound unique identifier
+		uid = `${platform}-${uid}`;
+
 		let params = {
 			TableName: tableName,
 			Key: {
@@ -36,7 +39,10 @@ var userProfilesDAO = {
 				}
 			});
 	},
-	updateUserProfile: (uid, profile) => {
+	updateUserProfile: (uid, platform, profile) => {
+		// construct compound unique identifier
+		uid = `${platform}-${uid}`;
+
 		let params = {
 			TableName: tableName,
 			Key: {
