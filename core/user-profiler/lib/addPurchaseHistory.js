@@ -25,14 +25,18 @@ function addPurchaseEvent(userid, platform, ASIN) {
         let itemBrowseNodeFreq = utils.collectBrowseNodeFreq(item, DOUBLE_COUNT);
 
         // Update user profile browse node frequencies
-        Object.keys(itemBrowseNodeFreq).forEach((key) => {
+        Object.keys(itemBrowseNodeFreq).forEach(key => {
             if ( !(key in profile) ) {
-                profile[key] = itemBrowseNodeFreq[key];
-                profile.ASINS = [ASIN];
+                profile[key] = {
+                    freq: itemBrowseNodeFreq[key].freq,
+                    items: {}
+                };
+                profile[key].items[ASIN] = itemBrowseNodeFreq[key].BrowseNodeId;
+            } else if ( !(ASIN in profile[key].items) ) {
+                profile[key].freq += itemBrowseNodeFreq[key].freq;
+                profile[key].items[ASIN] = itemBrowseNodeFreq[key].BrowseNodeId;
             } else {
-                profile[key].cnt += itemBrowseNodeFreq[key].cnt;
-                profile[key].BrowseNodeId = profile[key].BrowseNodeId.concat(itemBrowseNodeFreq[key].BrowseNodeId);
-                profile[key].ASINS.push(ASIN);
+                console.log(`${key} already associated with ${ASIN}`);
             }
         });
 
