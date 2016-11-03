@@ -40,7 +40,7 @@ function traverseItemNodes(nodes, frequencies, alreadySeen, doubleCount, curLeve
             // If we haven't seen this browse node yet, initialize it's frequency count
             if (!(name in frequencies)) {
                 frequencies[name] = {
-                    cnt: 0,
+                    freq: 0,
                     BrowseNodeId: []
                 };
             }
@@ -49,7 +49,7 @@ function traverseItemNodes(nodes, frequencies, alreadySeen, doubleCount, curLeve
             // seen this browse node yet
             if (doubleCount || !(name in alreadySeen)) {
                 alreadySeen[name] = 1;
-                frequencies[name].cnt += 1;
+                frequencies[name].freq += 1;
                 frequencies[name].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
             }
         }
@@ -120,7 +120,7 @@ const utils = {
         let profileVector = new Array(idxMap.length);
         Object.keys(idxMap).forEach(node => {
             if (node in profile) {
-                profileVector[idxMap[node]] = profile[node].cnt;
+                profileVector[idxMap[node]] = profile[node].freq;
             } else {
                 profileVector[idxMap[node]] = 0;
             }
@@ -135,7 +135,7 @@ const utils = {
             // Create item vector
             let itemVector = new Array(profileVector.length).fill(0);
             Object.keys(item).forEach(node => {
-                itemVector[idxMap[node]] = node.cnt;
+                itemVector[idxMap[node]] = node.freq;
             });
 
             // Calculate cosine sim
@@ -171,9 +171,9 @@ const utils = {
             "ResponseGroup": ["ItemAttributes", "BrowseNodes"]
         }).then(res => {
             // console.log(`Raw Item Info: ${console.log(JSON.stringify(res, null, 2))}`);
-            if (res && res.Item && res.Item[0]) {
-                return res.Item[0];
-            }else{
+            if (res && res.Items && res.Items[0]) {
+                return res.Items[0];
+            } else {
                 console.log("ERROR: INVALID ASIN");
             }
         }, err => {
