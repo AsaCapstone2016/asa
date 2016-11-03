@@ -2,6 +2,7 @@
 
 const config = require('./../../../config');
 let amazon_api = require('amazon-product-api');
+let distance = require('compute-cosine-distance');
 
 
 let amazon_client = amazon_api.createClient({
@@ -10,6 +11,11 @@ let amazon_client = amazon_api.createClient({
     awsTag: config.AWS_TAG
 });
 
+// Should we double count an item's browse node counts when calculating similarity to a user profile?
+const DOUBLE_COUNT = true;
+
+// How far up the browse node tree should we traverse when collecting browse node info for an item?
+const BROWSE_NODE_DEPTH = 2;
 
 /**
  * Traverse the browse node tree for an item to collect frequencies.
@@ -68,11 +74,11 @@ const utils = {
      * 
      * @returns Object mapping browse node names to a frequency count and array of ids
      */
-    collectBrowseNodeFreq(item, doubleCount, maxLevel) {
+    collectBrowseNodeFreq(item, doubleCount) {
         let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
         let freq = {};
 
-        traverseItemNodes(browseNodes, freq, {}, doubleCount, 0, maxLevel);
+        traverseItemNodes(browseNodes, freq, {}, doubleCount, 0, BROWSE_NODE_DEPTH);
 
         return freq;
     },
@@ -87,6 +93,68 @@ const utils = {
      */
     sortItemsBySimilarity(profile, items) {
 
+        let idxMap = {};        // Map browse node names to a position in the feature vectors
+        let itemNodes = [];     // Browse node frequencies for each item
+
+        /*
+         * Create taxonomy of browse nodes present in the candidate items
+         */
+        let idx = 0;
+        items.forEach(item => {
+            // Get the browse nodes associated with this item (with double counting)
+            let browseNodes = utils.collectBrowseNodeFreq(item, DOUBLE_COUNT);
+            itemNodes.push(browseNodes);
+
+            // Map any unseen browse nodes to the next index
+            Object.keys(browseNodes).forEach(node => {
+                if (!(node in idxMap)) {
+                    idxMap[node] = idx;
+                    idx++;
+                }
+            });
+        });
+
+        /*
+         * Create profile vector
+         */
+        let profileVector = new Array(idxMap.length);
+        Object.keys(idxMap).forEach(node => {
+            if (node in profile) {
+                profileVector[idxMap[node]] = profile[node].cnt;
+            } else {
+                profileVector[idxMap[node]] = 0;
+            }
+        });
+
+        /*
+         * Calculate cosine similarity b/w an item and the profile
+         */
+        for (let i in itemNodes) {
+            let item = itemNodes[i];
+
+            // Create item vector
+            let itemVector = new Array(profileVector.length).fill(0);
+            Object.keys(item).forEach(node => {
+                itemVector[idxMap[node]] = node.cnt;
+            });
+
+            // Calculate cosine sim
+            var cosineSim = distance(profileVector, itemVector);
+            if (!cosineSim) {
+                cosineSim = 2;
+            }
+
+            items[i].cosineSim = cosineSim;
+        }
+
+        /*
+         * Sort the items by their cosine similarity with the user profile
+         */
+        items.sort(function(a,b){
+            return a.cosineSim - b.cosineSim;
+        })
+
+        return items;
     },
 
     /**

@@ -2,8 +2,8 @@
 
 let utils = require('./utils');
 
-const DOUBLE_COUNT_BROWSE_NODES = false;
-const BROWSE_NODE_DEPTH = 2;
+// Should we double count browse nodes when adding an item's info to a user profile?
+const DOUBLE_COUNT = false;
 
 /**
  * Incorporate information about an item purchased by a user into that user's profile.
@@ -22,7 +22,7 @@ function addPurchaseEvent(userid, platform, ASIN) {
         let ASIN = item.ASIN && item.ASIN[0];
 
         // Parse browse node info from response
-        let itemBrowseNodeFreq = utils.collectBrowseNodeFreq(item, DOUBLE_COUNT_BROWSE_NODES, BROWSE_NODE_DEPTH);
+        let itemBrowseNodeFreq = utils.collectBrowseNodeFreq(item, DOUBLE_COUNT);
 
         // Update user profile browse node frequencies
         Object.keys(itemBrowseNodeFreq).forEach((key) => {
