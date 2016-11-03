@@ -164,7 +164,7 @@ const utils = {
      * 
      * @returns Raw item info from Amazon Advertising API
      */
-    getItem(ASIN) {
+    getItemInfo(ASIN) {
         return amazon_client.itemLookup({
             "ItemId": ASIN,
             "IdType": "ASIN",
@@ -181,3 +181,5 @@ const utils = {
         });
     }
 };
+
+module.exports = utils;

@@ -18,7 +18,7 @@ function addPurchaseEvent(userid, platform, ASIN) {
     let profile = {};
 
     // Get item browse node information from amazon
-    utils.getItem(ASIN).then(item => {
+    utils.getItemInfo(ASIN).then(item => {
         let ASIN = item.ASIN && item.ASIN[0];
 
         // Parse browse node info from response
