@@ -26,18 +26,23 @@ function addPurchaseEvent(userid, platform, ASIN) {
 
         // Update user profile browse node frequencies
         Object.keys(itemBrowseNodeFreq).forEach(key => {
+            // If we haven't seen this item before with this browse node, add the
+            // frequency for this item to the overall frequency for this browse node
             if ( !(key in profile) ) {
+                // We've never even seen this browse node before, create an entry
                 profile[key] = {
                     freq: itemBrowseNodeFreq[key].freq,
                     items: {}
                 };
-                profile[key].items[ASIN] = itemBrowseNodeFreq[key].BrowseNodeId;
             } else if ( !(ASIN in profile[key].items) ) {
+                // We've seen this browse node before but not on this item, increase
+                // the frequency
                 profile[key].freq += itemBrowseNodeFreq[key].freq;
-                profile[key].items[ASIN] = itemBrowseNodeFreq[key].BrowseNodeId;
-            } else {
-                console.log(`${key} already associated with ${ASIN}`);
             }
+            
+            // Even if we've already seen this ASIN, take the chance to update the
+            // the browse node ids associated with this item for this node
+            profile[key].items[ASIN] = itemBrowseNodeFreq[key].BrowseNodeId;
         });
 
         //TODO Save updated profile

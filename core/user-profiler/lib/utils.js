@@ -170,7 +170,6 @@ const utils = {
             "IdType": "ASIN",
             "ResponseGroup": ["ItemAttributes", "BrowseNodes"]
         }).then(res => {
-            // console.log(`Raw Item Info: ${console.log(JSON.stringify(res, null, 2))}`);
             if (res && res.Items && res.Items[0]) {
                 return res.Items[0];
             } else {
