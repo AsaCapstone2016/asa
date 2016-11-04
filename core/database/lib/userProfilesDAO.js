@@ -24,7 +24,7 @@ var userProfilesDAO = {
 			.then((data) => {
 				if (Object.keys(data).length != 0) {
 					// if user profile exists, get it
-					return data.profile;
+					return data.Item.profile;
 				} else {
 					// if user profile doesn't exist, create it
 					let params = {
@@ -35,7 +35,7 @@ var userProfilesDAO = {
 						}
 					};
 					return docClient.put(params).promise()
-						.then((success) => params.Item);
+						.then((success) => params.Item.profile);
 				}
 			});
 	},
