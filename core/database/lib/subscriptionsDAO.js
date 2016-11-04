@@ -21,9 +21,8 @@ var subscriptionsDAO = {
      * @returns {Promise} promise to notify when this put is done.
      */
     addUserSubscription: (uid, platform) => {
-        console.log(`Adding subscription: ${uid} - ${platform}`);
 
-        var date = new Date();
+        let date = new Date();
         date.setDate(date.getDate() + 30);
         date = date.toISOString();
         date = date.substring(0, date.indexOf(':'));
@@ -34,8 +33,6 @@ var subscriptionsDAO = {
                 "uid": `${platform}-${uid}`,
             }
         };
-
-        console.log(JSON.stringify(params, null, 2));
 
         return new Promise(function (resolve, reject) {
             docClient.put(params, function (err, data) {
@@ -48,6 +45,29 @@ var subscriptionsDAO = {
                 resolve();
             });
         });
+    },
+
+    /**
+     * Gets records from subscription table for a given date
+     * @param date ISO formatted date (MUST BE ISO)
+     * @returns {*} promise with data;
+     */
+    getUsersForDate: (date) => {
+        date = date.substring(0, date.indexOf(':'));
+        console.log(`DATE: ${date}`);
+
+        let params = {
+            TableName: tableName,
+            KeyConditionExpression: "#date = :day",
+            ExpressionAttributeNames: {
+                "#date": "date"
+            },
+            ExpressionAttributeValues: {
+                ":day": date
+            }
+        };
+
+        return docClient.query(params).promise();
     }
 };
 

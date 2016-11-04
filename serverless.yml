@@ -67,6 +67,15 @@ functions:
           path: cart-redirect
           method: get
           integration: lambda
+  scheduler:
+    handler: functions/scheduler.scheduler
+    timeout: 100
+    events:
+      - schedule: rate(1 minute)
+      - enabled: true
+  suggestionEvent:
+    handler: functions/suggestion-event.suggestionEvent
+    timeout: 100
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
