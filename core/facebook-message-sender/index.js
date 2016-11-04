@@ -313,6 +313,10 @@ var facebookMessageSender = {
         };
 
         return callSendAPI(json);
+    },
+
+    getName: function () {
+        return 'facebook';
     }
 };
 

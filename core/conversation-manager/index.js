@@ -8,6 +8,7 @@ let log = require('node-wit').log;
 // database access objects
 let searchQueryDAO = require('database').searchQueryDAO;
 let sessionsDAO = require('database').sessionsDAO;
+let subscriptionsDAO = require('database').subscriptionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -343,12 +344,14 @@ module.exports.handler = (message, sender, msgSender) => {
 
                 if (payload.METHOD === "GET_STARTED") {
                     // User selected the 'Get Started' button on first conversation initiation
-                    return actions.sendHelpMessage(session)
-                        .then((success) => {
-                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                        }, (error) => {
-                            console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                        });
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
+                        return actions.sendHelpMessage(session)
+                            .then((success) => {
+                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                            }, (error) => {
+                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                            });
+                    });
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results

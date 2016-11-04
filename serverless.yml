@@ -134,3 +134,20 @@ resources:
          ProvisionedThroughput:
            ReadCapacityUnits: 5
            WriteCapacityUnits: 5
+    SubscriptionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Subscriptions
+        AttributeDefinitions:
+          - AttributeName: date
+            AttributeType: S
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: date
+            KeyType: HASH
+          - AttributeName: uid
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
