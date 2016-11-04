@@ -22,7 +22,7 @@ var sessionsDAO = {
           Key: {
             uid: uid
           }
-        }
+        };
 
         return docClient.get(params).promise()
             .then((data) => {
