@@ -343,6 +343,7 @@ module.exports.handler = (message, sender, msgSender) => {
                 //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
+                    console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
                     return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
                         return actions.sendHelpMessage(session)
@@ -527,3 +528,17 @@ module.exports.handler = (message, sender, msgSender) => {
             console.log(`ERROR retrieving session from database: ${error}`);
         });
 };
+
+var a = {
+    "setting_type": "call_to_actions",
+    "thread_state": "new_thread",
+    "call_to_actions": [
+        {
+            "payload": [
+                {
+                    "method": "GET_STARTED"
+                }
+            ]
+        }
+    ]
+}

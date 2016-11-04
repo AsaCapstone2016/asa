@@ -21,18 +21,29 @@ var subscriptionsDAO = {
      * @returns {Promise} promise to notify when this put is done.
      */
     addUserSubscription: (uid, platform) => {
+        console.log(`Adding subscription: ${uid} - ${platform}`);
+
+        var date = new Date();
+        date.setDate(date.getDate() + 30);
+        date = date.toISOString();
+        date = date.substring(0, date.indexOf(':'));
         let params = {
             TableName: tableName,
             Item: {
-                "date": date.toISOString(),
+                "date": date,
                 "uid": `${platform}-${uid}`,
             }
         };
 
+        console.log(JSON.stringify(params, null, 2));
+
         return new Promise(function (resolve, reject) {
-            documentClient.put(params, function (err, data) {
+            docClient.put(params, function (err, data) {
+                console.log(data);
                 if (err) {
                     console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                    //If duplicate record error, that is fine.
+                    resolve();
                 }
                 resolve();
             });
