@@ -55,5 +55,3 @@ function addPurchaseEvent(userid, platform, ASIN) {
 };
 
 module.exports = addPurchaseEvent;
-
-addPurchaseEvent(null, null, "B01CQTK6GU");

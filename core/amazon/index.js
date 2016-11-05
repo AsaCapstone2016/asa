@@ -10,7 +10,6 @@ var amazon_client = amazon_api.createClient({
     awsSecret: config.AWS_SECRET,
     awsTag: config.AWS_TAG
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"];
 
 
 var amazonProduct = {
@@ -26,7 +25,7 @@ var amazonProduct = {
         let search_params = {
             "searchIndex": "All",
             "keywords": keywords,
-            "responseGroup": itemResponseGroup
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"]
         };
 
         Object.keys(params).forEach(key => {
@@ -40,10 +39,11 @@ var amazonProduct = {
         });
     },
 
-    similarityLookup: function (ASIN) {
+    similarityLookup: function (ASINs) {
         return amazon_client.similarityLookup({
-            "itemId": ASIN,
-            "responseGroup": itemResponseGroup
+            "itemId": ASINs,
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "Offers"],
+            "similarityType": "Random"
         }).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
