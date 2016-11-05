@@ -76,6 +76,11 @@ functions:
   suggestionEvent:
     handler: functions/suggestion-event.suggestionEvent
     timeout: 100
+    events:
+      - http:
+          path: suggestion-event
+          method: post
+          integration: lambda
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)

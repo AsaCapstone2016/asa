@@ -3,7 +3,8 @@
  */
 'use strict';
 var config = require('./../config');
-var subscriptionsDAO = require('database').subscriptionsDAO;
+var amazon = require('amazon');
+var messageSender = require('facebook-message-sender');
 
 /**
  * Lambda function for purchase redirect that logs some information about the purchase click
@@ -13,6 +14,13 @@ var subscriptionsDAO = require('database').subscriptionsDAO;
  * @param callback
  */
 module.exports.suggestionEvent = function (event, context, callback) {
-    console.log(`EVENT: ${JSON.stringify(event)}`);
-
+    let uids = event.body;
+    uids.forEach((uid)=> {
+        if (uid.substring(0, uid.indexOf('-')) == 'facebook') {
+            console.log('sending message');
+            messageSender.sendTextMessage(uid.substring(uid.indexOf('-') + 1), 'HERE IS YOUR SUGGESTION').then(()=> {
+                console.log('send message');
+            });
+        }
+    });
 };
