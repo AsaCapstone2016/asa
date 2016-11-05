@@ -16,7 +16,7 @@ let amazon_client = amazon_api.createClient({
 const DOUBLE_COUNT = true;
 
 // How far up the browse node tree should we traverse when collecting browse node info for an item?
-const BROWSE_NODE_DEPTH = 2;
+const BROWSE_NODE_DEPTH = 3;
 
 /**
  * Traverse the browse node tree for an item to collect frequencies.

@@ -48,10 +48,13 @@ function addPurchaseEvent(userid, platform, ASIN) {
             });
 
             // Save updated profile
-            console.log(`Profile: ${JSON.stringify(profile, null, 2)}`);
             return userProfilesDAO.updateUserProfile(userid, platform, profile);
         });
     });
 };
 
 module.exports = addPurchaseEvent;
+
+// addPurchaseEvent('aaron', 'fb', 'B00E9I1FPI');
+// addPurchaseEvent('aaron', 'fb', 'B0084QSM7U');
+// addPurchaseEvent('aaron', 'fb', 'B01G4TPI3Y');

@@ -47,7 +47,7 @@ var amazonProduct = {
         }).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
-            console.log(`ERROR finding similar items: ${error}`);
+            console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
         });
     },
 

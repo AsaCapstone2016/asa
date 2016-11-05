@@ -32,9 +32,11 @@ function getSuggestions(userid, platform) {
         let promiseArray = [];
         for (let i = 0; i < NUM_SUGGESTIONS && i < nodes.length; i++) {
             let asins = Object.keys(profile[nodes[i].name].items);
-            promiseArray.push(utils.findSimilarItems(asins, 1)).then(items => {
-                suggestions.concat(items);
-            });
+            promiseArray.push(utils.findSimilarItems(asins, 1).then(items => {
+                suggestions = suggestions.concat(items);
+            }, error => {
+                console.log(`No related items for ${nodes[i].name}`);
+            }));
         }
 
         // Return item suggestions
@@ -44,4 +46,9 @@ function getSuggestions(userid, platform) {
     });
 };
 
-module.exports = getSuggestion;
+module.exports = getSuggestions;
+
+// getSuggestions('aaron', 'fb').then(sugs =>{
+//     //console.log(`Suggested items: ${JSON.stringify(sugs, null, 2)}`);
+//     console.log(`Number of suggestions: ${sugs.length}`);
+// });
