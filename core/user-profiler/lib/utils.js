@@ -20,7 +20,7 @@ const BROWSE_NODE_DEPTH = 3;
 
 /**
  * Traverse the browse node tree for an item to collect frequencies.
- * 
+ *
  * @param nodes The browse nodes associated with an item
  * @param frequencies An object holding the frequencies of browse nodes already counted
  * @param alreadySeen Object storing browse nodes already seen for the current item
@@ -29,7 +29,7 @@ const BROWSE_NODE_DEPTH = 3;
  * @param maxLevel The maximum level we've been asked to traverse
  */
 function traverseItemNodes(nodes, frequencies, alreadySeen, doubleCount, curLevel, maxLevel) {
-    
+
     if (curLevel >= maxLevel) return;
 
     for (let idx in nodes) {
@@ -58,7 +58,7 @@ function traverseItemNodes(nodes, frequencies, alreadySeen, doubleCount, curLeve
         // Recurse up the ancestor browse node tree
         if (!browseNode.IsCategoryRoot && browseNode.Ancestors && browseNode.Ancestors[0]
             && browseNode.Ancestors[0].BrowseNode && browseNode.Ancestors[0].BrowseNode[0]) {
-            
+
             traverseItemNodes(browseNode.Ancestors[0].BrowseNode, frequencies, alreadySeen, doubleCount, curLevel+1, maxLevel);
         }
     }
@@ -68,11 +68,11 @@ const utils = {
 
     /**
      * Count the occurences of browse nodes associated with an item.
-     * 
+     *
      * @param item A raw item result from the Amazon Advertising API including Browse Nodes
      * @param doubleCount Boolean value determining whether to double count browse nodes that occur more than once
      * @param maxLevel How deep into the browse node tree should this search traverse
-     * 
+     *
      * @returns Object mapping browse node names to a frequency count and array of ids
      */
     collectBrowseNodeFreq(item, doubleCount) {
@@ -86,10 +86,10 @@ const utils = {
 
     /**
      * Sort group of items against a user profile using cosine similarity between browse node frequencies.
-     * 
+     *
      * @param profile A user profile containing browse node frequencies from their purchase history
      * @param items A list of raw item results from the Amazon Advertising API including Browse Nodes
-     * 
+     *
      * @returns Item information sorted from most relevant to the profile to least
      */
     sortItemsBySimilarity(profile, items) {
@@ -159,10 +159,62 @@ const utils = {
     },
 
     /**
+     * return list of item browseNode frequency map to calculate similarity with user profile
+     * @param  String keyword   [search query]
+     * @return Array            [list of object with item title and browseNode frequency map]
+     */
+    function getCandidateItems(query, numPages) {
+        let curPage = 1;
+        let promiseArray = [];
+        let searchCriteria = {
+            "searchIndex": "All",
+            "keywords": keywords,
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"],
+            "ItemPage": curPage
+        }
+        query.forEach(function(param){
+            searchCriteria[param] = query[param];
+        })
+
+        while (curPage <= numPages) {
+            const start = 10 * (curPage - 1);
+            searchCriteria.ItemPage = curPage;
+            promiseArray.push(amazon_client.itemSearch(searchCriteria)
+            .then((result) => {
+                let items = result.Items;
+                // for(let idx in items){
+                //     let browseNodeFreq = {};
+                //     let item = items[idx];
+                //     let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
+                //     if(browseNodes){
+                //         traverseItemNodes(browseNodes, browseNodeFreq, {}, true, 0, depth);
+                //     }
+                //     items[idx].browseNodeFreq = browseNodeFreq;
+                // }
+                return items;
+            }, (error) => {
+                return `ERR: ${JSON.stringify(err, null, 2)}`;
+            }));
+            curPage++;
+        }
+
+        return Promise.all(promiseArray).then((result) => {
+            let allItems = []
+            result.forEach((page) => {
+                allItems = allItems.concat(page);
+            });
+            return allItems;
+        }, (error) => {
+            return `ERR: ${JSON.stringify(err, null, 2)}`;
+        })
+    }
+
+
+    /**
      * Get raw item info
-     * 
+     *
      * @param ASIN Unique item identifier for Amazon
-     * 
+     *
      * @returns Raw item info from Amazon Advertising API
      */
     getItemInfo(ASIN) {
@@ -183,10 +235,10 @@ const utils = {
 
     /**
      * Find a number of items related to a list of items.
-     * 
+     *
      * @param ASINs A list of item ASINs
      * @param numItems Number of similar items needed
-     * 
+     *
      * @returns Array of raw item results from Amazon
      */
     findSimilarItems(ASINs, numItems) {
