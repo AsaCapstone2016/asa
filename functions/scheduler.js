@@ -22,7 +22,7 @@ module.exports.scheduler = function (event, context, callback) {
         let uids = data.Items.map((item)=> {
             return item.uid
         });
-        return fetch('https://leshjj62v9.execute-api.us-east-1.amazonaws.com/evan/suggestion-event', {
+        return fetch(config.SUGGESTION_EVENT_URL, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(uids)
