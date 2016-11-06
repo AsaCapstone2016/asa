@@ -1,6 +1,7 @@
 'use strict';
 
 let amazon = require('amazon');
+let userProfiler = require('user-profiler');
 
 let Wit = require('node-wit').Wit;
 let log = require('node-wit').log;
@@ -20,7 +21,7 @@ let messageSender;
  * Performs either simple item search or item recommendation based on user's context
  * @param context Current context object for the user
  */
-let performSearch = (context) => {
+let performSearch = (context, uid) => {
     let keywords = context.keywords;
     let recommendPipeline = context.recommend;
     let queryParams = context.query_params;
@@ -28,12 +29,12 @@ let performSearch = (context) => {
 
     if (recommendPipeline !== undefined || recommendFilter !== undefined) {
         // perform item recommendation
-        // todo: update with preferenceSearch() function instead
-        console.log('Execute item recommendation pipeline');
-        return amazon.itemSearch(keywords, queryParams);
+        console.log('Execute item recommendation');
+        queryParams.keywords = keywords;
+        return userProfiler.preferenceSearch(uid, 'fb', queryParams);
     } else {
         // perform simple item search
-        console.log('Execute simple item search pipeline');
+        console.log('Execute simple item search');
         return amazon.itemSearch(keywords, queryParams);
     }
 }
@@ -182,7 +183,7 @@ const actions = {
                     // todo: add this into promise chain below
                     searchQueryDAO.addItem(recipientId, keywords);
 
-                    return performSearch(context)
+                    return performSearch(context, recipientId)
                         .then((result) => {
                             context.items = result.Items;
                             context.bins = amazon.topRelevantSearchIndices(result, 4);
@@ -537,7 +538,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     });
 
                     // Run query with updated parameters
-                    return performSearch(context)
+                    return performSearch(context, uid)
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
@@ -559,7 +560,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     messageSender.sendTypingMessage(uid);
 
                     context.query_params = {};
-                    return performSearch(context)
+                    return performSearch(context, uid)
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)

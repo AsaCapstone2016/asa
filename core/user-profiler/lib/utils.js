@@ -155,7 +155,7 @@ const utils = {
             return a.cosineSim - b.cosineSim;
         });
 
-        result.Items = items;
+        result.Items = items.slice(0, 10);
         return result;
     },
 
