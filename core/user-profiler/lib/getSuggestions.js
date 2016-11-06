@@ -7,7 +7,7 @@ const NUM_SUGGESTIONS = 3;
 
 /**
  * Suggest items a user may be interested in.
- * 
+ *
  * @param userid Platform specific identifier string for a user
  * @param platform Name of the platform ('fb', 'slack')
  */
@@ -23,7 +23,7 @@ function getSuggestions(userid, platform) {
                 freq: profile[bnode].freq
             });
         });
-        nodes.sort((a,b) => {
+        nodes.sort((a, b) => {
             return b.freq - a.freq;
         });
 
