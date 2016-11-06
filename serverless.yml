@@ -72,7 +72,7 @@ functions:
     timeout: 100
     events:
       - schedule: rate(1 minute)
-      - enabled: true
+      - enabled: false
   suggestionEvent:
     handler: functions/suggestion-event.suggestionEvent
     timeout: 100
