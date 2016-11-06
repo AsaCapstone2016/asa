@@ -163,12 +163,11 @@ const utils = {
      * @param  String keyword   [search query]
      * @return Array            [list of object with item title and browseNode frequency map]
      */
-    function getCandidateItems(query, numPages) {
+    getCandidateItems(query, numPages) {
         let curPage = 1;
         let promiseArray = [];
         let searchCriteria = {
             "searchIndex": "All",
-            "keywords": keywords,
             "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"],
             "ItemPage": curPage
         }
@@ -207,8 +206,7 @@ const utils = {
         }, (error) => {
             return `ERR: ${JSON.stringify(err, null, 2)}`;
         })
-    }
-
+    },
 
     /**
      * Get raw item info
