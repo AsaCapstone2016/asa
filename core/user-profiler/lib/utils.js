@@ -168,18 +168,21 @@ const utils = {
         let promiseArray = [];
         let searchCriteria = {
             "searchIndex": "All",
-            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"],
+            // "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"],
+            "responseGroup": ["ItemIds", "ItemAttributes", "BrowseNodes"],
             "ItemPage": curPage
         }
-        query.forEach(function(param){
+
+        Object.keys(query).forEach(function(param){
             searchCriteria[param] = query[param];
-        })
+        });
 
         while (curPage <= numPages) {
             const start = 10 * (curPage - 1);
             searchCriteria.ItemPage = curPage;
             promiseArray.push(amazon_client.itemSearch(searchCriteria)
             .then((result) => {
+                // console.log(`Items on page ${curPage}: ${JSON.stringify(result, null, 2)}`);
                 let items = result.Items;
                 // for(let idx in items){
                 //     let browseNodeFreq = {};
@@ -192,7 +195,7 @@ const utils = {
                 // }
                 return items;
             }, (error) => {
-                return `ERR: ${JSON.stringify(err, null, 2)}`;
+                console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
             }));
             curPage++;
         }
@@ -204,7 +207,7 @@ const utils = {
             });
             return allItems;
         }, (error) => {
-            return `ERR: ${JSON.stringify(err, null, 2)}`;
+            console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
         })
     },
 
