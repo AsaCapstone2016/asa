@@ -92,8 +92,8 @@ const utils = {
      *
      * @returns Item information sorted from most relevant to the profile to least
      */
-    sortItemsBySimilarity(profile, items) {
-
+    sortItemsBySimilarity(profile, result) {
+        let items = result.Items;
         let idxMap = {};        // Map browse node names to a position in the feature vectors
         let itemNodes = [];     // Browse node frequencies for each item
 
@@ -155,7 +155,8 @@ const utils = {
             return a.cosineSim - b.cosineSim;
         });
 
-        return items;
+        result.Items = items;
+        return result;
     },
 
     /**
@@ -181,18 +182,9 @@ const utils = {
             searchCriteria.ItemPage = curPage;
             promiseArray.push(amazon_client.itemSearch(searchCriteria)
             .then((result) => {
-                // console.log(`Items on page ${curPage}: ${JSON.stringify(result, null, 2)}`);
-                let items = result.Items;
-                // for(let idx in items){
-                //     let browseNodeFreq = {};
-                //     let item = items[idx];
-                //     let browseNodes = item.BrowseNodes && item.BrowseNodes[0] && item.BrowseNodes[0].BrowseNode;
-                //     if(browseNodes){
-                //         traverseItemNodes(browseNodes, browseNodeFreq, {}, true, 0, depth);
-                //     }
-                //     items[idx].browseNodeFreq = browseNodeFreq;
-                // }
-                return items;
+                // let items = result.Items;
+                // return items;
+                return result
             }, (error) => {
                 console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
             }));
@@ -200,11 +192,12 @@ const utils = {
         }
 
         return Promise.all(promiseArray).then((result) => {
-            let allItems = []
-            result.forEach((page) => {
-                allItems = allItems.concat(page);
+            let totalResult = {};
+            result.forEach(page => {
+                if(Object.keys(totalResult).length === 0) totalResult = page;
+                else totalResult.Items = totalResult.Items.concat(page.Items);
             });
-            return allItems;
+            return totalResult;
         }, (error) => {
             console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
         })

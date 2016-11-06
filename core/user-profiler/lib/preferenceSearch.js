@@ -15,7 +15,7 @@ function queryAgainstUserProfile(userid, platform, query) {
     return userProfilesDAO.getUserProfile(userid, platform).then(profile => {
         console.log(`Profile: ${JSON.stringify(profile, null, 2)}`);
         // Get pages of item results from Amazon using the search query
-        return utils.getCandidateItems(query, 1).then(result => {
+        return utils.getCandidateItems(query, 5).then(result => {
             // console.log(`All 5 pages: ${JSON.stringify(result, null, 2)}`);
             // Rank items against user profile using cosine similarity
             return utils.sortItemsBySimilarity(profile, result);
