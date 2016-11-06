@@ -2,6 +2,7 @@
 
 const config = require('./../../../config');
 let amazon_api = require('amazon-product-api');
+let amazon = require('amazon');
 let distance = require('compute-cosine-distance');
 
 
@@ -15,7 +16,7 @@ let amazon_client = amazon_api.createClient({
 const DOUBLE_COUNT = true;
 
 // How far up the browse node tree should we traverse when collecting browse node info for an item?
-const BROWSE_NODE_DEPTH = 2;
+const BROWSE_NODE_DEPTH = 3;
 
 /**
  * Traverse the browse node tree for an item to collect frequencies.
@@ -150,9 +151,9 @@ const utils = {
         /*
          * Sort the items by their cosine similarity with the user profile
          */
-        items.sort(function(a,b){
+        items.sort((a,b) => {
             return a.cosineSim - b.cosineSim;
-        })
+        });
 
         return items;
     },
@@ -177,6 +178,20 @@ const utils = {
             }
         }, err => {
             console.log(`Error: ${JSON.stringify(err, null, 2)}`);
+        });
+    },
+
+    /**
+     * Find a number of items related to a list of items.
+     * 
+     * @param ASINs A list of item ASINs
+     * @param numItems Number of similar items needed
+     * 
+     * @returns Array of raw item results from Amazon
+     */
+    findSimilarItems(ASINs, numItems) {
+        return amazon.similarityLookup(ASINs).then(result => {
+            return result.Items.slice(0, numItems);
         });
     }
 };
