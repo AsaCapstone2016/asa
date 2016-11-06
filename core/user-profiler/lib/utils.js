@@ -136,7 +136,7 @@ const utils = {
             // Create item vector
             let itemVector = new Array(profileVector.length).fill(0);
             Object.keys(item).forEach(node => {
-                itemVector[idxMap[node]] = node.freq;
+                itemVector[idxMap[node]] = item[node].freq;
             });
 
             // Calculate cosine sim
@@ -168,8 +168,7 @@ const utils = {
         let promiseArray = [];
         let searchCriteria = {
             "searchIndex": "All",
-            // "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"],
-            "responseGroup": ["ItemIds", "ItemAttributes", "BrowseNodes"],
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers", "BrowseNodes"],
             "ItemPage": curPage
         }
 
