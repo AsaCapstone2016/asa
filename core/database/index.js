@@ -8,5 +8,6 @@ module.exports = {
     searchQueryDAO: require('./lib/searchQueryDAO'),
     sessionsDAO: require('./lib/sessionsDAO'),
     itemVariationsDAO: require('./lib/itemVariationsDAO'),
-    userProfilesDAO: require('./lib/userProfilesDAO')
+    userProfilesDAO: require('./lib/userProfilesDAO'),
+    subscriptionsDAO: require('./lib/subscriptionsDAO')
 };

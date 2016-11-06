@@ -9,6 +9,7 @@ let log = require('node-wit').log;
 // database access objects
 let searchQueryDAO = require('database').searchQueryDAO;
 let sessionsDAO = require('database').sessionsDAO;
+let subscriptionsDAO = require('database').subscriptionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -404,13 +405,16 @@ module.exports.handler = (message, sender, msgSender) => {
                 //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
+                    console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
-                    return actions.sendHelpMessage(session)
-                        .then((success) => {
-                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                        }, (error) => {
-                            console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                        });
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
+                        return actions.sendHelpMessage(session)
+                            .then((success) => {
+                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                            }, (error) => {
+                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                            });
+                    });
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
@@ -586,3 +590,17 @@ module.exports.handler = (message, sender, msgSender) => {
             console.log(`ERROR retrieving session from database: ${error}`);
         });
 };
+
+var a = {
+    "setting_type": "call_to_actions",
+    "thread_state": "new_thread",
+    "call_to_actions": [
+        {
+            "payload": [
+                {
+                    "method": "GET_STARTED"
+                }
+            ]
+        }
+    ]
+}

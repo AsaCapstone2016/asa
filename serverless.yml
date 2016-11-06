@@ -67,6 +67,20 @@ functions:
           path: cart-redirect
           method: get
           integration: lambda
+  scheduler:
+    handler: functions/scheduler.scheduler
+    timeout: 100
+    events:
+      - schedule: rate(1 minute)
+      - enabled: true
+  suggestionEvent:
+    handler: functions/suggestion-event.suggestionEvent
+    timeout: 100
+    events:
+      - http:
+          path: suggestion-event
+          method: post
+          integration: lambda
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
@@ -144,6 +158,23 @@ resources:
         KeySchema:
           - AttributeName: uid
             KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    SubscriptionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Subscriptions
+        AttributeDefinitions:
+          - AttributeName: date
+            AttributeType: S
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: date
+            KeyType: HASH
+          - AttributeName: uid
+            KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
