@@ -127,6 +127,11 @@ const utils = {
             }
         });
 
+        if (profileVector.every(e => e === 0)) {
+            result.NotEnoughInfo = true;
+            return result;
+        }
+
         /*
          * Calculate cosine similarity b/w an item and the profile
          */
