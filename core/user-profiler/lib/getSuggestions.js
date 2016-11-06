@@ -47,8 +47,3 @@ function getSuggestions(userid, platform) {
 };
 
 module.exports = getSuggestions;
-
-// getSuggestions('aaron', 'fb').then(sugs =>{
-//     //console.log(`Suggested items: ${JSON.stringify(sugs, null, 2)}`);
-//     console.log(`Number of suggestions: ${sugs.length}`);
-// });

@@ -93,16 +93,12 @@ const actions = {
                     if ('intent' in entities && entities.intent[0].value === 'search') {
                         // Search intent AND keywords -> perform search
 
-                        console.log('User wants a simple search');
-
                         context.run_search = true;
                         delete context.recommend;
                         delete context.missing_keywords;
                         delete context.missing_search_intent;
                     } else if ('intent' in entities && entities.intent[0].value === 'recommend') {
                         // Recommendation intent AND keywords -> perform recommendation
-
-                        console.log('User wants a recommendation');
 
                         context.run_search = true;
                         context.recommend = true;

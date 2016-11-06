@@ -55,6 +55,8 @@ function addPurchaseEvent(userid, platform, ASIN) {
 
 module.exports = addPurchaseEvent;
 
-//addPurchaseEvent('aaron', 'fb', 'B00E9I1FPI');
-//addPurchaseEvent('aaron', 'fb', 'B0084QSM7U');
-//addPurchaseEvent('aaron', 'fb', 'B01G4TPI3Y');
+// addPurchaseEvent('aaron', 'fb', 'B00E9I1FPI').then(() => {
+//     return addPurchaseEvent('aaron', 'fb', 'B0084QSM7U').then(() => {
+//         return addPurchaseEvent('aaron', 'fb', 'B01G4TPI3Y');
+//     });
+// });

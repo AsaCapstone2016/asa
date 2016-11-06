@@ -13,10 +13,8 @@ let userProfilesDAO = require('database').userProfilesDAO;
 function queryAgainstUserProfile(userid, platform, query) {
     // Get user profile
     return userProfilesDAO.getUserProfile(userid, platform).then(profile => {
-        console.log(`Profile: ${JSON.stringify(profile, null, 2)}`);
         // Get pages of item results from Amazon using the search query
         return utils.getCandidateItems(query, 5).then(result => {
-            // console.log(`All 5 pages: ${JSON.stringify(result, null, 2)}`);
             // Rank items against user profile using cosine similarity
             return utils.sortItemsBySimilarity(profile, result);
         }, error => {
@@ -27,13 +25,3 @@ function queryAgainstUserProfile(userid, platform, query) {
 
 
 module.exports = queryAgainstUserProfile;
-
-let query = {
-    keywords: "The Pillars of the Earth"
-};
-
-queryAgainstUserProfile('yiming', 'fb', query).then(items => {
-    console.log(`Results: ${JSON.stringify(items, null, 2)}`);
-}, error => {
-    console.log(`ERROR: ${JSON.stringify(error, null, 2)}`);
-});

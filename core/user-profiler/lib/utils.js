@@ -128,39 +128,40 @@ const utils = {
         });
 
         if (profileVector.every(e => e === 0)) {
-            result.NotEnoughInfo = true;
-            return result;
-        }
+            result.CanRecommend = false;
+        } else {
+            result.CanRecommend = true;
+            /*
+            * Calculate cosine similarity b/w an item and the profile
+            */
+            for (let i in itemNodes) {
+                let item = itemNodes[i];
 
-        /*
-         * Calculate cosine similarity b/w an item and the profile
-         */
-        for (let i in itemNodes) {
-            let item = itemNodes[i];
+                // Create item vector
+                let itemVector = new Array(profileVector.length).fill(0);
+                Object.keys(item).forEach(node => {
+                    itemVector[idxMap[node]] = item[node].freq;
+                });
 
-            // Create item vector
-            let itemVector = new Array(profileVector.length).fill(0);
-            Object.keys(item).forEach(node => {
-                itemVector[idxMap[node]] = item[node].freq;
-            });
+                // Calculate cosine sim
+                var cosineSim = distance(profileVector, itemVector);
+                if (!cosineSim) {
+                    cosineSim = 2;
+                }
 
-            // Calculate cosine sim
-            var cosineSim = distance(profileVector, itemVector);
-            if (!cosineSim) {
-                cosineSim = 2;
+                items[i].cosineSim = cosineSim;
             }
 
-            items[i].cosineSim = cosineSim;
+            /*
+            * Sort the items by their cosine similarity with the user profile
+            */
+            items.sort((a,b) => {
+                return a.cosineSim - b.cosineSim;
+            });
+            result.Items = items;
         }
 
-        /*
-         * Sort the items by their cosine similarity with the user profile
-         */
-        items.sort((a,b) => {
-            return a.cosineSim - b.cosineSim;
-        });
-
-        result.Items = items.slice(0, 10);
+        result.Items = result.Items.slice(0, 10);
         return result;
     },
 
