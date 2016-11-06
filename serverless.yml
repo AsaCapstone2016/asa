@@ -95,11 +95,11 @@ resources:
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
     SeachQueriesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -115,8 +115,8 @@ resources:
           - AttributeName: date
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
     PurchasedItemsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -132,8 +132,8 @@ resources:
            - AttributeName: date
              KeyType: RANGE
          ProvisionedThroughput:
-           ReadCapacityUnits: 5
-           WriteCapacityUnits: 5
+           ReadCapacityUnits: 1
+           WriteCapacityUnits: 1
     UserProfilesTable:
       Type: AWS::DynamoDB::Table
       Properties:
