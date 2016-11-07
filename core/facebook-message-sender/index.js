@@ -316,7 +316,7 @@ var facebookMessageSender = {
     },
 
     getName: function () {
-        return 'facebook';
+        return 'fb';
     }
 };
 

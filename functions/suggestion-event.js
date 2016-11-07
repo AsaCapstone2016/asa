@@ -19,18 +19,20 @@ module.exports.suggestionEvent = function (event, context, callback) {
         let platform = uid.substring(0, uid.indexOf('-'));
         let id = uid.substring(uid.indexOf('-') + 1);
 
-        let suggestions = getSuggestions(id, platform);
-        console.log(`SUGGESTIONS: ${JSON.stringify(suggestions)}`);
+        getSuggestions(id, platform).then((suggestions)=> {
 
-        //No suggestions
-        if (!suggestions.length)
-            return;
+            //No suggestions
+            if (!suggestions.length)
+                return;
 
-        if (platform == 'facebook') {
-            console.log('sending message');
-            facebookMessageSender.sendSearchResults(id, suggestions).then(()=> {
-                console.log(`SENT USER ${id} SOME SUGGESTIONS`);
-            });
-        }
+            if (platform == 'fb') {
+                facebookMessageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
+
+                    facebookMessageSender.sendSearchResults(id, suggestions).then(()=> {
+                        console.log(`SENT USER ${id} SOME SUGGESTIONS`);
+                    });
+                });
+            }
+        });
     });
 };
