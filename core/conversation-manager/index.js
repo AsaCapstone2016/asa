@@ -1,15 +1,15 @@
 'use strict';
 
-let amazon = require('amazon');
+let amazon = require('core/amazon');
 
-let Wit = require('node-wit').Wit;
-let log = require('node-wit').log;
+let Wit = require('core/node-wit').Wit;
+let log = require('core/node-wit').log;
 
 // database access objects
-let searchQueryDAO = require('database').searchQueryDAO;
-let sessionsDAO = require('database').sessionsDAO;
+let searchQueryDAO = require('core/database').searchQueryDAO;
+let sessionsDAO = require('core/database').sessionsDAO;
 
-const config = require('./../../config');
+const config = require('./../../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
 const ASSOCIATE_TAG = config.AWS_TAG;
 

@@ -9,10 +9,13 @@ let cartRedirect = require('../functions/cart-redirect.js').cartRedirect;
 app.use(bodyParser.json());
 
 let mapEventToLambda = (req) => {
+  console.log('QUERY:', req.query);
+  let headers = req.headers;
+  headers['CloudFront-Is-Mobile-Viewer'] = false;
   return {
     body: req.body,
     method: req.method,
-    headers: req.headers,
+    headers: headers,
     query: req.query,
     stage: 'dev',
     params: req.params
@@ -22,7 +25,8 @@ let mapEventToLambda = (req) => {
 app.get('/cart-redirect', (req, res) => {
   let context = {};
   context.succeed = (obj) => {
-    res.redirect(obj.location);
+    //console.log('trying to redirect to ',obj.location);
+    res.redirect(302, obj.location);
   }
 
   let event = mapEventToLambda(req);

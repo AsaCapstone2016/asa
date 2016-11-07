@@ -1,7 +1,7 @@
 'use strict';
 
 var fetch = require('node-fetch');
-var config = require('./../../config');
+var config = require('./../../../config');
 
 var facebookMessageSender = {
 
@@ -283,6 +283,7 @@ var facebookMessageSender = {
         }
         element.subtitle = variationSummary;
 
+      console.log('PURCHASEURL: ', product.purchaseUrl);
         element.buttons = [{
             type: "web_url",
             url: product.purchaseUrl,

@@ -25,7 +25,7 @@ function createDeployment(restId, next) {
     stageName: process.env.SLS_USER
   };
   apigateway.createDeployment(params, (err, data) => {
-    if (err) {}
+    if (err) console.log('Too many requests, retrying...')
     else {
       console.log('Deployment created');
     } 
