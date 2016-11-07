@@ -1,7 +1,7 @@
 'use strict';
 
 let utils = require('./utils');
-let userProfilesDAO = require('database').userProfilesDAO;
+let userProfilesDAO = require('core/database').userProfilesDAO;
 
 // Should we double count browse nodes when adding an item's info to a user profile?
 const DOUBLE_COUNT = false;

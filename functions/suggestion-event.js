@@ -3,9 +3,9 @@
  */
 'use strict';
 var config = require('./../config');
-var amazon = require('amazon');
-var facebookMessageSender = require('facebook-message-sender');
-var getSuggestions = require('user-profiler').getSuggestions;
+var amazon = require('core/amazon');
+var facebookMessageSender = require('core/facebook-message-sender');
+var getSuggestions = require('core/user-profiler').getSuggestions;
 /**
  * Lambda function for purchase redirect that logs some information about the purchase click
  * uid, redirect_url, ASIN, and is_cart all need to be passed in as queries on the url

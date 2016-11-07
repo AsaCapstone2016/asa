@@ -1,7 +1,7 @@
 'use strict';
 
 let utils = require('./utils');
-let userProfilesDAO = require('database').userProfilesDAO;
+let userProfilesDAO = require('core/database').userProfilesDAO;
 
 /**
  * Find the items in a category which are the most relevant to a user

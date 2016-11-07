@@ -1,6 +1,6 @@
 'use strict';
 var config = require('./../config');
-var subscriptionsDAO = require('database').subscriptionsDAO;
+var subscriptionsDAO = require('core/database').subscriptionsDAO;
 
 var fetch = require('node-fetch');
 var aws = require('aws-sdk');
