@@ -25,7 +25,7 @@ function createDeployment(restId, next) {
     stageName: process.env.SLS_USER
   };
   apigateway.createDeployment(params, (err, data) => {
-    if (err) console.log(err, err.stack); // an error occurred
+    if (err) {}
     else {
       console.log('Deployment created');
     } 
@@ -68,20 +68,20 @@ function getResources(apiId, next) {
   })
 }
 
-function pointEndpointLocally(apiId, resourceId, url) {
-  deleteIntegration(apiId, resourceId, () => {
-    putIntegration(apiId, resourceId, url, () => {
-      putIntegrationResponse(apiId, resourceId, url, () => {
+function pointEndpointLocally(apiId, resource, url) {
+  deleteIntegration(apiId, resource, () => {
+    putIntegration(apiId, resource, url, () => {
+      putIntegrationResponse(apiId, resource, url, () => {
         createDeployment(apiId);
       });
     })
   });
 }
 
-function deleteIntegration(apiId, resourceId, next) {
+function deleteIntegration(apiId, resource, next) {
     var params = {
-      httpMethod: 'POST',
-      resourceId: resourceId,
+      httpMethod: resource.method,
+      resourceId: resource.id,
       restApiId: apiId,
     };
 
@@ -95,12 +95,12 @@ function deleteIntegration(apiId, resourceId, next) {
     });
 }
 
-function putIntegration(apiId, resourceId, url, next) {
+function putIntegration(apiId, resource, url, next) {
     var params = {
       type: 'HTTP',
-      httpMethod: 'POST',
-      integrationHttpMethod: 'POST',
-      resourceId: resourceId,
+      httpMethod: resource.method,
+      integrationHttpMethod: resource.method,
+      resourceId: resource.id,
       restApiId: apiId,
       uri: url
     };
@@ -115,12 +115,12 @@ function putIntegration(apiId, resourceId, url, next) {
     });
 }
 
-function putIntegrationResponse(apiId, resourceId, url, next) {
+function putIntegrationResponse(apiId, resource, url, next) {
     var params = {
-      httpMethod: 'POST',
-      resourceId: resourceId,
+      httpMethod: resource.method,
+      resourceId: resource.id,
       restApiId: apiId,
-      statusCode: '200'
+      statusCode: resource.statusCode 
     };
 
     apigateway.putIntegrationResponse(params, function (err, data) {
@@ -140,9 +140,25 @@ ngrok.connect(3000, (err, url) => {
     url += '/';
     console.log('url: ', url);
     getEndpointId(`${process.env.SLS_USER}-ASA`, (restId) => {
-      getResources(restId, (items) => {
-        let fbWebhookEndpoint = items.filter(item => item.path === '/fb-webhook')[0];
-        pointEndpointLocally(restId, fbWebhookEndpoint.id, url);
+      getResources(restId, (resources) => {
+        let endpoints = resources.reduce((endpoints, resource) => {
+          for (let method in resource['resourceMethods']) {
+            endpoints.push({
+              id: resource.id,
+              method: method,
+              path: resource.path,
+              pathPart: resource.pathPart,
+              statusCode: resource.pathPart.search('redirect') < 0 ? '200' : '302' // hacky but no way to see current int response from resource
+            });
+          }
+          return endpoints;
+        },[]);
+
+        endpoints.forEach(endpoint => {
+          let endpointUrl = url + endpoint.pathPart;
+          console.log(`Pointing ${endpoint.path} to: ${endpointUrl}`);
+          pointEndpointLocally(restId, endpoint, endpointUrl);
+        });
       })
     });
   }
