@@ -157,7 +157,8 @@ ngrok.connect(3000, (err, url) => {
         endpoints.forEach(endpoint => {
           let endpointUrl = url + endpoint.pathPart;
           console.log(`Pointing ${endpoint.path} to: ${endpointUrl}`);
-          pointEndpointLocally(restId, endpoint, endpointUrl);
+          if (endpoint.pathPart !== '/cart-redirect')
+            pointEndpointLocally(restId, endpoint, endpointUrl);
         });
       })
     });
