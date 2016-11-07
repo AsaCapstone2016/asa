@@ -9,7 +9,6 @@ let cartRedirect = require('../functions/cart-redirect.js').cartRedirect;
 app.use(bodyParser.json());
 
 let mapEventToLambda = (req) => {
-  console.log('QUERY:', req.query);
   let headers = req.headers;
   headers['CloudFront-Is-Mobile-Viewer'] = false;
   return {
