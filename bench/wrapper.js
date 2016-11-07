@@ -20,8 +20,11 @@ let mapEventToLambda = (req) => {
 }
 
 app.get('/cart-redirect', (req, res) => {
-  res.sendStatus(302);
   let context = {};
+  context.succeed = (obj) => {
+    res.redirect(obj.location);
+  }
+
   let event = mapEventToLambda(req);
   cartRedirect(event, context, fakeCallback);
 });
