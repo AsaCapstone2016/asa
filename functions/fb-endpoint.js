@@ -1,11 +1,11 @@
 'use strict';
 
 // Import platform specific event converter and message sender
-var facebookEventConverter = require('facebook-event-converter');
-let facebookMessageSender = require('facebook-message-sender');
+var facebookEventConverter = require('core/facebook-event-converter');
+let facebookMessageSender = require('core/facebook-message-sender');
 
 // The conversation manager handles every message and sends responses
-var conversation = require('conversation-manager');
+var conversation = require('core/conversation-manager');
 
 // Import config variables
 var config = require('./../config');

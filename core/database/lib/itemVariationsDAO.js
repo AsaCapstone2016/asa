@@ -1,6 +1,6 @@
 'use strict';
 
-let config = require('./../../../config');
+let config = require('./../../../../config');
 
 const aws = require('aws-sdk');
 aws.config.update({ region: 'us-east-1' });

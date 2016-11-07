@@ -4,7 +4,7 @@
 'use strict';
 
 var AWS = require("aws-sdk");
-var config = require('./../../../config');
+var config = require('./../../../../config');
 
 AWS.config.update({
     region: "us-east-1",

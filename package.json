@@ -3,9 +3,10 @@
   "version": "0.0.1",
   "scripts": {
     "update-modules": "npm install core/database && npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon && npm install core/user-profiler",
+    "postinstall": "npm run update-modules && node symlink.js",
     "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
-    "testbench": "npm run update-modules && cd bench && ./start.sh",
+    "testbench": "cd bench && ./start.sh",
     "testbench:setup": "cd bench && ./setup.sh",
     "testbench:destroy": "cd bench && ./kill.sh"
   },

@@ -1,5 +1,5 @@
 'use strict';
-var purchasedItemDAO = require('database').purchasedItemDAO;
+var purchasedItemDAO = require('core/database').purchasedItemDAO;
 var config = require('./../config');
 var addPurchase = require('user-profiler').addPurchase;
 
