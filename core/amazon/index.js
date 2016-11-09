@@ -3,14 +3,13 @@
  */
 'use strict';
 
-var amazon_api = require("amazon-product-api");
+var amazon_api = require('./../amazon-product-api');
 var config = require('./../../config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,
     awsSecret: config.AWS_SECRET,
     awsTag: config.AWS_TAG
 });
-var itemResponseGroup = ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"];
 
 
 var amazonProduct = {
@@ -26,7 +25,7 @@ var amazonProduct = {
         let search_params = {
             "searchIndex": "All",
             "keywords": keywords,
-            "responseGroup": itemResponseGroup
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "SearchBins", "Offers"]
         };
 
         Object.keys(params).forEach(key => {
@@ -40,14 +39,15 @@ var amazonProduct = {
         });
     },
 
-    similarityLookup: function (ASIN) {
+    similarityLookup: function (ASINs) {
         return amazon_client.similarityLookup({
-            "itemId": ASIN,
-            "responseGroup": itemResponseGroup
+            "itemId": ASINs,
+            "responseGroup": ["ItemIds", "ItemAttributes", "Images", "Offers"],
+            "similarityType": "Random"
         }).then((result) => {
             return buildItemResponse(result);
         }, (error) => {
-            console.log(`ERROR finding similar items: ${error}`);
+            console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
         });
     },
 
@@ -282,6 +282,24 @@ var amazonProduct = {
         }, function (err) {
             console.log("ERROR in variationFind:", JSON.stringify(err, null, 2));
         });
+    },
+
+    browseNode: function(ASIN){
+        return amazon_client.itemLookup({
+            "ItemId": ASIN,
+            "IdType": "ASIN",
+            "ResponseGroup": ["ItemAttributes","BrowseNodes"]
+        }).then(function(res){
+            let item = res[0];
+            let browseNodes = item.BrowseNodes && item.BrowseNodes[0]
+            && item.BrowseNodes[0].BrowseNode;
+
+            var browseNodeFreq = {};
+            nodeTravese(browseNodes, browseNodeFreq);
+            return browseNodeFreq;
+        }, function(err){
+            console.log("ERR:",JSON.stringify(err, null, 2));
+        })
     }
 };
 
@@ -330,3 +348,26 @@ function buildItemResponse(result) {
 
 
 module.exports = amazonProduct;
+
+function nodeTravese(browseNodes, browseNodeFreq){
+    for(var idx in browseNodes){
+        var browseNode = browseNodes[idx];
+        if(!(browseNode.Name[0] in browseNodeFreq)){
+            browseNodeFreq[browseNode.Name[0]] = {
+                cnt: 0,
+                BrowseNodeId: []
+            }
+        }
+        browseNodeFreq[browseNode.Name[0]].cnt += 1;
+        browseNodeFreq[browseNode.Name[0]].BrowseNodeId.push(browseNode.BrowseNodeId[0]);
+        if(browseNode.Ancestors && browseNode.Ancestors[0] &&
+        browseNode.Ancestors[0].BrowseNode && browseNode.Ancestors[0].BrowseNode[0]){
+            nodeTravese(browseNode.Ancestors[0].BrowseNode, browseNodeFreq);
+        }
+
+        if(browseNode.Children && browseNode.Children[0] &&
+        browseNode.Children[0].BrowseNode && browseNode.Children[0].BrowseNode[0]){
+            nodeTravese(browseNode.Children[0].BrowseNode, browseNodeFreq);
+        }
+    }
+}

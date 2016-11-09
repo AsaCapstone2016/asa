@@ -1,1 +1,1 @@
-npm install --save-dev express body-parser ngrok aws-sdk nodemon
+npm install --save-dev express body-parser ngrok nodemon
