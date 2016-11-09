@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var amazon_api = require('core/amazon-product-api');
+var amazon_api = require('./../amazon-product-api');
 var config = require('./../../config');
 var amazon_client = amazon_api.createClient({
     awsId: config.AWS_ID,

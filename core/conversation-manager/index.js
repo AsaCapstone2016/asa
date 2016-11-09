@@ -1,15 +1,15 @@
 'use strict';
 
-let amazon = require('core/amazon');
-let userProfiler = require('core/user-profiler');
+let amazon = require('./../amazon');
+let userProfiler = require('./../user-profiler');
 
-let Wit = require('core/node-wit').Wit;
-let log = require('core/node-wit').log;
+let Wit = require('./../node-wit').Wit;
+let log = require('./../node-wit').log;
 
 // database access objects
-let searchQueryDAO = require('core/database').searchQueryDAO;
-let sessionsDAO = require('core/database').sessionsDAO;
-let subscriptionsDAO = require('core/database').subscriptionsDAO;
+let searchQueryDAO = require('./../database').searchQueryDAO;
+let sessionsDAO = require('./../database').sessionsDAO;
+let subscriptionsDAO = require('./../database').subscriptionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;

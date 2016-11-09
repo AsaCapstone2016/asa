@@ -1,7 +1,7 @@
 'use strict';
 
 let utils = require('./utils');
-let userProfilesDAO = require('core/database').userProfilesDAO;
+let userProfilesDAO = require('./../../database').userProfilesDAO;
 
 const NUM_SUGGESTIONS = 3;
 

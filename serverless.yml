@@ -16,6 +16,7 @@ service: ASA # NOTE: update this with your service name
 provider:
   name: aws
   runtime: nodejs4.3
+  cfLogs: true
 
 # you can overwrite defaults here
   stage: ${env:SLS_USER}
@@ -36,6 +37,7 @@ provider:
 # you can add packaging information here
 package:
   include:
+    - core
     - functions
     - node_modules
     - config.json

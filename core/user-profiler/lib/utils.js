@@ -1,8 +1,8 @@
 'use strict';
 
 const config = require('./../../../config');
-let amazon_api = require('core/amazon-product-api');
-let amazon = require('core/amazon');
+let amazon_api = require('./../../amazon-product-api');
+let amazon = require('./../../amazon');
 let distance = require('compute-cosine-distance');
 
 

@@ -3,9 +3,12 @@
  */
 'use strict';
 var config = require('./../config');
-var amazon = require('core/amazon');
-var facebookMessageSender = require('core/facebook-message-sender');
-var getSuggestions = require('core/user-profiler').getSuggestions;
+var amazon = require('./../core/amazon');
+var getSuggestions = require('./../core/user-profiler').getSuggestions;
+
+// This is what makes this the facebook messenger endpoint
+var platform = require('./../core/platforms').fbMessenger;
+
 /**
  * Lambda function for purchase redirect that logs some information about the purchase click
  * uid, redirect_url, ASIN, and is_cart all need to be passed in as queries on the url
@@ -26,9 +29,9 @@ module.exports.suggestionEvent = function (event, context, callback) {
                 return;
 
             if (platform == 'fb') {
-                facebookMessageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
+                platform.messageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
 
-                    facebookMessageSender.sendSearchResults(id, suggestions).then(()=> {
+                    platform.messageSender.sendSearchResults(id, suggestions).then(()=> {
                         console.log(`SENT USER ${id} SOME SUGGESTIONS`);
                     });
                 });
