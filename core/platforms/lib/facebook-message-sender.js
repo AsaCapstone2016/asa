@@ -237,7 +237,7 @@ var facebookMessageSender = {
 
             var element = {};
             element.title = option;
-            element.image_url = product.image;
+            element.image_url = product.image !== "no image" ? product.image : 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg';
             element.subtitle = product.price;
             element.buttons = [{
                 type: "postback",
