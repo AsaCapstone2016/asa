@@ -7,7 +7,7 @@ var amazon = require('./../core/amazon');
 var getSuggestions = require('./../core/user-profiler').getSuggestions;
 
 // This is what makes this the facebook messenger endpoint
-var platform = require('./../core/platforms').fbMessenger;
+var fb = require('./../core/platforms').fbMessenger;
 
 /**
  * Lambda function for purchase redirect that logs some information about the purchase click
@@ -22,16 +22,19 @@ module.exports.suggestionEvent = function (event, context, callback) {
         let platform = uid.substring(0, uid.indexOf('-'));
         let id = uid.substring(uid.indexOf('-') + 1);
 
+        console.log(platform);
+        console.log(id);
         getSuggestions(id, platform).then((suggestions)=> {
 
             //No suggestions
+            console.log(suggestions);
             if (!suggestions.length)
                 return;
 
             if (platform == 'fb') {
-                platform.messageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
+                fb.messageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
 
-                    platform.messageSender.sendSearchResults(id, suggestions).then(()=> {
+                    fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
                         console.log(`SENT USER ${id} SOME SUGGESTIONS`);
                     });
                 });
