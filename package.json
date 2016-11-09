@@ -19,7 +19,6 @@
     "xml2js": "0.4.5"
   },
   "devDependencies": {
-    "aws-sdk": "^2.6.15",
     "body-parser": "^1.15.2",
     "eslint": "^3.7.1",
     "express": "^4.14.0",
