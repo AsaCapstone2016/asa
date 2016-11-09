@@ -22,12 +22,9 @@ module.exports.suggestionEvent = function (event, context, callback) {
         let platform = uid.substring(0, uid.indexOf('-'));
         let id = uid.substring(uid.indexOf('-') + 1);
 
-        console.log(platform);
-        console.log(id);
         getSuggestions(id, platform).then((suggestions)=> {
 
             //No suggestions
-            console.log(suggestions);
             if (!suggestions.length)
                 return;
 
