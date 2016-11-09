@@ -228,7 +228,7 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
-                                            "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || "no image",
+                                            "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg',
                                             "price": (item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].ListPrice && item.ItemAttributes[0].ListPrice[0]
                                             && item.ItemAttributes[0].ListPrice[0].FormattedPrice
