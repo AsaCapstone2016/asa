@@ -98,7 +98,7 @@ var facebookMessageSender = {
                 element.buttons.push({
                     type: "web_url",
                     url: product.purchaseUrl,
-                    title: "Purchase",
+                    title: "Checkout",
                     webview_height_ratio: "TALL"
                 });
             }
@@ -286,7 +286,7 @@ var facebookMessageSender = {
         element.buttons = [{
             type: "web_url",
             url: product.purchaseUrl,
-            title: "Purchase",
+            title: "Checkout",
             webview_height_ratio: "TALL"
         }, {
             type: 'postback',
