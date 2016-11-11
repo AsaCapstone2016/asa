@@ -57,6 +57,7 @@ const actions = {
                             };
                         });
                     }
+
                     return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
@@ -175,20 +176,31 @@ const actions = {
                 const keywords = context.keywords;
                 context.query_params = {};
 
-                return new Promise((resolve, reject) => {
-                    // Log search event
-                    // todo: add this into promise chain below
-                    searchQueryDAO.addItem(recipientId, keywords);
-
-                    return performSearch(context, recipientId)
+                // Send message telling users that we're finding items specifically for them
+                if (context.recommend !== undefined) {
+                    return messageSender.sendTextMessage(recipientId, `I'll find some things I think you'll like...`)
+                        .then((success) => searchQueryDAO.addItem(recipientId, keywords))
+                        .then((success) => performSearch(context, recipientId))
                         .then((result) => {
                             context.items = result.Items;
                             context.bins = amazon.topRelevantSearchIndices(result, 4);
                             delete context.run_search;
                             delete context.missing_search_intent;
-                            return resolve(context);
+                            return context;
                         });
-                });
+                }
+
+                // log search event and execute search
+                // todo: these should be swapped, actually
+                return searchQueryDAO.addItem(recipientId, keywords)
+                    .then((success) => performSearch(context, recipientId))
+                    .then((result) => {
+                        context.items = result.Items;
+                        context.bins = amazon.topRelevantSearchIndices(result, 4);
+                        delete context.run_search;
+                        delete context.missing_search_intent;
+                        return context;
+                    });
 
             }, (error) => {
                 console.log(`ERROR in search action: ${error}`);
@@ -239,6 +251,7 @@ const actions = {
                     });
 
                     let prompt = context.bins[0].params[0].type === "SearchIndex" ? "Keep looking under" : "Add a filter";
+
                     return messageSender.sendTextMessage(recipientId, prompt, quickreplies)
                         .then(() => {
                             delete context.bins;
@@ -288,6 +301,7 @@ const actions = {
                             METHOD: "CLEAR_FILTERS"
                         })
                     });
+
                     return messageSender.sendTextMessage(recipientId, "Choose a type of filter", quickreplies)
                         .then(() => {
                             delete context.filters;
@@ -533,9 +547,37 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     // Add the bin parameters to the search query
                     let params = context.query_params;
+
+                    let recommend = false;
                     payload.params.forEach(param => {
                         (params[param.type] = params[param.type] || []).push(param.value);
+                        
+                        // Check if we need to tell the user we're recommending items now
+                        if (param.type === 'recommend') {
+                            recommend = true;
+                        }
                     });
+
+                    // Send message to user saying we're using their user profile now
+                    // Run query with updated parameters
+                    if (recommend) {
+                        return messageSender.sendTextMessage(uid, 'You selected personal filter...')
+                            .then((success) => performSearch(context, uid))
+                            .then((result) => {
+                                context.items = result.Items;
+                                return actions.sendSearchResults(session)
+                                    .then((ctx) => {
+                                        context = ctx;
+                                        session.context = context;
+
+                                        context.filters = amazon.getFilterInfo(result);
+                                        return actions.sendFilterByPrompt(session)
+                                            .then((ctx2) => {
+                                                return sessionsDAO.updateContext(uid, ctx2);
+                                            });
+                                    });
+                            });
+                    }
 
                     // Run query with updated parameters
                     return performSearch(context, uid)
