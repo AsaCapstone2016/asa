@@ -188,14 +188,7 @@ const actions = {
                         context.bins = amazon.topRelevantSearchIndices(result, 4);
                         delete context.run_search;
                         delete context.missing_search_intent;
-
-                        // If a user asked for a recommendation, send a descriptive leading message
-                        if (context.recommend !== undefined) {
-                            return messageSender.sendTextMessage(recipientId, `Here are some items I think you'll like`)
-                                .then((success) => context);
-                        } else {
-                            return context;
-                        }
+                        return context;
                     });
             }, (error) => {
                 console.log(`ERROR in search action: ${error}`);
@@ -203,6 +196,15 @@ const actions = {
     },
     sendSearchResults(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                // Send a descriptive leading message for recommended items
+                if (request.context.recommend !== undefined) {
+                    return messageSender.sendTextMessage(session.uid, `Here are some items I think you'll like`)
+                        .then((success) => session);
+                } else {
+                    return session;
+                }
+            })
             .then((session) => {
                 let recipientId = session.uid;
 
