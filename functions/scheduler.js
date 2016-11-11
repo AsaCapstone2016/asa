@@ -1,17 +1,19 @@
 'use strict';
-var config = require('./../config');
-var subscriptionsDAO = require('./../core/database').subscriptionsDAO;
+let config = require('./../config');
+let subscriptionsDAO = require('./../core/database').subscriptionsDAO;
 
-var fetch = require('node-fetch');
-var aws = require('aws-sdk');
-var lambda = new aws.Lambda({
+let fetch = require('node-fetch');
+let aws = require('aws-sdk');
+let lambda = new aws.Lambda({
     region: 'us-east-1' //change to your region
 });
+
+const notificationInterval = 7;
 
 module.exports.scheduler = function (event, context, callback) {
 
     let date = event.time;
-    return subscriptionsDAO.getUsersForDate(date).then((data) => {
+    subscriptionsDAO.getUsersForDate(date).then((data) => {
         let count = data.Count;
 
         //Exit scheduler if no items to publish for
@@ -28,7 +30,21 @@ module.exports.scheduler = function (event, context, callback) {
             body: JSON.stringify(uids)
         })
             .then(function (rsp) {
-                return rsp.json();
+                console.log("HANDLING RESPONSE.");
+                let promiseArray = [];
+
+                //Get date into our format.
+                let newDate = new Date();
+                newDate.setDate(newDate.getDate() + notificationInterval); //Adding 7 days for now, can change.
+                newDate = newDate.toISOString();
+                newDate = newDate.substring(0, newDate.indexOf(':'));
+
+                data.Items.forEach((item)=> {
+                    promiseArray.push(subscriptionsDAO.updateUserSubscription(item.date, item.uid, newDate));
+                });
+                return Promise.all(promiseArray).then(()=> {
+                    return rsp.json()
+                });
             })
             .then(function (json) {
                 if (json.error && json.error.message) {
