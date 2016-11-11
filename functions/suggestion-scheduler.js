@@ -25,7 +25,21 @@ module.exports.scheduler = function (event, context, callback) {
             body: JSON.stringify(uids)
         })
             .then(function (rsp) {
-                return rsp.json();
+                console.log("HANDLING RESPONSE.");
+                let promiseArray = [];
+
+                //Get date into our format.
+                let newDate = new Date();
+                newDate.setDate(newDate.getDate() + notificationInterval); //Adding 7 days for now, can change.
+                newDate = newDate.toISOString();
+                newDate = newDate.substring(0, newDate.indexOf(':'));
+
+                data.Items.forEach((item)=> {
+                    promiseArray.push(subscriptionsDAO.updateUserSubscription(item.date, item.uid, newDate));
+                });
+                return Promise.all(promiseArray).then(()=> {
+                    return rsp.json()
+                });
             })
             .then(function (json) {
                 if (json.error && json.error.message) {
