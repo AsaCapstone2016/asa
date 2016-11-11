@@ -10,6 +10,7 @@ aws.config.update({region: 'us-east-1'});
 
 let docClient = new aws.DynamoDB.DocumentClient();
 const tableName = `${config.TABLE_PREFIX}Subscriptions`;
+const notificationInterval = 7;
 
 var subscriptionsDAO = {
 
@@ -23,28 +24,10 @@ var subscriptionsDAO = {
     addUserSubscription: (uid, platform) => {
 
         let date = new Date();
-        date.setDate(date.getDate() + 30);
+        date.setDate(date.getDate() + notificationInterval);
         date = date.toISOString();
         date = date.substring(0, date.indexOf(':'));
-        let params = {
-            TableName: tableName,
-            Item: {
-                "date": date,
-                "uid": `${platform}-${uid}`,
-            }
-        };
-
-        return new Promise(function (resolve, reject) {
-            docClient.put(params, function (err, data) {
-                console.log(data);
-                if (err) {
-                    console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-                    //If duplicate record error, that is fine.
-                    resolve();
-                }
-                resolve();
-            });
-        });
+        return createUserSubscription(date, platform, uid);
     },
 
     /**
@@ -68,7 +51,78 @@ var subscriptionsDAO = {
         };
 
         return docClient.query(params).promise();
+    },
+
+    /**
+     * Get one subscription record based on date and uid
+     * @param date range key
+     * @param uid sort key
+     * @returns {*} results from get, empty if not found
+     */
+    getSubscriptionRecord: (date, uid) => {
+        let params = {
+            TableName: tableName,
+            Key: {
+                date: date,
+                uid: uid
+            }
+        };
+
+        return docClient.get(params).promise();
+    },
+
+    /**
+     * Updates a subscription record to have a new date. This function actually deletes the record and then
+     * creates a new one since we cannot update a range key in Dynamo.
+     *
+     * @param oldDate date in database
+     * @param uid uid we want to change
+     * @param newDate date that we want to update to.
+     * @returns {*|Promise|Promise.<T>} promise that eventually returns result of createUserSubscription
+     */
+    updateUserSubscription: (oldDate, uid, newDate) => {
+        return subscriptionsDAO.getSubscriptionRecord(oldDate, uid).then((results)=> {
+
+            //We didn't find a matching item with oldDate and uid, so punt
+            if (results.Item === undefined)
+                throw Error("ITEM NOT FOUND IN DATABASE WITH PARAMS, CALL addUserSubscription TO ADD RECORD");
+
+            let params = {
+                Key: {
+                    "date": oldDate,
+                    "uid": uid
+                },
+                TableName: tableName
+            };
+
+            return docClient.delete(params).promise().then((a)=> {
+                return createUserSubscription(newDate, uid.substring(0, uid.indexOf("-")),
+                    uid.substring(uid.indexOf("-") + 1));
+            }, (error)=> {
+                throw Error(error);
+            });
+        });
     }
+};
+
+/**
+ * Paramaterized function to create user subscription record in Dynamo
+ *
+ * @param date date to add
+ * @param platform (fb, slack, etc.)
+ * @param uid unique id based on platform
+ * @returns {*} Promise of dynamo put
+ */
+var createUserSubscription = function (date, platform, uid) {
+    let params = {
+        TableName: tableName,
+        Item: {
+            "date": date,
+            "uid": `${platform}-${uid}`
+        }
+    };
+
+    return docClient.put(params).promise();
 };
 
 module.exports = subscriptionsDAO;
