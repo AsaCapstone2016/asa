@@ -176,32 +176,27 @@ const actions = {
                 const keywords = context.keywords;
                 context.query_params = {};
 
-                // Send message telling users that we're finding items specifically for them
-                if (context.recommend !== undefined) {
-                    return messageSender.sendTextMessage(recipientId, `I'll find some things I think you'll like...`)
-                        .then((success) => searchQueryDAO.addItem(recipientId, keywords))
-                        .then((success) => performSearch(context, recipientId))
-                        .then((result) => {
-                            context.items = result.Items;
-                            context.bins = amazon.topRelevantSearchIndices(result, 4);
-                            delete context.run_search;
-                            delete context.missing_search_intent;
-                            return context;
-                        });
-                }
+                let messageBefore = (context.recommend === undefined) ? 'Let me look on Amazon...' : 'Hmm... let me think...';
 
-                // log search event and execute search
-                // todo: these should be swapped, actually
-                return searchQueryDAO.addItem(recipientId, keywords)
-                    .then((success) => performSearch(context, recipientId))
-                    .then((result) => {
+                return messageSender.sendTextMessage(recipientId, messageBefore)
+                    .then((success) => searchQueryDAO.addItem(recipientId, keywords))
+                    .then((success) => {
+                        messageSender.sendTypingMessage(recipientId);
+                        return performSearch(context, recipientId);
+                    }).then((result) => {
                         context.items = result.Items;
                         context.bins = amazon.topRelevantSearchIndices(result, 4);
                         delete context.run_search;
                         delete context.missing_search_intent;
-                        return context;
-                    });
 
+                        // If a user asked for a recommendation, send a descriptive leading message
+                        if (context.recommend !== undefined) {
+                            return messageSender.sendTextMessage(recipientId, `Here are some items I think you'll like`)
+                                .then((success) => context);
+                        } else {
+                            return context;
+                        }
+                    });
             }, (error) => {
                 console.log(`ERROR in search action: ${error}`);
             });
@@ -548,39 +543,22 @@ module.exports.handler = (message, sender, msgSender) => {
                     // Add the bin parameters to the search query
                     let params = context.query_params;
 
-                    let recommend = false;
                     payload.params.forEach(param => {
                         (params[param.type] = params[param.type] || []).push(param.value);
-                        
-                        // Check if we need to tell the user we're recommending items now
-                        if (param.type === 'recommend') {
-                            recommend = true;
-                        }
                     });
 
-                    // Send message to user saying we're using their user profile now
-                    // Run query with updated parameters
-                    if (recommend) {
-                        return messageSender.sendTextMessage(uid, `Okay, I'll find some items you'll like`)
-                            .then((success) => performSearch(context, uid))
-                            .then((result) => {
-                                context.items = result.Items;
-                                return actions.sendSearchResults(session)
-                                    .then((ctx) => {
-                                        context = ctx;
-                                        session.context = context;
 
-                                        context.filters = amazon.getFilterInfo(result);
-                                        return actions.sendFilterByPrompt(session)
-                                            .then((ctx2) => {
-                                                return sessionsDAO.updateContext(uid, ctx2);
-                                            });
-                                    });
-                            });
-                    }
-
-                    // Run query with updated parameters
-                    return performSearch(context, uid)
+                    return new Promise((resolve, reject) => {
+                            if (payload.params[0].type === 'recommend') {
+                                resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
+                            } else {
+                                resolve('No message sent');
+                            }
+                        })
+                        .then((success) => {
+                            messageSender.sendTypingMessage(uid);
+                            return performSearch(context, uid);
+                        })
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
