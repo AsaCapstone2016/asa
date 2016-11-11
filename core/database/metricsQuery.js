@@ -18,19 +18,24 @@ let searchQueryParams = {
 };
 
 docClient.scan(searchQueryParams).promise().then((data) => {
-    console.log(`*** SEARCH QUERY METRICS ***`)
+    console.log(`*** SEARCH QUERY METRICS ***`);
     let count = data.Count;
-    console.log(`      QUERY COUNT: ${count}`);
     let items = data.Items;
     let users = {};
+    let searchCount = 0;
     let userCount = 0;
     items.forEach((item)=> {
         if (users[item.uid] == null) {
             userCount++;
             users[item.uid] = item.uid;
         }
+        if (item.uid != '1061868600596425' && item.uid != '1079809842088638' && item.uid != '1205605186160963'
+            && item.uid != '797001537069627' && item.uid != '1126031090811765') {
+            searchCount++;
+        }
     });
     console.log(`      UNIQUE USERS: ${userCount}`);
+    console.log(`      QUERY COUNT: ${searchCount}`);
 });
 
 let purcahseParams = {
@@ -39,6 +44,18 @@ let purcahseParams = {
 };
 docClient.scan(purcahseParams).promise().then((data)=> {
     console.log(`*** PURCHASE METRICS ***`);
-    let count = data.Count;
+    let count = 0;
+    data.Items.forEach((item)=> {
+        if (item.uid != '1061868600596425' && item.uid != '1079809842088638' && item.uid != '1205605186160963'
+            && item.uid != '797001537069627' && item.uid != '1126031090811765') {
+            count++;
+        }
+    });
     console.log(`      PURCHASE COUNT: ${count}`);
 });
+
+// Renee - 1061868600596425
+// Aaron - 1079809842088638
+// Sam - 1205605186160963
+// Yiming - 797001537069627
+// Evan - 1126031090811765
