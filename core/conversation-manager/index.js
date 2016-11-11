@@ -561,7 +561,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     // Send message to user saying we're using their user profile now
                     // Run query with updated parameters
                     if (recommend) {
-                        return messageSender.sendTextMessage(uid, 'You selected personal filter...')
+                        return messageSender.sendTextMessage(uid, `Okay, I'll find some items you'll like`)
                             .then((success) => performSearch(context, uid))
                             .then((result) => {
                                 context.items = result.Items;
