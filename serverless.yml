@@ -84,7 +84,7 @@ functions:
           method: post
           integration: lambda
   reminderScheduler:
-    handler: function/reminder-scheduler.scheduler
+    handler: functions/reminder-scheduler.scheduler
     timeout: 100
     events:
       - schedule: rate(1 minute)

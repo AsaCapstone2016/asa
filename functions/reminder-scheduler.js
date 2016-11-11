@@ -1,6 +1,9 @@
+/**
+ * Created by evan on 11/11/16.
+ */
 'use strict';
 var config = require('./../config');
-var subscriptionsDAO = require('./../core/database').subscriptionsDAO;
+var remindersDAO = require('./../core/database').remindersDAO;
 
 var fetch = require('node-fetch');
 var aws = require('aws-sdk');
@@ -8,21 +11,20 @@ var aws = require('aws-sdk');
 module.exports.scheduler = function (event, context, callback) {
 
     let date = event.time;
-    return subscriptionsDAO.getUsersForDate(date).then((data) => {
-        let count = data.Count;
+    console.log(`DATE: ${date}`);
+    return remindersDAO.getRemindersForDateTime(date).then((results)=> {
+        let count = results.Count;
 
         //Exit scheduler if no items to publish for
         if (count == 0) {
             return;
         }
 
-        let uids = data.Items.map((item)=> {
-            return item.uid
-        });
-        return fetch(config.SUGGESTION_EVENT_URL, {
+        let reminders = results.Items;
+        return fetch(config.REMINDER_EVENT_URL, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(uids)
+            body: JSON.stringify(reminders)
         })
             .then(function (rsp) {
                 return rsp.json();
@@ -32,8 +34,5 @@ module.exports.scheduler = function (event, context, callback) {
                     throw new Error(json.error.message);
                 }
             });
-
-    }, (error)=> {
-        console.log(`ERROR: ${error}`);
     });
 };
