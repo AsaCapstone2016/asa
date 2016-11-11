@@ -1,6 +1,7 @@
 'use strict';
-var purchasedItemDAO = require('database').purchasedItemDAO;
+var purchasedItemDAO = require('./../core/database').purchasedItemDAO;
 var config = require('./../config');
+var addPurchase = require('./../core/user-profiler').addPurchase;
 
 /**
  * Lambda function for purchase redirect that logs some information about the purchase click
@@ -30,22 +31,22 @@ module.exports.cartRedirect = function (event, context, callback) {
     console.log(`is mobile: ${isMobileRequest}`);
 
     if (isCartUrl === '1') {
-        console.log("here");
         let cartParams = redirectUrl.substring(redirectUrl.indexOf("?") + 1);
         let hmacStart = cartParams.indexOf("hmac=") + 5;
         let hmacENd = cartParams.indexOf("&SubscriptionId");
         let hmac = encodeURIComponent(cartParams.slice(hmacStart, hmacENd));
         cartParams = cartParams.slice(0, hmacStart) + hmac + cartParams.slice(hmacENd);
         if (isMobileRequest === 'true') {
-            console.log("here again");
-            //redirectUrl = `https://www.amazon.com/gp/aw/rcart?${encodeURIComponent(cartParams)}`;
             redirectUrl = `https://www.amazon.com/gp/aw/rcart?${cartParams}`;
         } else {
             redirectUrl = `https://www.amazon.com/gp/cart/aws-merge.html?${cartParams}`;
         }
     }
-    purchasedItemDAO.addItem(uid, ASIN).then(()=> {
-        console.log(`PURCHASE REDIRECTED - ${redirectUrl}`);
-        context.succeed({location: redirectUrl});
+
+    addPurchase(uid, 'fb', ASIN).then(()=> {
+        return purchasedItemDAO.addItem(uid, ASIN).then(()=> {
+            console.log(`PURCHASE REDIRECTED - ${redirectUrl}`);
+            context.succeed({location: redirectUrl});
+        });
     });
 };

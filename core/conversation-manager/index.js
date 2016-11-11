@@ -1,13 +1,15 @@
 'use strict';
 
-let amazon = require('amazon');
+let amazon = require('./../amazon');
+let userProfiler = require('./../user-profiler');
 
-let Wit = require('node-wit').Wit;
-let log = require('node-wit').log;
+let Wit = require('./../node-wit').Wit;
+let log = require('./../node-wit').log;
 
 // database access objects
-let searchQueryDAO = require('database').searchQueryDAO;
-let sessionsDAO = require('database').sessionsDAO;
+let searchQueryDAO = require('./../database').searchQueryDAO;
+let sessionsDAO = require('./../database').sessionsDAO;
+let subscriptionsDAO = require('./../database').subscriptionsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -15,6 +17,28 @@ const ASSOCIATE_TAG = config.AWS_TAG;
 
 // Store messageSender in a variable accessible by the Wit actions
 let messageSender;
+
+/**
+ * Performs either simple item search or item recommendation based on user's context
+ * @param context Current context object for the user
+ */
+let performSearch = (context, uid) => {
+    let keywords = context.keywords;
+    let recommendPipeline = context.recommend;
+    let queryParams = context.query_params;
+    let recommendFilter = queryParams.recommend;
+
+    if (recommendPipeline !== undefined || recommendFilter !== undefined) {
+        // perform item recommendation
+        console.log('Execute item recommendation');
+        queryParams.keywords = keywords;
+        return userProfiler.preferenceSearch(uid, 'fb', queryParams);
+    } else {
+        // perform simple item search
+        console.log('Execute simple item search');
+        return amazon.itemSearch(keywords, queryParams);
+    }
+}
 
 const actions = {
     send(request, response) {
@@ -68,18 +92,34 @@ const actions = {
                 if ('keywords' in context) {
                     if ('intent' in entities && entities.intent[0].value === 'search') {
                         // Search intent AND keywords -> perform search
+
                         context.run_search = true;
+                        delete context.recommend;
+                        delete context.missing_keywords;
+                        delete context.missing_search_intent;
+                    } else if ('intent' in entities && entities.intent[0].value === 'recommend') {
+                        // Recommendation intent AND keywords -> perform recommendation
+
+                        context.run_search = true;
+                        context.recommend = true;
                         delete context.missing_keywords;
                         delete context.missing_search_intent;
                     } else {
                         // Keywords but no search intent -> confirm desire to search
                         context.missing_search_intent = true;
                         delete context.run_search;
+                        delete context.recommend;
                         delete context.missing_keywords;
                     }
                 } else {
-                    // Search intent but no keywords -> ask for keywords
+                    // Search or recommendation intent but no keywords -> ask for keywords
                     context.missing_keywords = true;
+
+                    // Toggle flag for recommendation if needed
+                    if ('intent' in entities && entities.intent[0].value === 'recommend') {
+                        context.recommend = true;
+                    }
+
                     delete context.run_search;
                     delete context.missing_search_intent;
                 }
@@ -134,11 +174,13 @@ const actions = {
                 let context = request.context;
                 const keywords = context.keywords;
                 context.query_params = {};
+
                 return new Promise((resolve, reject) => {
                     // Log search event
+                    // todo: add this into promise chain below
                     searchQueryDAO.addItem(recipientId, keywords);
-                    // Search Amazon with keywords
-                    return amazon.itemSearch(keywords, context.query_params)
+
+                    return performSearch(context, recipientId)
                         .then((result) => {
                             context.items = result.Items;
                             context.bins = amazon.topRelevantSearchIndices(result, 4);
@@ -195,6 +237,7 @@ const actions = {
                             })
                         };
                     });
+
                     let prompt = context.bins[0].params[0].type === "SearchIndex" ? "Keep looking under" : "Add a filter";
                     return messageSender.sendTextMessage(recipientId, prompt, quickreplies)
                         .then(() => {
@@ -223,6 +266,22 @@ const actions = {
                             })
                         };
                     });
+
+                    // Add 'Personal Filter' option ONLY when user not in recommendation pipeline
+                    // and if they haven't chosen this filter before
+                    if (context.recommend === undefined && context.query_params.recommend === undefined) {
+                        quickreplies.push({
+                            text: 'Personal Filter',
+                            payload: JSON.stringify({
+                                METHOD: "ADD_FILTER",
+                                params: [{
+                                    type: 'recommend',
+                                    value: true
+                                }]
+                            })
+                        });
+                    }
+
                     quickreplies.push({
                         text: 'Clear Filters',
                         payload: JSON.stringify({
@@ -342,13 +401,16 @@ module.exports.handler = (message, sender, msgSender) => {
                 //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
+                    console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
-                    return actions.sendHelpMessage(session)
-                        .then((success) => {
-                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                        }, (error) => {
-                            console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                        });
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
+                        return actions.sendHelpMessage(session)
+                            .then((success) => {
+                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                            }, (error) => {
+                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                            });
+                    });
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
@@ -476,7 +538,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     });
 
                     // Run query with updated parameters
-                    return amazon.itemSearch(context.keywords, params)
+                    return performSearch(context, uid)
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
@@ -498,7 +560,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     messageSender.sendTypingMessage(uid);
 
                     context.query_params = {};
-                    return amazon.itemSearch(context.keywords, context.query_params)
+                    return performSearch(context, uid)
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)

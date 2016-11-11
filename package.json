@@ -2,27 +2,30 @@
   "name": "application-name",
   "version": "0.0.1",
   "scripts": {
-    "update-modules": "npm install core/database && npm install core/facebook-event-converter && npm install core/facebook-message-sender && npm install core/conversation-manager && npm install core/amazon",
-    "deploy": "npm run lint && npm run update-modules && sls deploy --stage $SLS_USER",
+    "deploy": "npm run lint && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
-    "testbench": "npm run update-modules && cd bench && ./start.sh",
+    "testbench": "cd bench && ./start.sh",
     "testbench:setup": "cd bench && ./setup.sh",
     "testbench:destroy": "cd bench && ./kill.sh"
   },
   "dependencies": {
+    "aws-sdk": "^2.6.15",
+    "compute-cosine-distance": "^1.0.0",
+    "es6-promise": "3.0.2",
+    "isomorphic-fetch": "^2.2.1",
     "node-fetch": "^1.6.2",
-    "database": "file:./core/database",
-    "facebook-event-converter": "file:./core/facebook-event-converter",
-    "facebook-message-sender": "file:./core/facebook-message-sender",
-    "conversation-manager": "file:./core/conversation-manager",
-    "amazon": "file:./core/amazon"
+    "node-uuid": "^1.4.7",
+    "request": "2.53.0",
+    "xml2js": "0.4.5"
   },
   "devDependencies": {
-    "aws-sdk": "^2.6.11",
     "body-parser": "^1.15.2",
     "eslint": "^3.7.1",
     "express": "^4.14.0",
     "ngrok": "^2.2.3",
     "nodemon": "^1.11.0"
+  },
+  "engines": {
+    "node": ">=4.0.0"
   }
 }

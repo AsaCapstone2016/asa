@@ -16,6 +16,7 @@ service: ASA # NOTE: update this with your service name
 provider:
   name: aws
   runtime: nodejs4.3
+  cfLogs: true
 
 # you can overwrite defaults here
   stage: ${env:SLS_USER}
@@ -36,6 +37,7 @@ provider:
 # you can add packaging information here
 package:
   include:
+    - core
     - functions
     - node_modules
     - config.json
@@ -67,12 +69,20 @@ functions:
           path: cart-redirect
           method: get
           integration: lambda
-  reminderPoll:
-    handler: functions/reminderPoll.reminderPoll
+  scheduler:
+    handler: functions/scheduler.scheduler
     timeout: 100
     events:
       - schedule: rate(1 minute)
-      - enabled: true
+      - enabled: false
+  suggestionEvent:
+    handler: functions/suggestion-event.suggestionEvent
+    timeout: 100
+    events:
+      - http:
+          path: suggestion-event
+          method: post
+          integration: lambda
 #    you can add any of the following events
 #      - s3: ${env:BUCKET}
 #      - schedule: rate(10 minutes)
@@ -101,11 +111,11 @@ resources:
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
-              ReadCapacityUnits: 5
-              WriteCapacityUnits: 5
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
     SeachQueriesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -121,8 +131,8 @@ resources:
           - AttributeName: date
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
     PurchasedItemsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -138,5 +148,35 @@ resources:
            - AttributeName: date
              KeyType: RANGE
          ProvisionedThroughput:
-           ReadCapacityUnits: 5
-           WriteCapacityUnits: 5
+           ReadCapacityUnits: 1
+           WriteCapacityUnits: 1
+    UserProfilesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-UserProfiles
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    SubscriptionsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Subscriptions
+        AttributeDefinitions:
+          - AttributeName: date
+            AttributeType: S
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: date
+            KeyType: HASH
+          - AttributeName: uid
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
