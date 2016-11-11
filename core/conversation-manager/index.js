@@ -57,6 +57,7 @@ const actions = {
                             };
                         });
                     }
+
                     return messageSender.sendTextMessage(recipientId, msg, quickreplies)
                         .then(() => null);
                 }
@@ -175,27 +176,35 @@ const actions = {
                 const keywords = context.keywords;
                 context.query_params = {};
 
-                return new Promise((resolve, reject) => {
-                    // Log search event
-                    // todo: add this into promise chain below
-                    searchQueryDAO.addItem(recipientId, keywords);
+                let messageBefore = (context.recommend === undefined) ? 'Let me look on Amazon...' : 'Hmm... let me think...';
 
-                    return performSearch(context, recipientId)
-                        .then((result) => {
-                            context.items = result.Items;
-                            context.bins = amazon.topRelevantSearchIndices(result, 4);
-                            delete context.run_search;
-                            delete context.missing_search_intent;
-                            return resolve(context);
-                        });
-                });
-
+                return messageSender.sendTextMessage(recipientId, messageBefore)
+                    .then((success) => searchQueryDAO.addItem(recipientId, keywords))
+                    .then((success) => {
+                        messageSender.sendTypingMessage(recipientId);
+                        return performSearch(context, recipientId);
+                    }).then((result) => {
+                        context.items = result.Items;
+                        context.bins = amazon.topRelevantSearchIndices(result, 4);
+                        delete context.run_search;
+                        delete context.missing_search_intent;
+                        return context;
+                    });
             }, (error) => {
                 console.log(`ERROR in search action: ${error}`);
             });
     },
     sendSearchResults(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                // Send a descriptive leading message for recommended items
+                if (request.context.recommend !== undefined) {
+                    return messageSender.sendTextMessage(session.uid, `Here are some items I think you'll like`)
+                        .then((success) => session);
+                } else {
+                    return session;
+                }
+            })
             .then((session) => {
                 let recipientId = session.uid;
 
@@ -239,6 +248,7 @@ const actions = {
                     });
 
                     let prompt = context.bins[0].params[0].type === "SearchIndex" ? "Keep looking under" : "Add a filter";
+
                     return messageSender.sendTextMessage(recipientId, prompt, quickreplies)
                         .then(() => {
                             delete context.bins;
@@ -288,6 +298,7 @@ const actions = {
                             METHOD: "CLEAR_FILTERS"
                         })
                     });
+
                     return messageSender.sendTextMessage(recipientId, "Choose a type of filter", quickreplies)
                         .then(() => {
                             delete context.filters;
@@ -533,12 +544,23 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     // Add the bin parameters to the search query
                     let params = context.query_params;
+
                     payload.params.forEach(param => {
                         (params[param.type] = params[param.type] || []).push(param.value);
                     });
 
-                    // Run query with updated parameters
-                    return performSearch(context, uid)
+
+                    return new Promise((resolve, reject) => {
+                            if (payload.params[0].type === 'recommend') {
+                                resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
+                            } else {
+                                resolve('No message sent');
+                            }
+                        })
+                        .then((success) => {
+                            messageSender.sendTypingMessage(uid);
+                            return performSearch(context, uid);
+                        })
                         .then((result) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
