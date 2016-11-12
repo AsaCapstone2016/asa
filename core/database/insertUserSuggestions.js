@@ -12,13 +12,12 @@ let docClient = new aws.DynamoDB.DocumentClient();
 let subscriptionsDAO = require('./../../core/database').subscriptionsDAO;
 const tablePrefix = 'ASA-prod-';
 
-let purcahseParams = {
+let purchaseParams = {
     TableName: `${tablePrefix}Sessions`,
     Count: true
 };
 
-docClient.scan(purcahseParams).promise().then((data)=> {
-    console.log(`*** PURCHASE METRICS ***`);
+docClient.scan(purchaseParams).promise().then((data)=> {
     let count = 0;
     data.Items.forEach((item)=> {
         docClient.scan({TableName: `${tablePrefix}Suggestions`}).then((results)=> {
