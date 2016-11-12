@@ -2,6 +2,7 @@
 
 let utils = require('./utils');
 let userProfilesDAO = require('./../../database').userProfilesDAO;
+let amazon = require('./../../amazon');
 
 /**
  * Find the items in a category which are the most relevant to a user
@@ -16,7 +17,8 @@ function queryAgainstUserProfile(userid, platform, query) {
         // Get pages of item results from Amazon using the search query
         return utils.getCandidateItems(query, 5).then(result => {
             // Rank items against user profile using cosine similarity
-            return utils.sortItemsBySimilarity(profile, result);
+            result = utils.sortItemsBySimilarity(profile, result);
+            return amazon.buildItemResponse(result);
         }, error => {
             return `ERROR: ${JSON.stringify(error, null, 2)}`;
         })
