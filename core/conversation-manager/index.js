@@ -437,7 +437,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     // User selected a variation from a quickreply prompt
                     if (payload.VARIATION_VALUE === "Nevermind") {
                         // Stop selecting variations
-                        return actions.stopSelectingVariations(session)
+                        return actions.stopSearchProcess(session)
                             .then((ctx) => {
                                 return sessionsDAO.updateContext(uid, ctx);
                             }, (error) => {
@@ -497,7 +497,7 @@ module.exports.handler = (message, sender, msgSender) => {
                                 });
                         })
                         .then(() => {
-                            return actions.stopSelectingVariations(session)
+                            return actions.stopSearchProcess(session)
                                 .then((ctx) => {
                                     return sessionsDAO.updateContext(uid, ctx);
                                 });
