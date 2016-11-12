@@ -10,7 +10,7 @@ let log = require('./../node-wit').log;
 let searchQueryDAO = require('./../database').searchQueryDAO;
 let sessionsDAO = require('./../database').sessionsDAO;
 let subscriptionsDAO = require('./../database').subscriptionsDAO;
-let remindersDAO = require('./../databse').remindersDAO;
+let remindersDAO = require('./../database').remindersDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -430,7 +430,9 @@ const actions = {
                 let recipientId = session.uid;
                 let context = request.context;
 
-                return remindersDAO.addReminder(context.time, recipientId, 'fb', context.task)
+                let date = new Date(context.time);
+                date.setHours(date.getHours() - 3);
+                return remindersDAO.addReminder(date.toISOString(), recipientId, 'fb', context.task)
                     .then((success) => {
                         context.success = true;
                         delete context.fail;
@@ -633,14 +635,13 @@ module.exports.handler = (message, sender, msgSender) => {
                         (params[param.type] = params[param.type] || []).push(param.value);
                     });
 
-
                     return new Promise((resolve, reject) => {
-                            if (payload.params[0].type === 'recommend') {
-                                resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
-                            } else {
-                                resolve('No message sent');
-                            }
-                        })
+                        if (payload.params[0].type === 'recommend') {
+                            resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
+                        } else {
+                            resolve('No message sent');
+                        }
+                    })
                         .then((success) => {
                             messageSender.sendTypingMessage(uid);
                             return performSearch(context, uid);
