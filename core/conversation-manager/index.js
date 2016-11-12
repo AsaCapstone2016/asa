@@ -10,6 +10,7 @@ let log = require('./../node-wit').log;
 let searchQueryDAO = require('./../database').searchQueryDAO;
 let sessionsDAO = require('./../database').sessionsDAO;
 let subscriptionsDAO = require('./../database').subscriptionsDAO;
+let remindersDAO = require('./../databse').remindersDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -356,6 +357,89 @@ const actions = {
                             return resolve(context);
                         });
                 });
+            });
+    },
+    checkReminder(request) {
+        return new Promise((resolve, reject) => {
+            let entities = request.entities;
+            let context = request.context;
+
+            // Refresh state of context as we try to get 'task' and 'time' from the user
+            delete context.set_reminder;
+            delete context.missing_task;
+            delete context.missing_time;
+            delete context.no_time;
+            delete context.no_task;
+            delete context.ask_am_pm;
+            delete context.success;
+            delete context.fail;
+
+            if (context.setting_reminder || ('intent' in entities && entities.intent[0].value === "reminder")) {
+                // We either have the reminder intent at the beginning of the story
+                // or have already begun the story and are looping back to checkReminder
+                context.setting_reminder = true;
+
+                if ('reminder' in entities) {
+                    // Extract and store the reminder string
+                    let reminders = [];
+                    entities.reminder.forEach(reminder => {
+                        reminders.push(reminder.value);
+                    });
+                    context.task = reminders.join(' and ');
+
+                } else if (context.task === undefined) {
+                    context.missing_task = true;
+                }
+
+                if ('datetime' in entities) {
+                    // Extract and store the time
+
+                    // TODO detect when we need to ask about AM vs PM
+                    context.time = entities.datetime[0].value;
+
+                } else if (context.time === undefined) {
+                    context.missing_time = true;
+                }
+
+                if (context.task && context.time) {
+                    context.set_reminder = true;
+                } else if (context.missing_task && context.missing_time) {
+                    delete context.missing_time;
+                }
+
+            } else {
+                // Missing the reminder intent at the start of the Set Reminder story
+                context.missing_reminder_intent = true;
+            }
+
+            resolve(context);
+        });
+    },
+    storeTask(request) {
+
+    },
+    storeTime(request) {
+
+    },
+    storeAM_PM(request) {
+
+    },
+    setReminder(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+
+                return remindersDAO.addReminder(context.time, recipientId, 'fb', context.task)
+                    .then((success) => {
+                        context.success = true;
+                        delete context.fail;
+                        return context;
+                    }, (error) => {
+                        context.fail = true;
+                        delete context.success;
+                        return context;
+                    });
             });
     },
     clearContext(request) {
