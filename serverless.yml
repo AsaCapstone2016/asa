@@ -51,7 +51,7 @@ package:
 functions:
   facebookLambda:
     handler: functions/fb-endpoint.facebookLambda
-    timeout: 10
+    timeout: 20
     events:
       - http:
           path: fb-webhook
