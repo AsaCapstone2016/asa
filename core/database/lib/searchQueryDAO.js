@@ -28,11 +28,12 @@ var searchQueryDAO = {
             }
         };
 
-        documentClient.put(params, function (err, data) {
-            if (err) {
-                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-            }
-        });
+        return documentClient.put(params).promise()
+            .then((success) => {
+                console.log(`Successfully logged search query for user ${params.Item.uid}`);
+            }, (error) => {
+                console.log(`Error logging search query for user ${params.Item.uid}: ${JSON.stringify(error)}`);
+            });
     }
 };
 

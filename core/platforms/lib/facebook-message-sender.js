@@ -1,7 +1,7 @@
 'use strict';
 
 var fetch = require('node-fetch');
-var config = require('./../../config');
+var config = require('./../../../config');
 
 var facebookMessageSender = {
 
@@ -98,7 +98,7 @@ var facebookMessageSender = {
                 element.buttons.push({
                     type: "web_url",
                     url: product.purchaseUrl,
-                    title: "Purchase",
+                    title: "Checkout",
                     webview_height_ratio: "TALL"
                 });
             }
@@ -286,7 +286,7 @@ var facebookMessageSender = {
         element.buttons = [{
             type: "web_url",
             url: product.purchaseUrl,
-            title: "Purchase",
+            title: "Checkout",
             webview_height_ratio: "TALL"
         }, {
             type: 'postback',
@@ -313,6 +313,10 @@ var facebookMessageSender = {
         };
 
         return callSendAPI(json);
+    },
+
+    getName: function () {
+        return 'fb';
     }
 };
 
