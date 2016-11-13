@@ -1,19 +1,14 @@
 'use strict';
-let config = require('./../config');
-let subscriptionsDAO = require('./../core/database').subscriptionsDAO;
+var config = require('./../config');
+var subscriptionsDAO = require('./../core/database').subscriptionsDAO;
 
-let fetch = require('node-fetch');
-let aws = require('aws-sdk');
-let lambda = new aws.Lambda({
-    region: 'us-east-1' //change to your region
-});
-
-const notificationInterval = 7;
+var fetch = require('node-fetch');
+var aws = require('aws-sdk');
 
 module.exports.scheduler = function (event, context, callback) {
 
     let date = event.time;
-    subscriptionsDAO.getUsersForDate(date).then((data) => {
+    return subscriptionsDAO.getUsersForDate(date).then((data) => {
         let count = data.Count;
 
         //Exit scheduler if no items to publish for
