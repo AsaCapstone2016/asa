@@ -152,12 +152,6 @@ const utils = {
                 items[i].cosineSim = cosineSim;
             }
 
-            console.log("Items before sort:")
-            items.forEach(item=>{
-                console.log("cosineSim: ", item.cosineSim);
-                console.log("Order: ", item.order);
-            })
-
             /*
             * Sort the items by their cosine similarity with the user profile
             */
@@ -165,12 +159,6 @@ const utils = {
                 return a.cosineSim - b.cosineSim || a.order - b.order;
             });
             result.Items = items;
-
-            console.log("Items after sort:")
-            items.forEach(item=>{
-                console.log("cosineSim: ", item.cosineSim);
-                console.log("Order: ", item.order);
-            })
         }
 
         result.Items = result.Items.slice(0, 10);
