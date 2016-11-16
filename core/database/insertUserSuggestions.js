@@ -19,19 +19,30 @@ let purchaseParams = {
 
 docClient.scan(purchaseParams).promise().then((data)=> {
     let count = 0;
-    data.Items.forEach((item)=> {
-        docClient.scan({TableName: `${tablePrefix}Suggestions`}).then((results)=> {
+    docClient.scan({TableName: `${tablePrefix}Subscriptions`}).promise().then((results)=> {
+        let promiseArray = [];
+        data.Items.forEach((item)=> {
+
             let found = false;
-            results.items.forEach((result)=> {
+            results.Items.forEach((result)=> {
                 if (result.uid == item.uid)
                     found = true;
             });
 
             if (!found) {
-                subscriptionsDAO.addUserSubscription(item.uid, 'fb');
-            }
+                let params = {
+                    TableName: `${tablePrefix}Subscriptions`,
+                    Item: {
+                        "date": "2016-11-16T21",
+                        "uid": `fb-${item.uid}`
+                    }
+                };
 
+                promiseArray.push( docClient.put(params).promise());
+            }
+            return Promise.all(promiseArray);
         });
     });
+
     console.log(`      PURCHASE COUNT: ${count}`);
 });
