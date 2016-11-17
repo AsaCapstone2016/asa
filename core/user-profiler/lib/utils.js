@@ -156,7 +156,7 @@ const utils = {
             * Sort the items by their cosine similarity with the user profile
             */
             items.sort((a,b) => {
-                return a.cosineSim - b.cosineSim;
+                return a.cosineSim - b.cosineSim || a.order - b.order;
             });
             result.Items = items;
         }
@@ -188,8 +188,11 @@ const utils = {
             searchCriteria.ItemPage = curPage;
             promiseArray.push(amazon_client.itemSearch(searchCriteria)
             .then((result) => {
-                // let items = result.Items;
-                // return items;
+                let order = 0;
+                result.Items.forEach(item=>{
+                    item.order = start + order;
+                    order += 1;
+                })
                 return result
             }, (error) => {
                 console.log(`ERR: ${JSON.stringify(err, null, 2)}`);
