@@ -72,7 +72,7 @@ functions:
     handler: functions/suggestion-scheduler.scheduler
     timeout: 100
     events:
-      - schedule: rate(1 hour)
+      - schedule: cron(0 * * * ? *)
       - enabled: false
   suggestionEvent:
     handler: functions/suggestion-event.suggestionEvent
@@ -86,7 +86,7 @@ functions:
     handler: functions/reminder-scheduler.scheduler
     timeout: 100
     events:
-      - schedule: rate(1 minute)
+      - schedule: cron(* * * * ? *)
       - enabled: true
   reminderEvent:
     handler: functions/reminder-event.reminderEvent
