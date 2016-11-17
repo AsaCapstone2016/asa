@@ -9,6 +9,8 @@ var SUGGESTION_EVENT_URL = inProd ? process.env.SUGGESTION_EVENT_URL_PROD : proc
 var REMINDER_EVENT_URL = inProd ? process.env.REMINDER_EVENT_URL_PROD : process.env.REMINDER_EVENT_URL_DEV;
 
 var config = {
+    IN_PROD: inProd,
+    
     AWS_ID: process.env.AWS_ID,
     AWS_SECRET: process.env.AWS_SECRET,
     AWS_TAG: process.env.AWS_TAG,
@@ -19,7 +21,7 @@ var config = {
     WIT_TOKEN: process.env.WIT_TOKEN,
 
     TABLE_PREFIX: TABLE_PREFIX,
-    IN_PROD: inProd,
+    
     CART_REDIRECT_URL: CART_REDIRECT_URL,
     SUGGESTION_EVENT_URL: SUGGESTION_EVENT_URL,
     REMINDER_EVENT_URL: REMINDER_EVENT_URL

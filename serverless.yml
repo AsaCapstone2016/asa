@@ -43,7 +43,6 @@ package:
     - config.json
   exclude:
     - bench
-    - core
     - test
     - asa-wit-app.zip
 #  artifact: my-service-code.zip
