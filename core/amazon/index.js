@@ -46,8 +46,6 @@ var amazonProduct = {
             "similarityType": "Random"
         }).then((result) => {
             return amazonProduct.buildItemResponse(result);
-        }, (error) => {
-            console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
         });
     },
 
