@@ -32,8 +32,8 @@ function getSuggestions(userid, platform) {
         let promiseArray = [];
         for (let i = 0; i < NUM_SUGGESTIONS && i < nodes.length; i++) {
             let asins = Object.keys(profile[nodes[i].name].items);
-            promiseArray.push(utils.findSimilarItems(asins, 1).then(items => {
-                suggestions = suggestions.concat(items);
+            promiseArray.push(utils.findSimilarItems(asins).then(items => {
+                suggestions = suggestions.push(items);
             }, error => {
                 console.log(`No related items for ${nodes[i].name}`);
             }));
@@ -41,7 +41,7 @@ function getSuggestions(userid, platform) {
 
         // Return item suggestions
         return Promise.all(promiseArray).then(() => {
-            return suggestions;
+            return utils.filterOutDuplicates(suggestions);
         });
     });
 };
