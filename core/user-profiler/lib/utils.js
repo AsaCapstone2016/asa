@@ -260,11 +260,11 @@ const utils = {
         let asins = [];
         groups.forEach(group => {
             let idx = 0;
-            while (idx < group.length && !(group[idx].ASIN in asins)) {
+            while (idx < group.length && asins.indexOf(group[idx].ASIN[0]) > -1) {
                 idx++;
             }
             if (idx !== group.length) {
-                asins.push(group[idx].ASIN);
+                asins.push(group[idx].ASIN[0]);
                 suggestedItems.push(group[idx]);
             }
         });

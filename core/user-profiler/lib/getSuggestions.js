@@ -33,7 +33,7 @@ function getSuggestions(userid, platform) {
         for (let i = 0; i < NUM_SUGGESTIONS && i < nodes.length; i++) {
             let asins = Object.keys(profile[nodes[i].name].items);
             promiseArray.push(utils.findSimilarItems(asins).then(items => {
-                suggestions = suggestions.push(items);
+                suggestions.push(items);
             }, error => {
                 console.log(`No related items for ${nodes[i].name}`);
             }));
