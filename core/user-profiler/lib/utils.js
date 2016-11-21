@@ -239,14 +239,36 @@ const utils = {
      * Find a number of items related to a list of items.
      *
      * @param ASINs A list of item ASINs
-     * @param numItems Number of similar items needed
      *
      * @returns Array of raw item results from Amazon
      */
-    findSimilarItems(ASINs, numItems) {
+    findSimilarItems(ASINs) {
         return amazon.similarityLookup(ASINs).then(result => {
-            return result.Items.slice(0, numItems);
+            return result.Items;
         });
+    },
+
+    /**
+     * Choose one item from each group of suggested items, making sure
+     * not to repeat an item.
+     * 
+     * @param groups Array of arrays of item results from the Ad API
+     * @returns Array of item results with as many as the number of groups and as few as 0
+     */
+    filterOutDuplicates(groups) {
+        let suggestedItems = [];
+        let asins = [];
+        groups.forEach(group => {
+            let idx = 0;
+            while (idx < group.length && asins.indexOf(group[idx].ASIN[0]) > -1) {
+                idx++;
+            }
+            if (idx !== group.length) {
+                asins.push(group[idx].ASIN[0]);
+                suggestedItems.push(group[idx]);
+            }
+        });
+        return suggestedItems;
     }
 };
 
