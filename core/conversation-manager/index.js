@@ -33,7 +33,7 @@ let performSearch = (context, uid) => {
         // perform item recommendation
         console.log('Execute item recommendation');
         queryParams.keywords = keywords;
-        return userProfiler.preferenceSearch(uid, 'fb', queryParams);
+        return userProfiler.preferenceSearch(uid, messageSender.getName(), queryParams);
     } else {
         // perform simple item search
         console.log('Execute simple item search');
@@ -445,7 +445,7 @@ const actions = {
 
                 let date = new Date(context.time);
                 date.setHours(date.getHours() - 3);
-                return remindersDAO.addReminder(date.toISOString(), recipientId, 'fb', context.task)
+                return remindersDAO.addReminder(date.toISOString(), recipientId, messageSender.getName(), context.task)
                     .then((success) => {
                         context.success = true;
                         delete context.fail;
