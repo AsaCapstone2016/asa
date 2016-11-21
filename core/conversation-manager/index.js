@@ -618,6 +618,9 @@ module.exports.handler = (message, sender, msgSender) => {
                             context.items = result.Items;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => null);
+                        }, (error) => {
+                            console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
+                            return messageSender.sendTextMessage(uid, "Huh, I couldn't find any related items");
                         });
 
                 } else if (payload.METHOD === "FILTER_BY") {
