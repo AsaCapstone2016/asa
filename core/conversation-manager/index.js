@@ -194,7 +194,7 @@ const actions = {
                         messageSender.sendTypingMessage(recipientId);
                         return performSearch(context, recipientId);
                     }).then((result) => {
-                        context.items = result.Items;
+                        context.search_results = result;
                         context.bins = amazon.topRelevantSearchIndices(result, 4);
                         delete context.run_search;
                         delete context.missing_search_intent;
@@ -209,7 +209,11 @@ const actions = {
             .then((session) => {
                 // Send a descriptive leading message for recommended items
                 if (request.context.recommend !== undefined) {
-                    return messageSender.sendTextMessage(session.uid, `Here are some items I think you'll like`)
+                    let msg = `MESSAGE ABOUT NO RELEVANT INFO IN USER PROFILE`;
+                    if (request.context.search_results.CanRecommend) {
+                        msg = `Here are some items I think you'll like`;
+                    }
+                    return messageSender.sendTextMessage(session.uid, msg)
                         .then((success) => session);
                 } else {
                     return session;
@@ -221,7 +225,7 @@ const actions = {
                 messageSender.sendTypingMessage(recipientId);
 
                 let context = request.context;
-                const items = context.items;
+                const items = context.search_results.Items;
                 if (recipientId) {
                     items.forEach((item)=> {
                         let isCart = '0';
@@ -232,7 +236,7 @@ const actions = {
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
-                            delete context.items;
+                            delete context.search_results;
                             return context;
                         });
                 }
@@ -615,7 +619,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     return amazon.similarityLookup(payload.ASIN)
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => null);
                         }, (error) => {
@@ -659,7 +663,7 @@ module.exports.handler = (message, sender, msgSender) => {
                             return performSearch(context, uid);
                         })
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
@@ -681,7 +685,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.query_params = {};
                     return performSearch(context, uid)
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
