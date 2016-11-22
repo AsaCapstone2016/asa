@@ -83,6 +83,21 @@ var facebookMessageSender = {
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0]
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]);
+
+            // Offers->Offer->OfferListing->IsEligibleForPrime
+            let isPrimeEligable = product.primeEligable || ( product.Offers && product.Offers[0] && product.Offers[0].Offer
+                && product.Offers[0].Offer[0] && product.Offers[0].Offer[0].OfferListing
+                && product.Offers[0].Offer[0].OfferListing[0]
+                && product.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime
+                && product.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime[0]);
+            if (isPrimeEligable == null || isPrimeEligable === "0") {
+                isPrimeEligable = "No";
+            }
+            if (isPrimeEligable === "1") {
+                isPrimeEligable = "Yes";
+            }
+
+            element.subtitle += `\nPrime Eligable: ${isPrimeEligable}`;
             element.buttons = [];
             if (product.HasVariations) {
                 element.buttons.push({
@@ -238,7 +253,7 @@ var facebookMessageSender = {
             var element = {};
             element.title = option;
             element.image_url = product.image;
-            element.subtitle = product.price;
+            element.subtitle = `${product.price}\n Prime Eligable: ${product.primeEligable}`;
             element.buttons = [{
                 type: "postback",
                 title: "Select",

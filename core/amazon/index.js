@@ -11,7 +11,6 @@ var amazon_client = amazon_api.createClient({
     awsTag: config.AWS_TAG
 });
 
-
 var amazonProduct = {
     /**
      * params: {
@@ -33,6 +32,7 @@ var amazonProduct = {
         });
 
         return amazon_client.itemSearch(search_params).then((result) => {
+            console.log(`here are items ${JSON.stringify(result)}`);
             return amazonProduct.buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
@@ -224,6 +224,20 @@ var amazonProduct = {
                                 if (!(value in ref)) {
                                     // Otherwise, add value to map
                                     if (variationIdx == variationKeys.length - 1) {
+
+                                        // Offers->Offer->OfferListing->IsEligibleForPrime
+                                        let isPrimeEligable = item.Offers && item.Offers[0] && item.Offers[0].Offer
+                                            && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
+                                            && item.Offers[0].Offer[0].OfferListing[0]
+                                            && item.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime
+                                            && item.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime[0];
+                                        if (isPrimeEligable == null || isPrimeEligable === "0") {
+                                            isPrimeEligable = "No";
+                                        }
+                                        if (isPrimeEligable === "1") {
+                                            isPrimeEligable = "Yes";
+                                        }
+
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg',
@@ -239,7 +253,8 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]),
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
-                                            && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
+                                            && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0],
+                                            "primeEligable": isPrimeEligable
                                         }
 
                                         // Check if the last level variations are too numerous for selection through conversation
@@ -263,7 +278,6 @@ var amazonProduct = {
                             console.log("no item attributes");
                         }
                     }
-
 
                     return {
                         conversational: conversational,
@@ -325,6 +339,5 @@ var amazonProduct = {
         });
     }
 };
-
 
 module.exports = amazonProduct;
