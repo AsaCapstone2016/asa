@@ -209,7 +209,7 @@ const actions = {
             .then((session) => {
                 // Send a descriptive leading message for recommended items
                 if (request.context.recommend !== undefined) {
-                    let msg = `MESSAGE ABOUT NO RELEVANT INFO IN USER PROFILE`;
+                    let msg = `I don't know anything about your tastes in this category... but here's what I think is most relevant`;
                     if (request.context.search_results.CanRecommend) {
                         msg = `Here are some items I think you'll like`;
                     }
