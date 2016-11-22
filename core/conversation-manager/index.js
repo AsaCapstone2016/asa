@@ -147,10 +147,10 @@ const actions = {
             // If the context has the missing_keywords flag, delete it
             delete context.missing_keywords;
 
-            if ('search_query' in entities) {
+            if ('keywords' in entities) {
                 // Grab the keywords
                 let keywords = [];
-                entities.search_query.forEach((keyword) => {
+                entities.keywords.forEach((keyword) => {
                     keywords.push(keyword.value);
                 });
                 context.keywords = keywords.join(' ');
@@ -392,13 +392,13 @@ const actions = {
                 // or have already begun the story and are looping back to checkReminder
                 context.setting_reminder = true;
 
-                if ('reminder' in entities) {
+                if ('task' in entities) {
                     // Extract and store the reminder string
-                    let reminders = [];
-                    entities.reminder.forEach(reminder => {
-                        reminders.push(reminder.value);
+                    let tasks = [];
+                    entities.task.forEach(task => {
+                        tasks.push(task.value);
                     });
-                    context.task = reminders.join(' and ');
+                    context.task = tasks.join(' and ');
 
                 } else if (context.task === undefined) {
                     context.missing_task = true;
