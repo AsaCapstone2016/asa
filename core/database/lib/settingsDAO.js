@@ -25,7 +25,7 @@ var settingsDAO = {
         let params = {
             TableName: tableName,
             Item: {
-                uid: `${uid}-${platform}`,
+                uid: `${platform}-${uid}`,
                 timezone: "-05:00",
                 sendSuggestions: true
             }
@@ -49,7 +49,7 @@ var settingsDAO = {
                 "#uid": "uid"
             },
             ExpressionAttributeValues: {
-                ":uid": `${uid}-${platform}`
+                ":uid": `${platform}-${uid}`
             }
         };
 
@@ -65,7 +65,7 @@ var settingsDAO = {
         let params = {
             TableName: tableName,
             Key: {
-                uid: `${uid}-${platform}`,
+                uid: `${platform}-${uid}`,
                 UpdateExpression: 'set timezone = :timezone, sendSuggestions = :sendSuggestions',
                 ExpressionAttributeValues: {
                     ':timezone': settingsObject.timezone,

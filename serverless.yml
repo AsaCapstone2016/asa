@@ -222,4 +222,4 @@ resources:
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
-          WriteCapcityUnits: 1
+          WriteCapacityUnits: 1

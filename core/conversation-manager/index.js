@@ -11,6 +11,7 @@ let searchQueryDAO = require('./../database').searchQueryDAO;
 let sessionsDAO = require('./../database').sessionsDAO;
 let subscriptionsDAO = require('./../database').subscriptionsDAO;
 let remindersDAO = require('./../database').remindersDAO;
+let settingsDAO = require('./../database').settingsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -84,7 +85,7 @@ const actions = {
                     msg2 += "• Can you recommend something?\n";
                     msg2 += "• Recommend a book\n\n";
                     msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
-                    
+
                     return messageSender.sendTextMessage(recipientId, msg0)
                         .then(() => messageSender.sendTextMessage(recipientId, msg1))
                         .then(() => messageSender.sendTextMessage(recipientId, msg2))
@@ -514,12 +515,14 @@ module.exports.handler = (message, sender, msgSender) => {
                     console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
                     return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
-                        return actions.sendHelpMessage(session)
-                            .then((success) => {
-                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                            }, (error) => {
-                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                            });
+                        return settingsDAO.addDefaultSettings(uid, messageSender.getName()).then(()=> {
+                            return actions.sendHelpMessage(session)
+                                .then((success) => {
+                                    console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                                }, (error) => {
+                                    console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                                });
+                        });
                     });
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
