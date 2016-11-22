@@ -226,17 +226,7 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
 
                                         // Offers->Offer->OfferListing->IsEligibleForPrime
-                                        let isPrimeEligable = item.Offers && item.Offers[0] && item.Offers[0].Offer
-                                            && item.Offers[0].Offer[0] && item.Offers[0].Offer[0].OfferListing
-                                            && item.Offers[0].Offer[0].OfferListing[0]
-                                            && item.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime
-                                            && item.Offers[0].Offer[0].OfferListing[0].IsEligibleForPrime[0];
-                                        if (isPrimeEligable == null || isPrimeEligable === "0") {
-                                            isPrimeEligable = "No";
-                                        }
-                                        if (isPrimeEligable === "1") {
-                                            isPrimeEligable = "Yes";
-                                        }
+                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item);
 
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
@@ -254,8 +244,8 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]),
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
                                             && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0],
-                                            "primeEligable": isPrimeEligable
-                                        }
+                                            "primeEligible": isPrimeEligible
+                                        };
 
                                         // Check if the last level variations are too numerous for selection through conversation
                                         if (Object.keys(ref).length > 10) {
@@ -302,6 +292,8 @@ var amazonProduct = {
         var promiseArray = [];
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
             let curItem = items[itemIdx];
+
+            curItem.primeEligible = amazonProduct.isItemPrimeEligible(curItem);
             //When item has ParentASIN and ParentASIN not same as ASIN, which means has options
             if (curItem.ParentASIN !== undefined &&
                 curItem.ParentASIN.length > 0 &&
@@ -337,6 +329,31 @@ var amazonProduct = {
         return Promise.all(promiseArray).then(() => {
             return result;
         });
+    },
+
+    isItemPrimeEligible: function (item) {
+        let offers = item.Offers && item.Offers[0];
+        console.log(JSON.stringify(offers, null, 2));
+        if (!offers)
+            return false;
+
+        if (!offers.Offer)
+            return false;
+
+        let prime = false;
+        offers.Offer.forEach((offer)=> {
+            let offerListing = offer.OfferListing && offer.OfferListing[0];
+
+            if (!offerListing)
+                return;
+
+            let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
+
+            if (primeEligible === "1")
+                prime = true;
+        });
+
+        return prime;
     }
 };
 
