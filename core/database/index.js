@@ -10,5 +10,6 @@ module.exports = {
     itemVariationsDAO: require('./lib/itemVariationsDAO'),
     userProfilesDAO: require('./lib/userProfilesDAO'),
     subscriptionsDAO: require('./lib/subscriptionsDAO'),
-    remindersDAO: require('./lib/remindersDAO')
+    remindersDAO: require('./lib/remindersDAO'),
+    settingsDAO: require('./lib/settingsDAO')
 };

@@ -4,7 +4,7 @@
 'use strict';
 let fetch = require('node-fetch');
 let config = require('../config');
-let uids = ['fb-1061868600596425'];
+let uids = ['fb-1126031090811765'];
 
 fetch('https://v2x7ya8oca.execute-api.us-east-1.amazonaws.com/prod/suggestion-event', {
     method: 'POST',

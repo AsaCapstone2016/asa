@@ -39,7 +39,7 @@ let performSearch = (context, uid) => {
         console.log('Execute simple item search');
         return amazon.itemSearch(keywords, queryParams);
     }
-}
+};
 
 const actions = {
     send(request, response) {

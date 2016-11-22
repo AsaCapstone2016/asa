@@ -210,3 +210,16 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    SettingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Settings
+        AttributeDefinitions:
+          - AttributeName: uid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapcityUnits: 1
