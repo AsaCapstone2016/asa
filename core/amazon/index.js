@@ -32,7 +32,6 @@ var amazonProduct = {
         });
 
         return amazon_client.itemSearch(search_params).then((result) => {
-            console.log(`here are items ${JSON.stringify(result)}`);
             return amazonProduct.buildItemResponse(result);
         }, (error) => {
             console.log(`ERROR searching for items on Amazon: ${error}`);
@@ -226,7 +225,7 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
 
                                         // Offers->Offer->OfferListing->IsEligibleForPrime
-                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item);
+                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item, true);
 
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
@@ -331,29 +330,44 @@ var amazonProduct = {
         });
     },
 
-    isItemPrimeEligible: function (item) {
+    isItemPrimeEligible: function (item, isVariationOffer) {
         let offers = item.Offers && item.Offers[0];
-        console.log(JSON.stringify(offers, null, 2));
         if (!offers)
             return false;
 
-        if (!offers.Offer)
-            return false;
+        let isPrime = false;
+        if (isVariationOffer) {
+            if (!offers.Offer)
+                return false;
 
-        let prime = false;
-        offers.Offer.forEach((offer)=> {
-            let offerListing = offer.OfferListing && offer.OfferListing[0];
+            offers.Offer.forEach((offer)=> {
+                let offerListing = offer.OfferListing && offer.OfferListing[0];
 
-            if (!offerListing)
-                return;
+                if (!offerListing)
+                    return;
 
-            let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
+                let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
 
-            if (primeEligible === "1")
-                prime = true;
-        });
+                if (primeEligible === "1")
+                    isPrime = true;
+            });
+        }
+        else {
+            for (let a = 0; a < parseInt(offers.TotalOffers[0]); a++) {
+                let offer = offers.Offer[a];
+                let offerListing = offer.OfferListing && offer.OfferListing[0];
 
-        return prime;
+                if (!offerListing)
+                    continue;
+
+                let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
+
+                if (primeEligible === "1")
+                    return true;
+            }
+        }
+
+        return isPrime;
     }
 };
 
