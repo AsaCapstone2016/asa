@@ -225,7 +225,7 @@ var amazonProduct = {
                                     if (variationIdx == variationKeys.length - 1) {
 
                                         // Offers->Offer->OfferListing->IsEligibleForPrime
-                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item, true);
+                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item);
 
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
@@ -330,42 +330,27 @@ var amazonProduct = {
         });
     },
 
-    isItemPrimeEligible: function (item, isVariationOffer) {
+    isItemPrimeEligible: function (item) {
         let offers = item.Offers && item.Offers[0];
         if (!offers)
             return false;
 
         let isPrime = false;
-        if (isVariationOffer) {
-            if (!offers.Offer)
-                return false;
 
-            offers.Offer.forEach((offer)=> {
-                let offerListing = offer.OfferListing && offer.OfferListing[0];
+        if (!offers.Offer)
+            return false;
 
-                if (!offerListing)
-                    return;
+        offers.Offer.forEach((offer)=> {
+            let offerListing = offer.OfferListing && offer.OfferListing[0];
 
-                let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
+            if (!offerListing)
+                return;
 
-                if (primeEligible === "1")
-                    isPrime = true;
-            });
-        }
-        else {
-            for (let a = 0; a < parseInt(offers.TotalOffers[0]); a++) {
-                let offer = offers.Offer[a];
-                let offerListing = offer.OfferListing && offer.OfferListing[0];
+            let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
 
-                if (!offerListing)
-                    continue;
-
-                let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
-
-                if (primeEligible === "1")
-                    return true;
-            }
-        }
+            if (primeEligible === "1")
+                isPrime = true;
+        });
 
         return isPrime;
     }
