@@ -71,7 +71,7 @@ var amazonProduct = {
             return cartObject;
         }, (error) => {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
-            console.log(`ERROR creating cart for ${ASIN}: ${error}`);
+            console.log(`ERROR creating cart for ${ASIN}: ${JSON.stringify(error)}`);
             return cartObject;
         });
     },
