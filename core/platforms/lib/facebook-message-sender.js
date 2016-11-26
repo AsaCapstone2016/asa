@@ -317,6 +317,47 @@ var facebookMessageSender = {
 
     getName: function () {
         return 'fb';
+    },
+
+    sendUserSettings: function (recipientId) {
+
+        var json = {
+            recipient: {id: recipientId},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: "Click one of the settings to modify it.",
+                        buttons: [
+                            {
+                                type: "postback",
+                                title: "Timezone",
+                                payload: JSON.stringify({
+                                    METHOD: 'SET_TIMEZONE'
+                                })
+                            },
+                            {
+                                type: "postback",
+                                title: "Turn Off/On Suggestions",
+                                payload: JSON.stringify({
+                                    METHOD: 'SET_SUGGESTIONS'
+                                })
+                            },
+                            {
+                                type: "postback",
+                                title: "View Reminders",
+                                payload: JSON.stringify({
+                                    METHOD: 'VIEW_REMINDERS'
+                                })
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
     }
 };
 

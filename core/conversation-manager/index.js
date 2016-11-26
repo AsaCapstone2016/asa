@@ -73,6 +73,7 @@ const actions = {
             .then((session) => {
                 let recipientId = session.uid;
 
+                messageSender.sendUserSettings(recipientId);
                 if (recipientId) {
                     let msg0 = "Hi! Think of me as your personal shopping assistant.";
 
@@ -93,6 +94,7 @@ const actions = {
                             return request.context;
                         });
                 }
+
             });
     },
     checkQuery(request) {
@@ -702,7 +704,16 @@ module.exports.handler = (message, sender, msgSender) => {
                                 });
                         });
 
-                } else {
+                } else if (payload.METHOD === "SET_TIMEZONE") {
+                    console.log('hook up time zone settings');
+                }
+                else if (payload.METHOD === "SET_SUGGESTIONS") {
+                    console.log('hook up set suggestions');
+                }
+                else if (payload.METHOD === "VIEW_REMINDERS") {
+                    console.log('hook up view reminders');
+                }
+                else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
 
