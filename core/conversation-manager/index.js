@@ -1,5 +1,8 @@
 'use strict';
 
+let moment = require('moment');
+require('moment-timezone');
+
 let amazon = require('./../amazon');
 let userProfiler = require('./../user-profiler');
 
@@ -437,15 +440,30 @@ const actions = {
     storeAM_PM(request) {
 
     },
+    sendReminderConfirmation(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId).then(session => {
+            let recipientId = session.uid;
+            let context = request.context;
+
+            console.log("TIME: " + context.time);
+            let datetime = moment(context.time);
+            let timestring = datetime.tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+
+            // Construct well formatted message with the date and time of the reminder
+            let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
+
+            // Send confirmation message
+            return messageSender.sendTextMessage(recipientId, msg);
+
+        }).then(() => request.context); // As always, return the context from the action
+    },
     setReminder(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
                 let context = request.context;
 
-                let date = new Date(context.time);
-                date.setHours(date.getHours() - 3);
-                return remindersDAO.addReminder(date.toISOString(), recipientId, messageSender.getName(), context.task)
+                return remindersDAO.addReminder(context.time, recipientId, messageSender.getName(), context.task)
                     .then((success) => {
                         context.success = true;
                         delete context.fail;

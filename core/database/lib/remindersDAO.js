@@ -22,7 +22,10 @@ var remindersDAO = {
      * @returns {*} Promise from Dynamo
      */
     addReminder: (datetime, uid, platform, message) => {
-        datetime = datetime.substring(0, datetime.indexOf(':') + 3);
+
+        datetime = new Date(datetime);
+        datetime.setSeconds(0);
+        datetime = datetime.getTime();
 
         let id = uuid.v1();
         let params = {
@@ -46,13 +49,17 @@ var remindersDAO = {
      */
     getRemindersForDateTime: (datetime) => {
 
-        datetime = datetime.substring(0, datetime.indexOf(':') + 3);
+        datetime = new Date(datetime);
+        datetime.setSeconds(0);
+        datetime = datetime.getTime();
+
+        console.log(`LINUX TIME: ${datetime}`);
 
         let params = {
             TableName: tableName,
-            KeyConditionExpression: "#date = :day",
-            ExpressionAttributeNames: {
-                "#date": "date"
+            KeyConditionExpression: "#date = :day", 
+            ExpressionAttributeNames: { 
+                "#date": "date" 
             },
             ExpressionAttributeValues: {
                 ":day": datetime
