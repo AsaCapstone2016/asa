@@ -83,6 +83,9 @@ var facebookMessageSender = {
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0]
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                 && product.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]);
+
+            if (product.primeEligible)
+                element.subtitle += '\n Prime Eligible';
             element.buttons = [];
             if (product.HasVariations) {
                 element.buttons.push({
@@ -238,7 +241,9 @@ var facebookMessageSender = {
             var element = {};
             element.title = option;
             element.image_url = product.image;
-            element.subtitle = product.price;
+            element.subtitle = `${product.price}`;
+            if (product.primeEligible)
+                element.subtitle += `\n Prime Eligible`;
             element.buttons = [{
                 type: "postback",
                 title: "Select",
