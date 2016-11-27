@@ -638,8 +638,9 @@ module.exports.handler = (message, sender, msgSender) => {
                     return amazon.similarityLookup(payload.ASIN)
                         .then((result) => {
                             context.search_results = result;
+                            delete context.recommend;
                             return actions.sendSearchResults(session)
-                                .then((ctx) => null);
+                                .then((ctx) => sessionsDAO.updateContext(uid, ctx));
                         }, (error) => {
                             console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
                             return messageSender.sendTextMessage(uid, "Huh, I couldn't find any related items");
