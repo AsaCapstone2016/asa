@@ -734,8 +734,11 @@ module.exports.handler = (message, sender, msgSender) => {
                     return remindersDAO.getRemindersForUser(uid).then((reminders) => {
 
                         let msg = "Here are your current reminders: \n\n";
+
                         reminders.forEach((reminder)=> {
-                            msg += `• "${reminder.message}" on ${reminder.date}\n`;
+                            let date = moment(reminder.date);
+
+                            msg += `• "${reminder.message}" on ${date.format('lll')}\n`;
                         });
 
                         return messageSender.sendTextMessage(uid, msg);
