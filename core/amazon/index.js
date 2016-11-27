@@ -331,15 +331,13 @@ var amazonProduct = {
     },
 
     isItemPrimeEligible: function (item) {
+
         let offers = item.Offers && item.Offers[0];
-        if (!offers)
+        if (!offers || !offers.Offer)
             return false;
 
         let isPrime = false;
-
-        if (!offers.Offer)
-            return false;
-
+        
         offers.Offer.forEach((offer)=> {
             let offerListing = offer.OfferListing && offer.OfferListing[0];
 
