@@ -11,8 +11,6 @@ var addPurchase = require('./../core/user-profiler').addPurchase;
  * @param callback
  */
 module.exports.cartRedirect = function (event, context, callback) {
-    console.log(`PURCHASE REDIRECT EVENT ${JSON.stringify(event, null, 2)}`);
-    console.log(`PURCHASE REDIRECT CONTEXT ${JSON.stringify(context, null, 2)}`);
     let querystring = event.query;
     //Seems like the purchase url somehow generates another request to this url...? This is a fix tho
     if (event.query['associate-id']) {
@@ -25,10 +23,7 @@ module.exports.cartRedirect = function (event, context, callback) {
     let ASIN = querystring.ASIN;
     let isCartUrl = querystring.is_cart;
     let isMobileRequest = event.headers['CloudFront-Is-Mobile-Viewer'];
-
-    console.log(`redirect_url: ${redirectUrl}`);
-    console.log(`is cart: ${isCartUrl}`);
-    console.log(`is mobile: ${isMobileRequest}`);
+    let isTabletRequest = event.headers['CloudFront-Is-Tablet-Viewer'];
 
     if (isCartUrl === '1') {
         let cartParams = redirectUrl.substring(redirectUrl.indexOf("?") + 1);
@@ -36,7 +31,7 @@ module.exports.cartRedirect = function (event, context, callback) {
         let hmacENd = cartParams.indexOf("&SubscriptionId");
         let hmac = encodeURIComponent(cartParams.slice(hmacStart, hmacENd));
         cartParams = cartParams.slice(0, hmacStart) + hmac + cartParams.slice(hmacENd);
-        if (isMobileRequest === 'true') {
+        if (isMobileRequest === 'true' || isTabletRequest === 'true') {
             redirectUrl = `https://www.amazon.com/gp/aw/rcart?${cartParams}`;
         } else {
             redirectUrl = `https://www.amazon.com/gp/cart/aws-merge.html?${cartParams}`;
@@ -45,7 +40,6 @@ module.exports.cartRedirect = function (event, context, callback) {
 
     addPurchase(uid, 'fb', ASIN).then(()=> {
         return purchasedItemDAO.addItem(uid, ASIN).then(()=> {
-            console.log(`PURCHASE REDIRECTED - ${redirectUrl}`);
             context.succeed({location: redirectUrl});
         });
     });

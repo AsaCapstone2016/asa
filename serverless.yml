@@ -43,7 +43,6 @@ package:
     - config.json
   exclude:
     - bench
-    - core
     - test
     - asa-wit-app.zip
 #  artifact: my-service-code.zip
@@ -51,7 +50,7 @@ package:
 functions:
   facebookLambda:
     handler: functions/fb-endpoint.facebookLambda
-    timeout: 10
+    timeout: 20
     events:
       - http:
           path: fb-webhook
@@ -69,11 +68,11 @@ functions:
           path: cart-redirect
           method: get
           integration: lambda
-  scheduler:
-    handler: functions/scheduler.scheduler
+  suggestionScheduler:
+    handler: functions/suggestion-scheduler.scheduler
     timeout: 100
     events:
-      - schedule: rate(1 minute)
+      - schedule: cron(0 * * * ? *)
       - enabled: false
   suggestionEvent:
     handler: functions/suggestion-event.suggestionEvent
@@ -81,6 +80,20 @@ functions:
     events:
       - http:
           path: suggestion-event
+          method: post
+          integration: lambda
+  reminderScheduler:
+    handler: functions/reminder-scheduler.scheduler
+    timeout: 100
+    events:
+      - schedule: cron(* * * * ? *)
+      - enabled: true
+  reminderEvent:
+    handler: functions/reminder-event.reminderEvent
+    timeout: 100
+    events:
+      - http:
+          path: reminder-event
           method: post
           integration: lambda
 #    you can add any of the following events
@@ -176,6 +189,23 @@ resources:
           - AttributeName: date
             KeyType: HASH
           - AttributeName: uid
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    RemindersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ASA-${opt:stage}-Reminders
+        AttributeDefinitions:
+          - AttributeName: date
+            AttributeType: N
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: date
+            KeyType: HASH
+          - AttributeName: id
             KeyType: RANGE
         ProvisionedThroughput:
           ReadCapacityUnits: 1

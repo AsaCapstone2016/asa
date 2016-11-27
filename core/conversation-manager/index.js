@@ -1,5 +1,8 @@
 'use strict';
 
+let moment = require('moment');
+require('moment-timezone');
+
 let amazon = require('./../amazon');
 let userProfiler = require('./../user-profiler');
 
@@ -10,6 +13,7 @@ let log = require('./../node-wit').log;
 let searchQueryDAO = require('./../database').searchQueryDAO;
 let sessionsDAO = require('./../database').sessionsDAO;
 let subscriptionsDAO = require('./../database').subscriptionsDAO;
+let remindersDAO = require('./../database').remindersDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -32,7 +36,7 @@ let performSearch = (context, uid) => {
         // perform item recommendation
         console.log('Execute item recommendation');
         queryParams.keywords = keywords;
-        return userProfiler.preferenceSearch(uid, 'fb', queryParams);
+        return userProfiler.preferenceSearch(uid, messageSender.getName(), queryParams);
     } else {
         // perform simple item search
         console.log('Execute simple item search');
@@ -72,12 +76,21 @@ const actions = {
                 let recipientId = session.uid;
 
                 if (recipientId) {
-                    let msg = "Hi! Think of me as your personal shopping assistant.";
-                    msg += " I can help you discover and purchase items on Amazon.";
-                    msg += " Try saying...\n\n";
-                    msg += " • I want to buy something\n";
-                    msg += " • Can you find Ocarina of Time?";
-                    return messageSender.sendTextMessage(recipientId, msg)
+                    let msg0 = "Hi! Think of me as your personal shopping assistant.";
+
+                    let msg1 = "I can help you discover and purchase items on Amazon.";
+                    msg1 += " Try saying...\n\n";
+                    msg1 += "• I want to buy something\n";
+                    msg1 += "• Can you find Ocarina of Time?";
+
+                    let msg2 = "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
+                    msg2 += "• Can you recommend something?\n";
+                    msg2 += "• Recommend a book\n\n";
+                    msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
+                    
+                    return messageSender.sendTextMessage(recipientId, msg0)
+                        .then(() => messageSender.sendTextMessage(recipientId, msg1))
+                        .then(() => messageSender.sendTextMessage(recipientId, msg2))
                         .then(() => {
                             return request.context;
                         });
@@ -137,10 +150,10 @@ const actions = {
             // If the context has the missing_keywords flag, delete it
             delete context.missing_keywords;
 
-            if ('search_query' in entities) {
+            if ('keywords' in entities) {
                 // Grab the keywords
                 let keywords = [];
-                entities.search_query.forEach((keyword) => {
+                entities.keywords.forEach((keyword) => {
                     keywords.push(keyword.value);
                 });
                 context.keywords = keywords.join(' ');
@@ -184,7 +197,7 @@ const actions = {
                         messageSender.sendTypingMessage(recipientId);
                         return performSearch(context, recipientId);
                     }).then((result) => {
-                        context.items = result.Items;
+                        context.search_results = result;
                         context.bins = amazon.topRelevantSearchIndices(result, 4);
                         delete context.run_search;
                         delete context.missing_search_intent;
@@ -199,7 +212,11 @@ const actions = {
             .then((session) => {
                 // Send a descriptive leading message for recommended items
                 if (request.context.recommend !== undefined) {
-                    return messageSender.sendTextMessage(session.uid, `Here are some items I think you'll like`)
+                    let msg = `I don't know anything about your tastes in this category... but here's what I think is most relevant`;
+                    if (request.context.search_results.CanRecommend) {
+                        msg = `Here are some items I think you'll like`;
+                    }
+                    return messageSender.sendTextMessage(session.uid, msg)
                         .then((success) => session);
                 } else {
                     return session;
@@ -211,7 +228,7 @@ const actions = {
                 messageSender.sendTypingMessage(recipientId);
 
                 let context = request.context;
-                const items = context.items;
+                const items = context.search_results.Items;
                 if (recipientId) {
                     items.forEach((item)=> {
                         let isCart = '0';
@@ -222,7 +239,7 @@ const actions = {
                     });
                     return messageSender.sendSearchResults(recipientId, items)
                         .then(() => {
-                            delete context.items;
+                            delete context.search_results;
                             return context;
                         });
                 }
@@ -356,6 +373,106 @@ const actions = {
                             return resolve(context);
                         });
                 });
+            });
+    },
+    checkReminder(request) {
+        return new Promise((resolve, reject) => {
+            let entities = request.entities;
+            let context = request.context;
+
+            // Refresh state of context as we try to get 'task' and 'time' from the user
+            delete context.set_reminder;
+            delete context.missing_task;
+            delete context.missing_time;
+            delete context.no_time;
+            delete context.no_task;
+            delete context.ask_am_pm;
+            delete context.success;
+            delete context.fail;
+
+            if (context.setting_reminder || ('intent' in entities && entities.intent[0].value === "reminder")) {
+                // We either have the reminder intent at the beginning of the story
+                // or have already begun the story and are looping back to checkReminder
+                context.setting_reminder = true;
+
+                if ('task' in entities) {
+                    // Extract and store the reminder string
+                    let tasks = [];
+                    entities.task.forEach(task => {
+                        tasks.push(task.value);
+                    });
+                    context.task = tasks.join(' and ');
+
+                } else if (context.task === undefined) {
+                    context.missing_task = true;
+                }
+
+                if ('datetime' in entities) {
+                    // Extract and store the time
+
+                    // TODO detect when we need to ask about AM vs PM
+                    context.time = entities.datetime[0].value;
+
+                } else if (context.time === undefined) {
+                    context.missing_time = true;
+                }
+
+                if (context.task && context.time) {
+                    context.set_reminder = true;
+                } else if (context.missing_task && context.missing_time) {
+                    delete context.missing_time;
+                }
+
+            } else {
+                // Missing the reminder intent at the start of the Set Reminder story
+                context.missing_reminder_intent = true;
+            }
+
+            resolve(context);
+        });
+    },
+    storeTask(request) {
+
+    },
+    storeTime(request) {
+
+    },
+    storeAM_PM(request) {
+
+    },
+    sendReminderConfirmation(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId).then(session => {
+            let recipientId = session.uid;
+            let context = request.context;
+
+            console.log("TIME: " + context.time);
+            let datetime = moment(context.time);
+            let timestring = datetime.tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+
+            // Construct well formatted message with the date and time of the reminder
+            let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
+
+            // Send confirmation message
+            return messageSender.sendTextMessage(recipientId, msg);
+
+        }).then(() => request.context); // As always, return the context from the action
+    },
+    setReminder(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then((session) => {
+                let recipientId = session.uid;
+                let context = request.context;
+
+                return remindersDAO.addReminder(context.time, recipientId, messageSender.getName(), context.task)
+                    .then((success) => {
+                        context.success = true;
+                        delete context.fail;
+                        return context;
+                    }, (error) => {
+                        context.fail = true;
+                        delete context.success;
+                        return context;
+                    });
             });
     },
     clearContext(request) {
@@ -520,9 +637,13 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     return amazon.similarityLookup(payload.ASIN)
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
+                            delete context.recommend;
                             return actions.sendSearchResults(session)
-                                .then((ctx) => null);
+                                .then((ctx) => sessionsDAO.updateContext(uid, ctx));
+                        }, (error) => {
+                            console.log(`ERROR finding similar items: ${JSON.stringify(error, null, 2)}`);
+                            return messageSender.sendTextMessage(uid, "Huh, I couldn't find any related items");
                         });
 
                 } else if (payload.METHOD === "FILTER_BY") {
@@ -549,20 +670,19 @@ module.exports.handler = (message, sender, msgSender) => {
                         (params[param.type] = params[param.type] || []).push(param.value);
                     });
 
-
                     return new Promise((resolve, reject) => {
-                            if (payload.params[0].type === 'recommend') {
-                                resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
-                            } else {
-                                resolve('No message sent');
-                            }
-                        })
+                        if (payload.params[0].type === 'recommend') {
+                            resolve(messageSender.sendTextMessage(uid, `Okay, I'll try to filter out things you won't like`));
+                        } else {
+                            resolve('No message sent');
+                        }
+                    })
                         .then((success) => {
                             messageSender.sendTypingMessage(uid);
                             return performSearch(context, uid);
                         })
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
@@ -584,7 +704,7 @@ module.exports.handler = (message, sender, msgSender) => {
                     context.query_params = {};
                     return performSearch(context, uid)
                         .then((result) => {
-                            context.items = result.Items;
+                            context.search_results = result;
                             return actions.sendSearchResults(session)
                                 .then((ctx) => {
                                     context = ctx;
