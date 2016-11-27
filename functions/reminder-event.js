@@ -25,7 +25,7 @@ module.exports.reminderEvent = function (event, context, callback) {
         let message = reminder.message;
 
         if (platform === 'fb') {
-            fb.messageSender.sendTextMessage(uid, `Hey! You asked me to remind you to ${message}`).then(()=> {
+            fb.messageSender.sendTextMessage(uid, `Hey! You asked me to remind you to "${message}"`).then(()=> {
                 remindersDAO.removeReminder(date, id).then(()=> {
 
                 });
