@@ -730,7 +730,16 @@ module.exports.handler = (message, sender, msgSender) => {
                     console.log('hook up set suggestions');
                 }
                 else if (payload.METHOD === "VIEW_REMINDERS") {
-                    console.log('hook up view reminders');
+
+                    return remindersDAO.getRemindersForUser(uid).then((reminders) => {
+
+                        let msg = "Here are your current reminders: \n\n";
+                        reminders.forEach((reminder)=> {
+                            msg += `• "${reminder.message}" on ${reminder.date}\n`;
+                        });
+
+                        return messageSender.sendTextMessage(uid, msg);
+                    });
                 }
                 else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
