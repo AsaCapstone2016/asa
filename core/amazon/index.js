@@ -11,7 +11,6 @@ var amazon_client = amazon_api.createClient({
     awsTag: config.AWS_TAG
 });
 
-
 var amazonProduct = {
     /**
      * params: {
@@ -72,7 +71,7 @@ var amazonProduct = {
             return cartObject;
         }, (error) => {
             // *** ERROR *** something bad happend when creating a temp cart... handle this better
-            console.log(`ERROR creating cart for ${ASIN}: ${error}`);
+            console.log(`ERROR creating cart for ${ASIN}: ${JSON.stringify(error)}`);
             return cartObject;
         });
     },
@@ -224,6 +223,10 @@ var amazonProduct = {
                                 if (!(value in ref)) {
                                     // Otherwise, add value to map
                                     if (variationIdx == variationKeys.length - 1) {
+
+                                        // Offers->Offer->OfferListing->IsEligibleForPrime
+                                        let isPrimeEligible = amazonProduct.isItemPrimeEligible(item);
+
                                         ref[value] = {
                                             "ASIN": item.ASIN && item.ASIN[0],
                                             "image": item.LargeImage && item.LargeImage[0] && item.LargeImage[0].URL && item.LargeImage[0].URL[0] || 'http://webservices.amazon.com/scratchpad/assets/images/amazon-no-image.jpg',
@@ -239,8 +242,9 @@ var amazonProduct = {
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice
                                             && item.Offers[0].Offer[0].OfferListing[0].Price[0].FormattedPrice[0]),
                                             "title": item.ItemAttributes && item.ItemAttributes[0]
-                                            && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0]
-                                        }
+                                            && item.ItemAttributes[0].Title && item.ItemAttributes[0].Title[0],
+                                            "primeEligible": isPrimeEligible
+                                        };
 
                                         // Check if the last level variations are too numerous for selection through conversation
                                         if (Object.keys(ref).length > 10) {
@@ -263,7 +267,6 @@ var amazonProduct = {
                             console.log("no item attributes");
                         }
                     }
-
 
                     return {
                         conversational: conversational,
@@ -288,6 +291,8 @@ var amazonProduct = {
         var promiseArray = [];
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
             let curItem = items[itemIdx];
+
+            curItem.primeEligible = amazonProduct.isItemPrimeEligible(curItem);
             //When item has ParentASIN and ParentASIN not same as ASIN, which means has options
             if (curItem.ParentASIN !== undefined &&
                 curItem.ParentASIN.length > 0 &&
@@ -323,8 +328,30 @@ var amazonProduct = {
         return Promise.all(promiseArray).then(() => {
             return result;
         });
+    },
+
+    isItemPrimeEligible: function (item) {
+
+        let offers = item.Offers && item.Offers[0];
+        if (!offers || !offers.Offer)
+            return false;
+
+        let isPrime = false;
+        
+        offers.Offer.forEach((offer)=> {
+            let offerListing = offer.OfferListing && offer.OfferListing[0];
+
+            if (!offerListing)
+                return;
+
+            let primeEligible = offerListing.IsEligibleForPrime && offerListing.IsEligibleForPrime[0];
+
+            if (primeEligible === "1")
+                isPrime = true;
+        });
+
+        return isPrime;
     }
 };
-
 
 module.exports = amazonProduct;
