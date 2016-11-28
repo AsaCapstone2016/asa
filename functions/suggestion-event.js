@@ -35,6 +35,8 @@ module.exports.suggestionEvent = function (event, context, callback) {
 
                             console.log(`SENT USER ${id} SOME SUGGESTIONS`);
                         });
+                }, (err)=> {
+                    console.log(err);
                 });
             }
         });
