@@ -65,14 +65,17 @@ var settingsDAO = {
         let params = {
             TableName: tableName,
             Key: {
-                uid: `${platform}-${uid}`,
-                UpdateExpression: 'set timezone = :timezone, sendSuggestions = :sendSuggestions',
-                ExpressionAttributeValues: {
-                    ':timezone': settingsObject.timezone,
-                    ':sendSuggestions': settingsObject.sendSuggestions
-                },
-                ReturnValues: 'UPDATED_NEW'
-            }
+                uid: `${platform}-${uid}`
+            },
+            UpdateExpression: 'set #timezone = :timezone, sendSuggestions = :sendSuggestions',
+            ExpressionAttributeValues: {
+                ':timezone': settingsObject.timezone,
+                ':sendSuggestions': settingsObject.sendSuggestions
+            },
+            ExpressionAttributeNames: {
+                "#timezone": "timezone"
+            },
+            ReturnValues: 'UPDATED_NEW'
         };
 
         return docClient.update(params).promise()
@@ -81,6 +84,20 @@ var settingsDAO = {
             }, (error) => {
                 console.log(`ERROR updating context: ${error}`);
             });
+    },
+
+    turnSuggestionsOff: (uid, platform) => {
+        return settingsDAO.getUserSettings(uid, platform).then((settings) => {
+            settings.sendSuggestions = false;
+            return settingsDAO.updateUserSettings(uid, platform, settings);
+        });
+    },
+
+    turnSuggestionsOn: (uid, platform) => {
+        return settingsDAO.getUserSettings(uid, platform).then((settings) => {
+            settings.sendSuggestions = true;
+            return settingsDAO.updateUserSettings(uid, platform, settings);
+        });
     }
 };
 

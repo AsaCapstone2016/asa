@@ -76,28 +76,29 @@ const actions = {
             .then((session) => {
                 let recipientId = session.uid;
 
-                messageSender.sendUserSettings(recipientId);
-                if (recipientId) {
-                    let msg0 = "Hi! Think of me as your personal shopping assistant.";
+                return settingsDAO.getUserSettings(recipientId, messageSender.getName()).then((settings)=> {
+                    messageSender.sendUserSettings(recipientId, settings);
+                    if (recipientId) {
+                        let msg0 = "Hi! Think of me as your personal shopping assistant.";
 
-                    let msg1 = "I can help you discover and purchase items on Amazon.";
-                    msg1 += " Try saying...\n\n";
-                    msg1 += "• I want to buy something\n";
-                    msg1 += "• Can you find Ocarina of Time?";
+                        let msg1 = "I can help you discover and purchase items on Amazon.";
+                        msg1 += " Try saying...\n\n";
+                        msg1 += "• I want to buy something\n";
+                        msg1 += "• Can you find Ocarina of Time?";
 
-                    let msg2 = "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
-                    msg2 += "• Can you recommend something?\n";
-                    msg2 += "• Recommend a book\n\n";
-                    msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
+                        let msg2 = "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
+                        msg2 += "• Can you recommend something?\n";
+                        msg2 += "• Recommend a book\n\n";
+                        msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
 
-                    return messageSender.sendTextMessage(recipientId, msg0)
-                        .then(() => messageSender.sendTextMessage(recipientId, msg1))
-                        .then(() => messageSender.sendTextMessage(recipientId, msg2))
-                        .then(() => {
-                            return request.context;
-                        });
-                }
-
+                        return messageSender.sendTextMessage(recipientId, msg0)
+                            .then(() => messageSender.sendTextMessage(recipientId, msg1))
+                            .then(() => messageSender.sendTextMessage(recipientId, msg2))
+                            .then(() => {
+                                return request.context;
+                            });
+                    }
+                });
             });
     },
     checkQuery(request) {
@@ -726,8 +727,15 @@ module.exports.handler = (message, sender, msgSender) => {
                 } else if (payload.METHOD === "SET_TIMEZONE") {
                     console.log('hook up time zone settings');
                 }
-                else if (payload.METHOD === "SET_SUGGESTIONS") {
-                    console.log('hook up set suggestions');
+                else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
+                    return settingsDAO.turnSuggestionsOn(uid, messageSender.getName()).then(()=> {
+                        return messageSender.sendTextMessage(uid, 'Turned suggestions on.');
+                    });
+                }
+                else if (payload.METHOD === "SET_SUGGESTIONS_OFF") {
+                    return settingsDAO.turnSuggestionsOff(uid, messageSender.getName()).then(()=> {
+                        return messageSender.sendTextMessage(uid, 'Turned suggestions off.');
+                    });
                 }
                 else if (payload.METHOD === "VIEW_REMINDERS") {
 

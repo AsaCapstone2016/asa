@@ -324,8 +324,14 @@ var facebookMessageSender = {
         return 'fb';
     },
 
-    sendUserSettings: function (recipientId) {
+    sendUserSettings: function (recipientId, settings) {
 
+        let suggestionTitle = "Turn On Suggestions";
+        let suggestionMethod = "SET_SUGGESTIONS_ON";
+        if (settings.sendSuggestions) {
+            suggestionTitle = "Turn Off Suggestions";
+            suggestionMethod = "SET_SUGGESTIONS_OFF";
+        }
         var json = {
             recipient: {id: recipientId},
             message: {
@@ -344,9 +350,9 @@ var facebookMessageSender = {
                             },
                             {
                                 type: "postback",
-                                title: "Turn Off/On Suggestions",
+                                title: suggestionTitle,
                                 payload: JSON.stringify({
-                                    METHOD: 'SET_SUGGESTIONS'
+                                    METHOD: suggestionMethod
                                 })
                             },
                             {
