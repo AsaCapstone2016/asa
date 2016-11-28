@@ -724,8 +724,13 @@ module.exports.handler = (message, sender, msgSender) => {
                                 });
                         });
 
-                } else if (payload.METHOD === "SET_TIMEZONE") {
-                    console.log('hook up time zone settings');
+                } else if (payload.METHOD === "SELECT_TIMEZONE") {
+                    return settingsDAO.getUserSettings(uid, messageSender.getName()).then((settings)=> {
+                        return messageSender.sendTextMessage(uid, `Currently your timezone is: ${settings.timezone}`)
+                            .then(() => {
+                                return messageSender.sendTimezones(uid);
+                            });
+                    });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
                     return settingsDAO.turnSuggestionsOn(uid, messageSender.getName()).then(()=> {

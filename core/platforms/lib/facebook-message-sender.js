@@ -345,7 +345,7 @@ var facebookMessageSender = {
                                 type: "postback",
                                 title: "Timezone",
                                 payload: JSON.stringify({
-                                    METHOD: 'SET_TIMEZONE'
+                                    METHOD: 'SELECT_TIMEZONE'
                                 })
                             },
                             {
@@ -365,6 +365,54 @@ var facebookMessageSender = {
                         ]
                     }
                 }
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    sendTimezones: function (recipientId) {
+
+        let quick_replies = [
+            {
+                content_type: 'text',
+                title: 'Eastern (EST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Detroit'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Central (CST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Chicago'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Mountain (MST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Denver'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Pacific (PST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/San Francisco'
+                })
+            }
+        ];
+
+        let json = {
+            recipient: {id: recipientId},
+            message: {
+                text: `Select a time zone`,
+                quick_replies: quick_replies
             }
         };
 
