@@ -320,10 +320,20 @@ var facebookMessageSender = {
         return callSendAPI(json);
     },
 
+    /**
+     * Get the name of this message sender.
+     * @returns {string}
+     */
     getName: function () {
         return 'fb';
     },
 
+    /**
+     * Send the settings prompt to the user.
+     *
+     * @param recipientId
+     * @param settings
+     */
     sendUserSettings: function (recipientId, settings) {
 
         let suggestionTitle = "Turn On Suggestions";
@@ -371,6 +381,10 @@ var facebookMessageSender = {
         return callSendAPI(json);
     },
 
+    /**
+     * Send the list of timezones to a user
+     * @param recipientId
+     */
     sendTimezones: function (recipientId) {
 
         let quick_replies = [
@@ -419,6 +433,14 @@ var facebookMessageSender = {
         return callSendAPI(json);
     },
 
+    /**
+     * Send a message with a text and button with payload. If you want to do it with url you can modify this method
+     *
+     * @param recipientId
+     * @param message
+     * @param buttonTitle
+     * @param buttonPayload
+     */
     sendSingleButtonMessage: (recipientId, message, buttonTitle, buttonPayload) => {
 
         let buttons = [{

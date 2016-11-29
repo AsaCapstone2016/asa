@@ -715,6 +715,14 @@ module.exports.handler = (message, sender, msgSender) => {
                             });
                     });
                 }
+                else if (payload.METHOD === "SET_TIMEZONE") {
+                    return settingsDAO.getUserSettings(uid, messageSender.getName()).then((settings)=> {
+                        settings.timezone = payload.TIMEZONE_VALUE;
+                        return settingsDAO.updateUserSettings(uid, messageSender.getName(), settings).then(()=>{
+                            return messageSender.sendTextMessage(uid,`Updated timezone to ${payload.TIMEZONE_VALUE}`);
+                        });
+                    });
+                }
                 else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
                     return settingsDAO.turnSuggestionsOn(uid, messageSender.getName()).then(()=> {
                         return messageSender.sendTextMessage(uid, 'Turned suggestions on.');

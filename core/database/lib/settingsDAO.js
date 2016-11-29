@@ -26,7 +26,7 @@ var settingsDAO = {
             TableName: tableName,
             Item: {
                 uid: `${platform}-${uid}`,
-                timezone: "-05:00",
+                timezone: "America/Detroit",
                 sendSuggestions: true
             }
         };
@@ -61,6 +61,13 @@ var settingsDAO = {
         });
     },
 
+    /**
+     * Update settings for a user
+     * @param uid user id
+     * @param platform message platform
+     * @param settingsObject settings to update
+     * @returns {*|Promise|Promise.<T>}
+     */
     updateUserSettings: (uid, platform, settingsObject) => {
         let params = {
             TableName: tableName,
@@ -86,6 +93,13 @@ var settingsDAO = {
             });
     },
 
+    /**
+     * Turn suggestions off for a user.
+     *
+     * @param uid
+     * @param platform
+     * @returns {*|Promise|Promise.<T>}
+     */
     turnSuggestionsOff: (uid, platform) => {
         return settingsDAO.getUserSettings(uid, platform).then((settings) => {
             settings.sendSuggestions = false;
@@ -93,6 +107,12 @@ var settingsDAO = {
         });
     },
 
+    /**
+     * Turn suggestions on for a user.
+     * @param uid
+     * @param platform
+     * @returns {*|Promise|Promise.<T>}
+     */
     turnSuggestionsOn: (uid, platform) => {
         return settingsDAO.getUserSettings(uid, platform).then((settings) => {
             settings.sendSuggestions = true;
