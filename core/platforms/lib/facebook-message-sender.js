@@ -417,6 +417,31 @@ var facebookMessageSender = {
         };
 
         return callSendAPI(json);
+    },
+
+    sendSingleButtonMessage: (recipientId, message, buttonTitle, buttonPayload) => {
+
+        let buttons = [{
+            type: "postback",
+            title: buttonTitle,
+            payload: JSON.stringify(buttonPayload)
+        }];
+
+        let json = {
+            recipient: {id: recipientId},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: message,
+                        buttons: buttons
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
     }
 };
 

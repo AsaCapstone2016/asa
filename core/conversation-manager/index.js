@@ -729,15 +729,36 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     return remindersDAO.getRemindersForUser(uid).then((reminders) => {
 
-                        let msg = "Here are your current reminders: \n\n";
+                        if (reminders.length == 0)
+                            return messageSender.sendTextMessage(uid, 'You have no reminders!');
+
+                        let msg = "Here are your current reminders:";
+
+                        messageSender.sendTextMessage(uid, msg);
+                        let promiseArray = [];
 
                         reminders.forEach((reminder)=> {
                             let date = moment(reminder.date);
 
-                            msg += `• "${reminder.message}" on ${date.format('lll')}\n`;
+                            msg = `• "${reminder.message}" on ${date.format('lll')}\n`;
+
+                            let reminderPayload = {
+                                METHOD: "DELETE_REMINDER",
+                                DATE: reminder.date,
+                                ID: reminder.id
+                            };
+                            promiseArray.push(messageSender.sendSingleButtonMessage(uid, msg, 'Delete Reminder', reminderPayload));
                         });
 
-                        return messageSender.sendTextMessage(uid, msg);
+                        return Promise.all(promiseArray);
+                    });
+                }
+                else if (payload.METHOD === "DELETE_REMINDER") {
+                    let date = payload.DATE;
+                    let id = payload.ID;
+
+                    return remindersDAO.removeReminder(date, id).then(()=> {
+                        return messageSender.sendTextMessage(uid, 'Deleted reminder');
                     });
                 }
                 else {
