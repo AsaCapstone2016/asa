@@ -5,6 +5,7 @@
 var config = require('./../config');
 var amazon = require('./../core/amazon');
 var getSuggestions = require('./../core/user-profiler').getSuggestions;
+let settingsDAO = require('./../core/database').settingsDAO;
 
 // This is what makes this the facebook messenger endpoint
 var fb = require('./../core/platforms').fbMessenger;
@@ -18,27 +19,41 @@ var fb = require('./../core/platforms').fbMessenger;
  */
 module.exports.suggestionEvent = function (event, context, callback) {
     let uids = event.body;
+
+    let promiseArray = [];
+
     uids.forEach((uid)=> {
         let platform = uid.substring(0, uid.indexOf('-'));
         let id = uid.substring(uid.indexOf('-') + 1);
 
-        getSuggestions(id, platform).then((suggestions)=> {
+        promiseArray.push(settingsDAO.getUserSettings(id, platform).then((settings)=> {
 
-            //No suggestions
-            if (!suggestions.length)
+            console.log(settings.sendSuggestions);
+            if (settings.sendSuggestions === false) {
                 return;
-
-            if (platform == 'fb') {
-                fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
-                    fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.')
-                        .then(()=> {
-
-                            console.log(`SENT USER ${id} SOME SUGGESTIONS`);
-                        });
-                }, (err)=> {
-                    console.log(err);
-                });
             }
-        });
+
+            getSuggestions(id, platform).then((suggestions)=> {
+
+                //No suggestions
+                if (!suggestions.length)
+                    return;
+
+                if (platform == 'fb') {
+                    fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
+                        fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.')
+                            .then(()=> {
+
+                                console.log(`SENT USER ${id} SOME SUGGESTIONS`);
+                            });
+                    }, (err)=> {
+                        console.log(err);
+                    });
+                }
+            })
+        }));
+
     });
+
+    return Promise.all(promiseArray);
 };
