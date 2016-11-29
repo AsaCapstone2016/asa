@@ -388,16 +388,10 @@ const actions = {
             delete context.set_reminder;
             delete context.missing_task;
             delete context.missing_time;
-            delete context.no_time;
-            delete context.no_task;
-            delete context.ask_am_pm;
             delete context.success;
             delete context.fail;
 
-            if (context.setting_reminder || ('intent' in entities && entities.intent[0].value === "reminder")) {
-                // We either have the reminder intent at the beginning of the story
-                // or have already begun the story and are looping back to checkReminder
-                context.setting_reminder = true;
+            if ('intent' in entities && entities.intent[0].value === "reminder") {
 
                 if ('task' in entities) {
                     // Extract and store the reminder string
@@ -413,8 +407,6 @@ const actions = {
 
                 if ('datetime' in entities) {
                     // Extract and store the time
-
-                    // TODO detect when we need to ask about AM vs PM
                     context.time = entities.datetime[0].value;
 
                 } else if (context.time === undefined) {
@@ -434,15 +426,6 @@ const actions = {
 
             resolve(context);
         });
-    },
-    storeTask(request) {
-
-    },
-    storeTime(request) {
-
-    },
-    storeAM_PM(request) {
-
     },
     sendReminderConfirmation(request) {
         return sessionsDAO.getSessionFromSessionId(request.sessionId).then(session => {

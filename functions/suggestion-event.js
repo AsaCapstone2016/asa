@@ -29,11 +29,14 @@ module.exports.suggestionEvent = function (event, context, callback) {
                 return;
 
             if (platform == 'fb') {
-                fb.messageSender.sendTextMessage(id,'Hey! I\'ve found some things that you might like.').then(()=> {
+                fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
+                    fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.')
+                        .then(()=> {
 
-                    fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
-                        console.log(`SENT USER ${id} SOME SUGGESTIONS`);
-                    });
+                            console.log(`SENT USER ${id} SOME SUGGESTIONS`);
+                        });
+                }, (err)=> {
+                    console.log(err);
                 });
             }
         });
