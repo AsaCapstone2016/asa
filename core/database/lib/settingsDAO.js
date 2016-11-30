@@ -55,8 +55,28 @@ var settingsDAO = {
 
         return docClient.query(params).promise().then((data)=> {
             // We should only ever have one settings object
-            return data.Items[0];
+            console.log("here1");
+            let settings = data.Items[0];
+
+            if (settings === undefined) {
+                settings = {
+                    uid: `${platform}-${uid}`,
+                    timezone: "America/Detroit",
+                    sendSuggestions: true
+                };
+
+                let params = {
+                    TableName: tableName,
+                    Item: settings
+                };
+
+                return docClient.put(params).promise().then(() => settings);
+            } else {
+                return settings;
+            }
+            
         }, (error) => {
+            console.log("here2");
             throw Error(`ERROR retrieving session: ${error}`);
         });
     },
