@@ -742,39 +742,17 @@ module.exports.handler = (message, sender, msgSender) => {
                 }
                 else if (payload.METHOD === "VIEW_REMINDERS") {
 
-                    return remindersDAO.getRemindersForUser(uid).then((reminders) => {
-
-                        if (reminders.length == 0)
-                            return messageSender.sendTextMessage(uid, 'You have no reminders!');
-
-                        let msg = "Here are your current reminders:";
-
-                        messageSender.sendTextMessage(uid, msg);
-                        let promiseArray = [];
-
-                        reminders.forEach((reminder)=> {
-                            let date = moment(reminder.date);
-
-                            msg = `• "${reminder.message}" on ${date.format('lll')}\n`;
-
-                            let reminderPayload = {
-                                METHOD: "DELETE_REMINDER",
-                                DATE: reminder.date,
-                                ID: reminder.id
-                            };
-                            promiseArray.push(messageSender.sendSingleButtonMessage(uid, msg, 'Delete Reminder', reminderPayload));
-                        });
-
-                        return Promise.all(promiseArray);
-                    });
+                    let msg = "Here are your current reminders:";
+                    return messageSender.sendTextMessage(uid, msg)
+                        .then(prepareAndSendReminders(uid));
                 }
                 else if (payload.METHOD === "DELETE_REMINDER") {
                     let date = payload.DATE;
                     let id = payload.ID;
 
-                    return remindersDAO.removeReminder(date, id).then(()=> {
-                        return messageSender.sendTextMessage(uid, 'Deleted reminder');
-                    });
+                    return remindersDAO.removeReminder(date, id)
+                        .then(messageSender.sendTextMessage(uid, 'Deleted reminder'))
+                        .then(prepareAndSendReminders(uid));
                 }
                 else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
@@ -785,4 +763,28 @@ module.exports.handler = (message, sender, msgSender) => {
         }, (error) => {
             console.log(`ERROR retrieving session from database: ${error}`);
         });
+};
+
+let prepareAndSendReminders = function (uid) {
+    return remindersDAO.getRemindersForUser(uid).then((reminders) => {
+
+        if (reminders.length == 0)
+            return messageSender.sendTextMessage(uid, 'You have no reminders!');
+
+        reminders.forEach((reminder)=> {
+            reminder.datestring = moment(reminder.date).tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+            reminder.payload = {
+                METHOD: "DELETE_REMINDER",
+                DATE: reminder.date,
+                ID: reminder.id
+            };
+        });
+
+        reminders.sort((a, b) => {
+            return a.date - b.date;
+        });
+
+        return reminders;
+
+    }).then(reminders => messageSender.displayReminders(uid, reminders));
 };

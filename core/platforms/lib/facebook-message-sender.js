@@ -434,30 +434,37 @@ var facebookMessageSender = {
     },
 
     /**
-     * Send a message with a text and button with payload. If you want to do it with url you can modify this method
-     *
-     * @param recipientId
-     * @param message
-     * @param buttonTitle
-     * @param buttonPayload
+     * Send slideshow of upcoming reminders
+     * 
+     * @param recipientId Page scoped id of user to send reminders to
+     * @param reminders Array of reminder objects with message, datestring, and payload for Delete button
      */
-    sendSingleButtonMessage: (recipientId, message, buttonTitle, buttonPayload) => {
+    displayReminders: (recipientId, reminders) => {
+        var elements = [];
 
-        let buttons = [{
-            type: "postback",
-            title: buttonTitle,
-            payload: JSON.stringify(buttonPayload)
-        }];
+        // Create elements for each reminder
+        reminders.forEach(function (reminder) {
+            var element = {};
+            element.title = reminder.message;
+            element.subtitle = reminder.datestring;
 
-        let json = {
+            element.buttons = [{
+                type: 'postback',
+                title: 'Delete Reminder',
+                payload: JSON.stringify(reminder.payload)
+            }];
+
+            elements.push(element);
+        });
+
+        var json = {
             recipient: {id: recipientId},
             message: {
                 attachment: {
                     type: "template",
                     payload: {
-                        template_type: "button",
-                        text: message,
-                        buttons: buttons
+                        template_type: "generic",
+                        elements: elements
                     }
                 }
             }
@@ -465,6 +472,7 @@ var facebookMessageSender = {
 
         return callSendAPI(json);
     }
+
 };
 
 function callSendAPI(messageData) {
