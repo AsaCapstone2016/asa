@@ -114,17 +114,6 @@ var sessionsDAO = {
         };
 
         return sessionsDAO.updateContext(uid, context).then(() => context);
-    },
-
-    getSettings: (uid, context) => {
-        console.log(JSON.stringify(context));
-        console.log(JSON.stringify(context.settings));
-        if (context.settings == null) {
-            return sessionsDAO.addDefaultSettings(uid, context);
-        }
-        else {
-            return Promise.resolve(context.settings);
-        }
     }
 };
 
