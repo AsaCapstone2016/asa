@@ -35,8 +35,8 @@ var sessionsDAO = {
                     // if session exists, grab it
                     let session = data.Item;
                     if (session.settings == null) {
-                        return sessionsDAO.updateSettings(uid, DEFAULT_SETTINGS).then(updatedObj => {
-                            session.settings = updatedObj.Attributes.settings;
+                        return sessionsDAO.updateSettings(uid, DEFAULT_SETTINGS).then(updatedSettings => {
+                            session.settings = updatedSettings;
                             return session;
                         });
                     }
@@ -120,7 +120,7 @@ var sessionsDAO = {
             ReturnValues: 'UPDATED_NEW'
         };
 
-        return docClient.update(params).promise();
+        return docClient.update(params).promise().then(result => settings);
     }
 };
 

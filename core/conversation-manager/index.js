@@ -493,8 +493,8 @@ module.exports.handler = (message, sender, msgSender) => {
 
             let uid = session.uid;
             let sessionId = session.sessionId;
-            let context = session.context;
             let settings = session.settings;
+            let context = session.context;
 
             if (message.content.action === 'text') {
                 // Handle text messages from the user
@@ -720,8 +720,8 @@ module.exports.handler = (message, sender, msgSender) => {
                 }
                 else if (payload.METHOD === "SET_TIMEZONE") {
                     settings.timezone = payload.TIMEZONE_VALUE;
-                    return sessionsDAO.updateSettings(uid, settings).then(updatedObj => {
-                        return messageSender.sendTextMessage(uid, `Updated timezone to ${updatedObj.Attributes.settings.timezone}`);
+                    return sessionsDAO.updateSettings(uid, settings).then(updatedSettings => {
+                        return messageSender.sendTextMessage(uid, `Updated timezone to ${updatedSettings.timezone}`);
                     });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
@@ -738,9 +738,15 @@ module.exports.handler = (message, sender, msgSender) => {
                 }
                 else if (payload.METHOD === "VIEW_REMINDERS") {
 
-                    let msg = "Here are your current reminders:";
-                    return messageSender.sendTextMessage(uid, msg)
-                        .then(prepareAndSendReminders(uid, settings.timezone));
+                    return prepareReminders(uid, settings.timezone).then(reminders => {
+                        if (reminders.length > 0) {
+                            let msg = 'Here are your current reminders:';
+                            return messageSender.sendTextMessage(uid, msg)
+                                .then(messageSender.displayReminders(uid, reminders));
+                        } else {
+                            return messageSender.sendTextMessage(uid, 'You have no reminders!');
+                        }
+                    });
                 }
                 else if (payload.METHOD === "DELETE_REMINDER") {
                     let date = payload.DATE;
@@ -748,7 +754,8 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     return remindersDAO.removeReminder(date, id)
                         .then(messageSender.sendTextMessage(uid, 'Deleted reminder'))
-                        .then(prepareAndSendReminders(uid, settings.timezone));
+                        .then(prepareReminders(uid, settings.timezone))
+                        .then(reminders => messageSender.displayReminders(uid, reminders));
                 }
                 else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
@@ -761,11 +768,8 @@ module.exports.handler = (message, sender, msgSender) => {
         });
 };
 
-let prepareAndSendReminders = function (uid, timezone) {
+let prepareReminders = function (uid, timezone) {
     return remindersDAO.getRemindersForUser(uid).then((reminders) => {
-
-        if (reminders.length == 0)
-            return messageSender.sendTextMessage(uid, 'You have no reminders!');
 
         reminders.forEach((reminder) => {
             reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a');
@@ -781,6 +785,5 @@ let prepareAndSendReminders = function (uid, timezone) {
         });
 
         return reminders;
-
-    }).then(reminders => messageSender.displayReminders(uid, reminders));
+    });
 };
