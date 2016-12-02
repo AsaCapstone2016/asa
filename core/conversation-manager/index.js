@@ -102,7 +102,7 @@ const actions = {
             .then(session => {
                 let recipientId = session.uid;
 
-                let settings = session.context.settings;
+                let settings = session.settings;
                 return messageSender.sendUserSettings(recipientId, settings).then(() => request.context);
             });
     },
@@ -436,10 +436,11 @@ const actions = {
         return sessionsDAO.getSessionFromSessionId(request.sessionId).then(session => {
             let recipientId = session.uid;
             let context = request.context;
+            let settings = session.settings;
 
             console.log("TIME: " + context.time);
             let datetime = moment(context.time);
-            let timestring = datetime.tz(context.settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a');
+            let timestring = datetime.tz(settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a');
 
             // Construct well formatted message with the date and time of the reminder
             let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
@@ -468,10 +469,7 @@ const actions = {
             });
     },
     clearContext(request) {
-        let context = {};
-        context.settings = request.context.settings;
-
-        return new Promise((resolve, reject) => resolve(context));
+        return new Promise((resolve, reject) => resolve({}));
     }
 };
 
@@ -496,6 +494,7 @@ module.exports.handler = (message, sender, msgSender) => {
             let uid = session.uid;
             let sessionId = session.sessionId;
             let context = session.context;
+            let settings = session.settings;
 
             if (message.content.action === 'text') {
                 // Handle text messages from the user
@@ -714,27 +713,26 @@ module.exports.handler = (message, sender, msgSender) => {
 
                 } else if (payload.METHOD === "SELECT_TIMEZONE") {
 
-                    let settings = context.settings;
                     return messageSender.sendTextMessage(uid, `Currently your timezone is: ${settings.timezone}`)
                         .then(() => {
                             return messageSender.sendTimezones(uid);
                         });
                 }
                 else if (payload.METHOD === "SET_TIMEZONE") {
-                    context.settings.timezone = payload.TIMEZONE_VALUE;
-                    return sessionsDAO.updateContext(uid, context).then(() => {
-                        return messageSender.sendTextMessage(uid, `Updated timezone to ${payload.TIMEZONE_VALUE}`);
+                    settings.timezone = payload.TIMEZONE_VALUE;
+                    return sessionsDAO.updateSettings(uid, settings).then(updatedObj => {
+                        return messageSender.sendTextMessage(uid, `Updated timezone to ${updatedObj.Attributes.settings.timezone}`);
                     });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
-                    context.settings.sendSuggestions = true;
-                    return sessionsDAO.updateContext(uid, context).then(() => {
+                    settings.sendSuggestions = true;
+                    return sessionsDAO.updateSettings(uid, settings).then(success => {
                         return messageSender.sendTextMessage(uid, 'Turned suggestions on.');
                     });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_OFF") {
-                    context.settings.sendSuggestions = false;
-                    return sessionsDAO.updateContext(uid, context).then(() => {
+                    settings.sendSuggestions = false;
+                    return sessionsDAO.updateSettings(uid, settings).then(success => {
                         return messageSender.sendTextMessage(uid, 'Turned suggestions off.');
                     });
                 }
@@ -742,7 +740,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     let msg = "Here are your current reminders:";
                     return messageSender.sendTextMessage(uid, msg)
-                        .then(prepareAndSendReminders(uid, context.settings.timezone));
+                        .then(prepareAndSendReminders(uid, settings.timezone));
                 }
                 else if (payload.METHOD === "DELETE_REMINDER") {
                     let date = payload.DATE;
@@ -750,7 +748,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     return remindersDAO.removeReminder(date, id)
                         .then(messageSender.sendTextMessage(uid, 'Deleted reminder'))
-                        .then(prepareAndSendReminders(uid));
+                        .then(prepareAndSendReminders(uid, settings.timezone));
                 }
                 else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);

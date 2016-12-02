@@ -9,6 +9,11 @@ let docClient = new aws.DynamoDB.DocumentClient();
 const tableName = `${config.TABLE_PREFIX}Sessions`;
 const indexName = 'sessionId-index';
 
+const DEFAULT_SETTINGS = {
+    timezone: 'America/Detroit',
+    sendSuggestions: true
+};
+
 var sessionsDAO = {
     /**
      * Retrieve session from database or create new one from user id
@@ -29,11 +34,11 @@ var sessionsDAO = {
                 if (Object.keys(data).length != 0) {
                     // if session exists, grab it
                     let session = data.Item;
-                    if (session.context.settings == null) {
-                        return sessionsDAO.addDefaultSettings(uid, session.context).then((context) => {
-                            session.context = context;
+                    if (session.settings == null) {
+                        return sessionsDAO.updateSettings(uid, DEFAULT_SETTINGS).then(updatedObj => {
+                            session.settings = updatedObj.Attributes.settings;
                             return session;
-                        })
+                        });
                     }
                     else {
                         return session;
@@ -45,16 +50,12 @@ var sessionsDAO = {
                         Item: {
                             uid: uid,
                             sessionId: new Date().getTime(),
-                            context: {
-                                settings: {
-                                    timezone: "America/Detroit",
-                                    sendSuggestions: false
-                                }
-                            }
+                            context: {},
+                            settings: DEFAULT_SETTINGS
                         }
                     };
                     return docClient.put(params).promise()
-                        .then((success) => params.Item);
+                        .then(success => params.Item);
                 }
             });
     },
@@ -106,14 +107,20 @@ var sessionsDAO = {
             });
     },
 
-    addDefaultSettings: (uid, context) => {
-
-        context.settings = {
-            timezone: "America/Detroit",
-            sendSuggestions: false
+    updateSettings: (uid, settings) => {
+        let params = {
+            TableName: tableName,
+            Key: {
+                uid: uid
+            },
+            UpdateExpression: 'set settings = :settings',
+            ExpressionAttributeValues: {
+                ':settings': settings
+            },
+            ReturnValues: 'UPDATED_NEW'
         };
 
-        return sessionsDAO.updateContext(uid, context).then(() => context);
+        return docClient.update(params).promise();
     }
 };
 
