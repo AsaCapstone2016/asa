@@ -14,7 +14,6 @@ let searchQueryDAO = require('./../database').searchQueryDAO;
 let sessionsDAO = require('./../database').sessionsDAO;
 let subscriptionsDAO = require('./../database').subscriptionsDAO;
 let remindersDAO = require('./../database').remindersDAO;
-let settingsDAO = require('./../database').settingsDAO;
 
 const config = require('./../../config');
 const WIT_TOKEN = config.WIT_TOKEN;
@@ -103,9 +102,8 @@ const actions = {
             .then(session => {
                 let recipientId = session.uid;
 
-                return settingsDAO.getUserSettings(recipientId, messageSender.getName())
-                    .then(settings => messageSender.sendUserSettings(recipientId, settings))
-                    .then(() => request.context);
+                let settings = session.context.settings;
+                return messageSender.sendUserSettings(recipientId, settings).then(() => request.context);
             });
     },
     checkQuery(request) {
@@ -241,7 +239,7 @@ const actions = {
                 let context = request.context;
                 const items = context.search_results.Items;
                 if (recipientId) {
-                    items.forEach((item)=> {
+                    items.forEach((item) => {
                         let isCart = '0';
                         if (item.cartCreated) {
                             isCart = '1';
@@ -441,7 +439,7 @@ const actions = {
 
             console.log("TIME: " + context.time);
             let datetime = moment(context.time);
-            let timestring = datetime.tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+            let timestring = datetime.tz(context.settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a');
 
             // Construct well formatted message with the date and time of the reminder
             let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
@@ -470,7 +468,10 @@ const actions = {
             });
     },
     clearContext(request) {
-        return new Promise((resolve, reject) => resolve({}));
+        let context = {};
+        context.settings = request.context.settings;
+
+        return new Promise((resolve, reject) => resolve(context));
     }
 };
 
@@ -488,7 +489,6 @@ const witClient = new Wit({
 module.exports.handler = (message, sender, msgSender) => {
     return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
-
             //console.log(`SESSION before handler: ${JSON.stringify(session)}`);
 
             messageSender = msgSender;
@@ -525,15 +525,13 @@ module.exports.handler = (message, sender, msgSender) => {
                 if (payload.METHOD === "GET_STARTED") {
                     console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
-                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
-                        return settingsDAO.addDefaultSettings(uid, messageSender.getName()).then(()=> {
-                            return actions.sendHelpMessage(session)
-                                .then((success) => {
-                                    console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                                }, (error) => {
-                                    console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                                });
-                        });
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(() => {
+                        return actions.sendHelpMessage(session)
+                            .then((success) => {
+                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                            }, (error) => {
+                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
+                            });
                     });
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
@@ -715,28 +713,28 @@ module.exports.handler = (message, sender, msgSender) => {
                         });
 
                 } else if (payload.METHOD === "SELECT_TIMEZONE") {
-                    return settingsDAO.getUserSettings(uid, messageSender.getName()).then((settings)=> {
-                        return messageSender.sendTextMessage(uid, `Currently your timezone is: ${settings.timezone}`)
-                            .then(() => {
-                                return messageSender.sendTimezones(uid);
-                            });
-                    });
+
+                    let settings = context.settings;
+                    return messageSender.sendTextMessage(uid, `Currently your timezone is: ${settings.timezone}`)
+                        .then(() => {
+                            return messageSender.sendTimezones(uid);
+                        });
                 }
                 else if (payload.METHOD === "SET_TIMEZONE") {
-                    return settingsDAO.getUserSettings(uid, messageSender.getName()).then((settings)=> {
-                        settings.timezone = payload.TIMEZONE_VALUE;
-                        return settingsDAO.updateUserSettings(uid, messageSender.getName(), settings).then(()=>{
-                            return messageSender.sendTextMessage(uid,`Updated timezone to ${payload.TIMEZONE_VALUE}`);
-                        });
+                    context.settings.timezone = payload.TIMEZONE_VALUE;
+                    return sessionsDAO.updateContext(uid, context).then(() => {
+                        return messageSender.sendTextMessage(uid, `Updated timezone to ${payload.TIMEZONE_VALUE}`);
                     });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
-                    return settingsDAO.turnSuggestionsOn(uid, messageSender.getName()).then(()=> {
+                    context.settings.sendSuggestions = true;
+                    return sessionsDAO.updateContext(uid, context).then(() => {
                         return messageSender.sendTextMessage(uid, 'Turned suggestions on.');
                     });
                 }
                 else if (payload.METHOD === "SET_SUGGESTIONS_OFF") {
-                    return settingsDAO.turnSuggestionsOff(uid, messageSender.getName()).then(()=> {
+                    context.settings.sendSuggestions = false;
+                    return sessionsDAO.updateContext(uid, context).then(() => {
                         return messageSender.sendTextMessage(uid, 'Turned suggestions off.');
                     });
                 }
@@ -744,7 +742,7 @@ module.exports.handler = (message, sender, msgSender) => {
 
                     let msg = "Here are your current reminders:";
                     return messageSender.sendTextMessage(uid, msg)
-                        .then(prepareAndSendReminders(uid));
+                        .then(prepareAndSendReminders(uid, context.settings.timezone));
                 }
                 else if (payload.METHOD === "DELETE_REMINDER") {
                     let date = payload.DATE;
@@ -765,14 +763,14 @@ module.exports.handler = (message, sender, msgSender) => {
         });
 };
 
-let prepareAndSendReminders = function (uid) {
+let prepareAndSendReminders = function (uid, timezone) {
     return remindersDAO.getRemindersForUser(uid).then((reminders) => {
 
         if (reminders.length == 0)
             return messageSender.sendTextMessage(uid, 'You have no reminders!');
 
-        reminders.forEach((reminder)=> {
-            reminder.datestring = moment(reminder.date).tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+        reminders.forEach((reminder) => {
+            reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a');
             reminder.payload = {
                 METHOD: "DELETE_REMINDER",
                 DATE: reminder.date,

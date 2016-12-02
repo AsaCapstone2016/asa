@@ -3,32 +3,41 @@
 let config = require('./../../../config');
 
 let aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-1' });
+aws.config.update({region: 'us-east-1'});
 
 let docClient = new aws.DynamoDB.DocumentClient();
 const tableName = `${config.TABLE_PREFIX}Sessions`;
 const indexName = 'sessionId-index';
 
 var sessionsDAO = {
-  /**
-   * Retrieve session from database or create new one from user id
-   * uid: user id of recipient, primary key for db record
-   */
+    /**
+     * Retrieve session from database or create new one from user id
+     * uid: user id of recipient, primary key for db record
+     */
     getSessionIdFromUserId: (uid) => {
         let record, sessionId;
 
         let params = {
-          TableName: tableName,
-          Key: {
-            uid: uid
-          }
+            TableName: tableName,
+            Key: {
+                uid: uid
+            }
         };
 
         return docClient.get(params).promise()
             .then((data) => {
                 if (Object.keys(data).length != 0) {
                     // if session exists, grab it
-                    return data.Item;
+                    let session = data.Item;
+                    if (session.context.settings == null) {
+                        return sessionsDAO.addDefaultSettings(uid, session.context).then((context) => {
+                            session.context = context;
+                            return session;
+                        })
+                    }
+                    else {
+                        return session;
+                    }
                 } else {
                     // if session does not exist, create it
                     let params = {
@@ -36,7 +45,12 @@ var sessionsDAO = {
                         Item: {
                             uid: uid,
                             sessionId: new Date().getTime(),
-                            context: {}
+                            context: {
+                                settings: {
+                                    timezone: "America/Detroit",
+                                    sendSuggestions: false
+                                }
+                            }
                         }
                     };
                     return docClient.put(params).promise()
@@ -49,22 +63,22 @@ var sessionsDAO = {
      * sessionId: session id, primary key for sessionId index
      */
     getSessionFromSessionId: (sessionId) => {
-      let params = {
-          TableName: tableName,
-          IndexName: indexName,
-          KeyConditionExpression: 'sessionId = :sessionId',
-          ExpressionAttributeValues: {
-              ':sessionId': sessionId
-          }
-      };
+        let params = {
+            TableName: tableName,
+            IndexName: indexName,
+            KeyConditionExpression: 'sessionId = :sessionId',
+            ExpressionAttributeValues: {
+                ':sessionId': sessionId
+            }
+        };
 
-      return docClient.query(params).promise()
-          .then((data) => {
-              // We should only ever have one session so just return the first item
-              return data.Items[0];
-          }, (error) => {
-              console.log(`ERROR retrieving session: ${error}`);
-          });
+        return docClient.query(params).promise()
+            .then((data) => {
+                // We should only ever have one session so just return the first item
+                return data.Items[0];
+            }, (error) => {
+                console.log(`ERROR retrieving session: ${error}`);
+            });
     },
     /**
      * Update context in database given user id
@@ -90,6 +104,27 @@ var sessionsDAO = {
             }, (error) => {
                 console.log(`ERROR updating context: ${error}`);
             });
+    },
+
+    addDefaultSettings: (uid, context) => {
+
+        context.settings = {
+            timezone: "America/Detroit",
+            sendSuggestions: false
+        };
+
+        return sessionsDAO.updateContext(uid, context).then(() => context);
+    },
+
+    getSettings: (uid, context) => {
+        console.log(JSON.stringify(context));
+        console.log(JSON.stringify(context.settings));
+        if (context.settings == null) {
+            return sessionsDAO.addDefaultSettings(uid, context);
+        }
+        else {
+            return Promise.resolve(context.settings);
+        }
     }
 };
 
