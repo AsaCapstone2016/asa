@@ -440,7 +440,7 @@ const actions = {
 
             console.log("TIME: " + context.time);
             let datetime = moment(context.time);
-            let timestring = datetime.tz(settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a');
+            let timestring = datetime.tz(settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a z');
 
             // Construct well formatted message with the date and time of the reminder
             let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
@@ -451,17 +451,18 @@ const actions = {
         }).then(() => request.context); // As always, return the context from the action
     },
     setReminder(request) {
+        let context = request.context;
+
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
-                let context = request.context;
 
                 return remindersDAO.addReminder(context.time, recipientId, messageSender.getName(), context.task)
-                    .then((success) => {
+                    .then(success => {
                         context.success = true;
                         delete context.fail;
                         return context;
-                    }, (error) => {
+                    }, error => {
                         context.fail = true;
                         delete context.success;
                         return context;
@@ -469,6 +470,7 @@ const actions = {
             });
     },
     clearContext(request) {
+        //console.log(`CLEAR Context`);
         return new Promise((resolve, reject) => resolve({}));
     }
 };
@@ -775,7 +777,7 @@ let prepareReminders = function (uid, timezone) {
     return remindersDAO.getRemindersForUser(uid).then((reminders) => {
 
         reminders.forEach((reminder) => {
-            reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a');
+            reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a z');
             reminder.payload = {
                 METHOD: "DELETE_REMINDER",
                 DATE: reminder.date,
