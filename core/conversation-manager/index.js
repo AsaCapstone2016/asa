@@ -496,6 +496,9 @@ module.exports.handler = (message, sender, msgSender) => {
             let settings = session.settings;
             let context = session.context;
 
+            // Make sure the context uses this user's chosen timezone
+            context.timezone = settings.timezone;
+
             if (message.content.action === 'text') {
                 // Handle text messages from the user
                 let text = message.content.payload;

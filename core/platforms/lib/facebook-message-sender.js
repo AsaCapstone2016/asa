@@ -417,7 +417,7 @@ var facebookMessageSender = {
                 title: 'Pacific (PST)',
                 payload: JSON.stringify({
                     METHOD: 'SET_TIMEZONE',
-                    TIMEZONE_VALUE: 'America/San_Francisco'
+                    TIMEZONE_VALUE: 'America/Los_Angeles'
                 })
             }
         ];
