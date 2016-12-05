@@ -5,7 +5,7 @@
 var config = require('./../config');
 var amazon = require('./../core/amazon');
 var getSuggestions = require('./../core/user-profiler').getSuggestions;
-let settingsDAO = require('./../core/database').settingsDAO;
+let sessionsDAO = require('./../core/database').sessionsDAO;
 
 // This is what makes this the facebook messenger endpoint
 var fb = require('./../core/platforms').fbMessenger;
@@ -22,31 +22,32 @@ module.exports.suggestionEvent = function (event, context, callback) {
 
     let promiseArray = [];
 
-    uids.forEach((uid)=> {
+    uids.forEach((uid) => {
         let platform = uid.substring(0, uid.indexOf('-'));
         let id = uid.substring(uid.indexOf('-') + 1);
 
-        promiseArray.push(settingsDAO.getUserSettings(id, platform).then((settings)=> {
+        promiseArray.push(sessionsDAO.getSessionIdFromUserId(id).then((session) => {
 
+            let settings = session.settings;
             console.log(settings.sendSuggestions);
             if (settings.sendSuggestions === false) {
                 return;
             }
 
-            getSuggestions(id, platform).then((suggestions)=> {
+            getSuggestions(id, platform).then((suggestions) => {
 
                 //No suggestions
                 if (!suggestions.length)
                     return;
 
                 if (platform == 'fb') {
-                    fb.messageSender.sendSearchResults(id, suggestions).then(()=> {
+                    fb.messageSender.sendSearchResults(id, suggestions).then(() => {
                         fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.')
-                            .then(()=> {
+                            .then(() => {
 
                                 console.log(`SENT USER ${id} SOME SUGGESTIONS`);
                             });
-                    }, (err)=> {
+                    }, (err) => {
                         console.log(err);
                     });
                 }
