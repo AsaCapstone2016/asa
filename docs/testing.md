@@ -26,8 +26,6 @@ For the sake of velocity, we've built a tool which allows us to test our
 lambda functions locally without the need to redeploy to our Cloudformation 
 stack on every change, saving us a couple minutes every time we want to see our changes.
 
-    Warning: This is very much a hack and not meant to be production code
-
 The Testbench achieves this through the following steps:
 
     1. Wrapping our lambda functions in an express app
