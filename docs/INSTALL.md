@@ -128,7 +128,7 @@ to create the Asa stack on AWS and deploy each Lambda function.
 Asa will not work after the initial deployment because she needs URLs to several
 lambda functions created by the initial deployment.
 
-At the end of the output from ```npm run deploy`` find the output of function URLs.
+At the end of the output from ```npm run deploy`` find the output of endpoint URLs.
 Notice that each URL is identical except for the name of the final resource. Copy a
 URL from the beginning until just before the last forward slash and set this as the
 value of the URL_PREFIX variable in the config file.
@@ -138,12 +138,12 @@ Now rerun ```npm run deploy``` to update the config file deployed on AWS.
 ## **Verify Webhook With Facebook Application**
 
 In order to receive user messages through your Facebook Page, you need to register
-The fb-endpoint webhook created by the deploy command. Copy the *entire* URL ending
-with "fb-endpoint" before proceeding.
+The fb-webhook URL created by the deploy command. Copy the *entire* URL ending
+with "fb-webhook" before proceeding.
 
 Go to your Facebook App and under *Products -> Messenger* click "Setup Webhooks".
 
-Paste the URL for the fb-endpoint into the "Callback URL" field and enter the
+Paste the URL for the fb-webhook into the "Callback URL" field and enter the
 FB_VERIFY_TOKEN found in your config file. For "Subscription Fields" select
 **messages** and **messaging_postbacks**.
 
