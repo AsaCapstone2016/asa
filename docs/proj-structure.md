@@ -3,13 +3,13 @@
 
 [Back to Table of Contents](./../README.md)
 
-[lambda functions folder]: ./functions
-[platform clients folder]: ./core/platforms
-[conv manager folder]: ./core/conversation-manager
-[wit client folder]: ./core/node-wit
-[amazon client folder]: ./core/amazon
-[user profiler folder]: ./core/user-profiler
-[dao folder]: ./core/database
+[lambda functions folder]: ./../functions
+[platform clients folder]: ./../core/platforms
+[conv manager folder]: ./../core/conversation-manager
+[wit client folder]: ./../core/node-wit
+[amazon client folder]: ./../core/amazon
+[user profiler folder]: ./../core/user-profiler
+[dao folder]: ./../core/database
 
 ## **Lambda Functions**
 The [functions][lambda functions folder] folder contains handler functions
