@@ -471,6 +471,43 @@ var facebookMessageSender = {
         };
 
         return callSendAPI(json);
+    },
+
+    /**
+     * Send slideshow of Asa features with buttons to view examples
+     * 
+     * @param recipientId Page scoped id of user to send help message to
+     * @param features List of features objects containing a name and payload for the example button
+     */
+    sendHelpMessage: (recipientId, features) => {
+        let elements = [];
+
+        // Create elements for each feature
+        features.forEach(feature => {
+            elements.push({
+                title: feature.name,
+                buttons: [{
+                    type: 'postback',
+                    title: 'Examples',
+                    payload: JSON.stringify(feature.payload)
+                }]
+            });
+        });
+
+        let json = {
+            recipient: {id: recipientId},
+            message: {
+                attachment: {
+                    type: 'template',
+                    payload: {
+                        template_type: 'generic',
+                        elements: elements
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
     }
 
 };

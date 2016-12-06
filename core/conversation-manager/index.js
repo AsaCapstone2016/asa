@@ -76,21 +76,36 @@ const actions = {
                 let recipientId = session.uid;
 
                 if (recipientId) {
-                    let msg0 = "Hi! Think of me as your personal shopping assistant.";
+                    let intro = 'Here are some things I can do:';
+                    let settingsMsg = 'Send "Settings" at any time to change your timezone or view reminders';
 
-                    let msg1 = "I can help you discover and purchase items on Amazon.";
-                    msg1 += " Try saying...\n\n";
-                    msg1 += "• I want to buy something\n";
-                    msg1 += "• Can you find Ocarina of Time?";
+                    let features = [
+                        {
+                            name: 'Search for items',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'search'
+                            }
+                        },
+                        {
+                            name: 'Get recommendations',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'recommend'
+                            }
+                        },
+                        {
+                            name: 'Set reminders',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'reminder'
+                            }
+                        }
+                    ];
 
-                    let msg2 = "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
-                    msg2 += "• Can you recommend something?\n";
-                    msg2 += "• Recommend a book\n\n";
-                    msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
-
-                    return messageSender.sendTextMessage(recipientId, msg0)
-                        .then(() => messageSender.sendTextMessage(recipientId, msg1))
-                        .then(() => messageSender.sendTextMessage(recipientId, msg2))
+                    return messageSender.sendTextMessage(recipientId, intro)
+                        .then(() => messageSender.sendHelpMessage(recipientId, features))
+                        .then(() => messageSender.sendTextMessage(recipientId, settingsMsg))
                         .then(() => {
                             return request.context;
                         });
@@ -543,16 +558,45 @@ module.exports.handler = (message, sender, msgSender) => {
                 //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
-                    console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
-                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(() => {
-                        return actions.sendHelpMessage(session)
-                            .then((success) => {
-                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                            }, (error) => {
-                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                            });
-                    });
+
+                    let welcomeMsg = "Hi! Think of me as your personal shopping assistant.";
+
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName())
+                        .then(() => messageSender.sendTextMessage(uid, welcomeMsg))
+                        .then(() => actions.sendHelpMessage(session))
+                        .then((success) => {
+                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                        }, (error) => {
+                            console.log(`ERROR starting conversation with ${sessionId}: ${error}`);
+                        });
+
+                } else if (payload.METHOD === 'SEND_EXAMPLES') {
+                    // User has asked to see reminders for a feature displayed in the help message
+                    let msg = '';
+                    if (payload.type === 'search') {
+
+                        msg += "I can help you find and purchase items on Amazon.";
+                        msg += " Try saying...\n\n";
+                        msg += "• I want to buy something\n";
+                        msg += "• Can you find Ocarina of Time?";
+
+                    } else if (payload.type === 'recommend') {
+
+                        msg += "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
+                        msg += "• Can you recommend something?\n";
+                        msg += "• Recommend a book\n\n";
+                        msg += "I'll try to use what I've learned about you to filter search results for you personally."
+                        
+                    } else if (payload.type === 'reminder') {
+
+                        msg += "You can ask me to remind you to do something at a specific time.";
+                        msg += " Say something like...\n\n";
+                        msg += "• Remind me to buy textbooks tomorrow afternoon\n";
+                        msg += "• Can you remind me to buy a gift for mom at 6pm?";   
+                    }
+
+                    return messageSender.sendTextMessage(uid, msg);
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
