@@ -22,19 +22,21 @@ $ npm run tests
 
 ## **Run Asa Locally in Testbench**
 
-    For the sake of velocity, we've built a tool which allows us to test our 
-    lambda functions locally without the need to redeploy to our Cloudformation 
-    stack on every change, saving us a couple minutes every time we want to see our changes.
+For the sake of velocity, we've built a tool which allows us to test our 
+lambda functions locally without the need to redeploy to our Cloudformation 
+stack on every change, saving us a couple minutes every time we want to see our changes.
 
     Warning: This is very much a hack and not meant to be production code
 
-    The Testbench achieves this by wrapping our lambda functions in an express app, 
+The Testbench achieves this through the following steps:
+
+    wrapping our lambda functions in an express app, 
     running the express app locally, exposing localhost through ngrok, and finally rewiring 
     our API gateway endpoints to point to our local express app using the Node SDK for AWS.
 
-    To set up and run Testbench:
-    Make sure you have installed all dependencies for the ASA Project and deployed to AWS 
-    using Serverless.
+To set up and run Testbench:
+Make sure you have installed all dependencies for the ASA Project and deployed to AWS 
+using Serverless.
 
 ```bash
 $ npm run testbench:setup
