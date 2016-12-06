@@ -40,6 +40,10 @@ Extending to multiple platforms would require evaluating what
 group of message types are common or at least possible to replicate
 on all platforms then refactoring the current platform client code.
 
+## **Refactor Conversation Manager**
+Generalizing platform client functions will also require a refactoring
+of the Conversation Manager.
+
 ## **Minimal test coverage**
 
 Currently only the Amazon client and Facebook Messenger client are
