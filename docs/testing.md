@@ -39,6 +39,8 @@ To set up and run Testbench:
 Make sure you have installed all dependencies for the ASA Project and deployed to AWS 
 using Serverless.
 
+In the root of the project:
+
 ```bash
 $ npm run testbench:setup
 $ npm run testbench
