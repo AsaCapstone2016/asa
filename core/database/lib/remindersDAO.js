@@ -57,9 +57,9 @@ var remindersDAO = {
 
         let params = {
             TableName: tableName,
-            KeyConditionExpression: "#date = :day", 
-            ExpressionAttributeNames: { 
-                "#date": "date" 
+            KeyConditionExpression: "#date = :day",
+            ExpressionAttributeNames: {
+                "#date": "date"
             },
             ExpressionAttributeValues: {
                 ":day": datetime
@@ -79,7 +79,28 @@ var remindersDAO = {
         };
 
         return docClient.delete(params).promise();
+    },
+
+    getRemindersForUser: (uid) => {
+
+        let params = {
+            TableName: tableName,
+            Count: true
+        };
+
+        let reminders = [];
+        return docClient.scan(params).promise().then((data)=> {
+
+            data.Items.forEach((item)=> {
+                if (item.uid === uid) {
+                    reminders.push(item);
+                }
+            });
+
+            return reminders;
+        });
     }
+
 };
 
 module.exports = remindersDAO;
