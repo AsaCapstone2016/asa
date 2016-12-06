@@ -30,9 +30,10 @@ stack on every change, saving us a couple minutes every time we want to see our 
 
 The Testbench achieves this through the following steps:
 
-    wrapping our lambda functions in an express app, 
-    running the express app locally, exposing localhost through ngrok, and finally rewiring 
-    our API gateway endpoints to point to our local express app using the Node SDK for AWS.
+    1. Wrapping our lambda functions in an express app
+    2. Running the express app locally
+    3. Exposing localhost through ngrok
+    4. Eewiring our API gateway endpoints to point to our local express app using the Node SDK for AWS.
 
 To set up and run Testbench:
 Make sure you have installed all dependencies for the ASA Project and deployed to AWS 
