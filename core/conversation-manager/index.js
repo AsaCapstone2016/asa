@@ -758,9 +758,14 @@ module.exports.handler = (message, sender, msgSender) => {
                     let id = payload.ID;
 
                     return remindersDAO.removeReminder(date, id)
-                        .then(messageSender.sendTextMessage(uid, 'Deleted reminder'))
-                        .then(prepareReminders(uid, settings.timezone))
-                        .then(reminders => messageSender.displayReminders(uid, reminders));
+                        .then(() => messageSender.sendTextMessage(uid, 'Deleted reminder'))
+                        .then(() => prepareReminders(uid, settings.timezone))
+                        .then(reminders => {
+                            if (reminders.length > 0)
+                                return messageSender.displayReminders(uid, reminders);
+                            else
+                                return messageSender.sendTextMessage(uid, 'You have no more reminders');
+                        });
                 }
                 else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
@@ -773,8 +778,17 @@ module.exports.handler = (message, sender, msgSender) => {
         });
 };
 
+/**
+ * Find reminders for a user and add info needed to display them
+ * 
+ * @param uid User id
+ * @param timezone Timezone string for this user
+ * 
+ * @returns Array of reminders each with a 'message', 'datestring', and 'payload'
+ *          that represent the task, time, and required button response respectively
+ */
 let prepareReminders = function (uid, timezone) {
-    return remindersDAO.getRemindersForUser(uid).then((reminders) => {
+    return remindersDAO.getRemindersForUser(uid).then(reminders => {
 
         reminders.forEach((reminder) => {
             reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a z');
