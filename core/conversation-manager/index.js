@@ -412,7 +412,23 @@ const actions = {
 
                 if ('datetime' in entities) {
                     // Extract and store the time
-                    context.time = entities.datetime[0].value;
+                    let dtEntity = entities.datetime[0];
+
+                    if (dtEntity.type == 'value') {
+                        // If the time is a simple value, just store it
+                        context.time = dtEntity.value;
+                    } else if (dtEntity.type == 'interval') {
+                        // If the time is an interval, such as the 'afternoon' aka noon - 7pm,
+                        // split the difference and find the middle point between the two times
+                        // to store as the time to remind the user
+                        let from = new Date(dtEntity.from.value);
+                        let to = new Date(dtEntity.to.value);
+
+                        let avg = (from.getTime() + to.getTime()) / 2;
+                        avg = new Date(avg);
+
+                        context.time = avg.getTime();
+                    }
 
                 } else if (context.time === undefined) {
                     context.missing_time = true;
