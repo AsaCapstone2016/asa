@@ -4,6 +4,7 @@
   "scripts": {
     "deploy": "npm run lint && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
+    "test": "mocha test --recursive --timeout 20000",
     "testbench": "cd bench && ./start.sh",
     "testbench:setup": "cd bench && ./setup.sh",
     "testbench:destroy": "cd bench && ./kill.sh"
