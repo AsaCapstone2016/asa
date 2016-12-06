@@ -4,6 +4,7 @@
   "scripts": {
     "deploy": "npm run lint && sls deploy --stage $SLS_USER",
     "lint": "eslint ./** --ext .js",
+    "test": "mocha test --recursive --timeout 20000",
     "testbench": "cd bench && ./start.sh",
     "testbench:setup": "cd bench && ./setup.sh",
     "testbench:destroy": "cd bench && ./kill.sh"
@@ -23,8 +24,11 @@
   },
   "devDependencies": {
     "body-parser": "^1.15.2",
+    "chai": "^3.5.0",
+    "chai-things": "^0.2.0",
     "eslint": "^3.7.1",
     "express": "^4.14.0",
+    "mocha": "^3.2.0",
     "ngrok": "^2.2.3",
     "nodemon": "^1.11.0"
   },

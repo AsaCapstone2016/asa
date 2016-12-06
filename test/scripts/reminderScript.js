@@ -3,8 +3,8 @@
  */
 'use strict';
 let fetch = require('node-fetch');
-let config = require('../config');
-let remindersDAO = require('./../core/database').remindersDAO;
+let config = require('./../../config');
+let remindersDAO = require('./../../core/database').remindersDAO;
 
 let testUID = '998822520243400'; // CHANGE TO RENEE's FOR BETA
 let testReminderMessage = 'buy an anniversary present';

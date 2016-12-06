@@ -34,7 +34,7 @@ var amazonProduct = {
         return amazon_client.itemSearch(search_params).then((result) => {
             return amazonProduct.buildItemResponse(result);
         }, (error) => {
-            console.log(`ERROR searching for items on Amazon: ${error}`);
+            console.log(`ERROR searching for items on Amazon: ${JSON.stringify(error, null, 2)}`);
         });
     },
 
@@ -337,7 +337,7 @@ var amazonProduct = {
             return false;
 
         let isPrime = false;
-        
+
         offers.Offer.forEach((offer)=> {
             let offerListing = offer.OfferListing && offer.OfferListing[0];
 
