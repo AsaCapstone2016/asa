@@ -3,7 +3,7 @@
  */
 'use strict';
 let fetch = require('node-fetch');
-let config = require('../config');
+let config = require('./../../config');
 let uids = ['fb-1061868600596425'];
 
 fetch('https://v2x7ya8oca.execute-api.us-east-1.amazonaws.com/prod/suggestion-event', {

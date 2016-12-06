@@ -23,8 +23,11 @@
   },
   "devDependencies": {
     "body-parser": "^1.15.2",
+    "chai": "^3.5.0",
+    "chai-things": "^0.2.0",
     "eslint": "^3.7.1",
     "express": "^4.14.0",
+    "mocha": "^3.2.0",
     "ngrok": "^2.2.3",
     "nodemon": "^1.11.0"
   },
