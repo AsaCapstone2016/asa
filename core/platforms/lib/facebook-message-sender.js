@@ -320,9 +320,159 @@ var facebookMessageSender = {
         return callSendAPI(json);
     },
 
+    /**
+     * Get the name of this message sender.
+     * @returns {string}
+     */
     getName: function () {
         return 'fb';
+    },
+
+    /**
+     * Send the settings prompt to the user.
+     *
+     * @param recipientId
+     * @param settings
+     */
+    sendUserSettings: function (recipientId, settings) {
+
+        let suggestionTitle = "Turn On Suggestions";
+        let suggestionMethod = "SET_SUGGESTIONS_ON";
+        if (settings.sendSuggestions) {
+            suggestionTitle = "Turn Off Suggestions";
+            suggestionMethod = "SET_SUGGESTIONS_OFF";
+        }
+        var json = {
+            recipient: {id: recipientId},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: "Click one of the settings to modify it.",
+                        buttons: [
+                            {
+                                type: "postback",
+                                title: "Timezone",
+                                payload: JSON.stringify({
+                                    METHOD: 'SELECT_TIMEZONE'
+                                })
+                            },
+                            {
+                                type: "postback",
+                                title: suggestionTitle,
+                                payload: JSON.stringify({
+                                    METHOD: suggestionMethod
+                                })
+                            },
+                            {
+                                type: "postback",
+                                title: "View Reminders",
+                                payload: JSON.stringify({
+                                    METHOD: 'VIEW_REMINDERS'
+                                })
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    /**
+     * Send the list of timezones to a user
+     * @param recipientId
+     */
+    sendTimezones: function (recipientId) {
+
+        let quick_replies = [
+            {
+                content_type: 'text',
+                title: 'Eastern (EST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Detroit'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Central (CST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Chicago'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Mountain (MST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Denver'
+                })
+            },
+            {
+                content_type: 'text',
+                title: 'Pacific (PST)',
+                payload: JSON.stringify({
+                    METHOD: 'SET_TIMEZONE',
+                    TIMEZONE_VALUE: 'America/Los_Angeles'
+                })
+            }
+        ];
+
+        let json = {
+            recipient: {id: recipientId},
+            message: {
+                text: `Select a time zone`,
+                quick_replies: quick_replies
+            }
+        };
+
+        return callSendAPI(json);
+    },
+
+    /**
+     * Send slideshow of upcoming reminders
+     * 
+     * @param recipientId Page scoped id of user to send reminders to
+     * @param reminders Array of reminder objects with message, datestring, and payload for Delete button
+     */
+    displayReminders: (recipientId, reminders) => {
+        var elements = [];
+
+        // Create elements for each reminder
+        reminders.forEach(function (reminder) {
+            var element = {};
+            element.title = reminder.message;
+            element.subtitle = reminder.datestring;
+
+            element.buttons = [{
+                type: 'postback',
+                title: 'Delete Reminder',
+                payload: JSON.stringify(reminder.payload)
+            }];
+
+            elements.push(element);
+        });
+
+        var json = {
+            recipient: {id: recipientId},
+            message: {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "generic",
+                        elements: elements
+                    }
+                }
+            }
+        };
+
+        return callSendAPI(json);
     }
+
 };
 
 function callSendAPI(messageData) {
