@@ -34,22 +34,17 @@ module.exports.suggestionEvent = function (event, context, callback) {
                 return;
             }
 
-            getSuggestions(id, platform).then((suggestions) => {
+            return getSuggestions(id, platform).then((suggestions) => {
 
                 //No suggestions
                 if (!suggestions.length)
                     return;
 
                 if (platform == 'fb') {
-                    fb.messageSender.sendSearchResults(id, suggestions).then(() => {
-                        fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.')
-                            .then(() => {
-
-                                console.log(`SENT USER ${id} SOME SUGGESTIONS`);
-                            });
-                    }, (err) => {
-                        console.log(err);
-                    });
+                    return fb.messageSender.sendSearchResults(id, suggestions)
+                        .then(() => fb.messageSender.sendTextMessage(id, 'Hey! I\'ve found some things that you might like.'))
+                        .then(() => console.log(`SENT USER ${id} SOME SUGGESTIONS`))
+                        .catch(error => console.log(JSON.stringify(error, null, 2)));
                 }
             })
         }));
