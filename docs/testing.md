@@ -25,6 +25,7 @@ $ npm run tests
 For the sake of velocity, we've built a tool which allows us to test our 
 lambda functions locally without the need to redeploy to our Cloudformation 
 stack on every change, saving us a couple minutes every time we want to see our changes.
+This could be used until the Serverless framework has a solution for this.
 
 The Testbench achieves this through the following steps:
 
