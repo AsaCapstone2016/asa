@@ -43,6 +43,7 @@ package:
     - config.json
   exclude:
     - bench
+    - docs
     - test
     - asa-wit-app.zip
 #  artifact: my-service-code.zip
@@ -210,3 +211,4 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+          

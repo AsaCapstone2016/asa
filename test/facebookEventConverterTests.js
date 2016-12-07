@@ -1,7 +1,7 @@
 /**
  * Created by evan on 9/20/16.
  */
-var facebookEventConverter = require('facebook-event-converter');
+var facebookEventConverter = require('../core/platforms').fbMessenger.eventConverter;
 var expect = require('chai').expect;
 
 //This is a basic FB event
@@ -41,7 +41,7 @@ describe('Facebook Event Converter', function () {
 
             expect(event[0]).to.deep.equal({
                 UID: "1114852861896648",
-                message: {
+                content: {
                     payload: "hey",
                     action: "text"
                 }
@@ -80,7 +80,7 @@ describe('Facebook Event Converter', function () {
 
             expect(event[0]).to.deep.equal({
                 UID: "1114852861896648",
-                message: {
+                content: {
                     payload: "ITEM_LOOKUP",
                     action: "postback"
                 }

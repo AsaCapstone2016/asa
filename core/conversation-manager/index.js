@@ -42,7 +42,7 @@ let performSearch = (context, uid) => {
         console.log('Execute simple item search');
         return amazon.itemSearch(keywords, queryParams);
     }
-}
+};
 
 const actions = {
     send(request, response) {
@@ -76,25 +76,49 @@ const actions = {
                 let recipientId = session.uid;
 
                 if (recipientId) {
-                    let msg0 = "Hi! Think of me as your personal shopping assistant.";
+                    let intro = 'Here are some things I can do:';
+                    let settingsMsg = 'Send "Settings" at any time to change your timezone or view reminders';
 
-                    let msg1 = "I can help you discover and purchase items on Amazon.";
-                    msg1 += " Try saying...\n\n";
-                    msg1 += "• I want to buy something\n";
-                    msg1 += "• Can you find Ocarina of Time?";
+                    let features = [
+                        {
+                            name: 'Search for items',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'search'
+                            }
+                        },
+                        {
+                            name: 'Get recommendations',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'recommend'
+                            }
+                        },
+                        {
+                            name: 'Set reminders',
+                            payload: {
+                                METHOD: 'SEND_EXAMPLES',
+                                type: 'reminder'
+                            }
+                        }
+                    ];
 
-                    let msg2 = "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
-                    msg2 += "• Can you recommend something?\n";
-                    msg2 += "• Recommend a book\n\n";
-                    msg2 += "I'll try to use what I've learned about you to filter search results for you personally."
-                    
-                    return messageSender.sendTextMessage(recipientId, msg0)
-                        .then(() => messageSender.sendTextMessage(recipientId, msg1))
-                        .then(() => messageSender.sendTextMessage(recipientId, msg2))
+                    return messageSender.sendTextMessage(recipientId, intro)
+                        .then(() => messageSender.sendHelpMessage(recipientId, features))
+                        .then(() => messageSender.sendTextMessage(recipientId, settingsMsg))
                         .then(() => {
                             return request.context;
                         });
                 }
+            });
+    },
+    viewSettings(request) {
+        return sessionsDAO.getSessionFromSessionId(request.sessionId)
+            .then(session => {
+                let recipientId = session.uid;
+
+                let settings = session.settings;
+                return messageSender.sendUserSettings(recipientId, settings).then(() => request.context);
             });
     },
     checkQuery(request) {
@@ -230,7 +254,7 @@ const actions = {
                 let context = request.context;
                 const items = context.search_results.Items;
                 if (recipientId) {
-                    items.forEach((item)=> {
+                    items.forEach((item) => {
                         let isCart = '0';
                         if (item.cartCreated) {
                             isCart = '1';
@@ -403,7 +427,23 @@ const actions = {
 
                 if ('datetime' in entities) {
                     // Extract and store the time
-                    context.time = entities.datetime[0].value;
+                    let dtEntity = entities.datetime[0];
+
+                    if (dtEntity.type == 'value') {
+                        // If the time is a simple value, just store it
+                        context.time = dtEntity.value;
+                    } else if (dtEntity.type == 'interval') {
+                        // If the time is an interval, such as the 'afternoon' aka noon - 7pm,
+                        // split the difference and find the middle point between the two times
+                        // to store as the time to remind the user
+                        let from = new Date(dtEntity.from.value);
+                        let to = new Date(dtEntity.to.value);
+
+                        let avg = (from.getTime() + to.getTime()) / 2;
+                        avg = new Date(avg);
+
+                        context.time = avg.getTime();
+                    }
 
                 } else if (context.time === undefined) {
                     context.missing_time = true;
@@ -427,10 +467,11 @@ const actions = {
         return sessionsDAO.getSessionFromSessionId(request.sessionId).then(session => {
             let recipientId = session.uid;
             let context = request.context;
+            let settings = session.settings;
 
             console.log("TIME: " + context.time);
             let datetime = moment(context.time);
-            let timestring = datetime.tz('America/Detroit').format('ddd MMM Do, YYYY [at] h:mm a');
+            let timestring = datetime.tz(settings.timezone).format('ddd MMM Do, YYYY [at] h:mm a z');
 
             // Construct well formatted message with the date and time of the reminder
             let msg = `Ok, I'll remind you to "${context.task}" on ${timestring}`;
@@ -441,17 +482,18 @@ const actions = {
         }).then(() => request.context); // As always, return the context from the action
     },
     setReminder(request) {
+        let context = request.context;
+
         return sessionsDAO.getSessionFromSessionId(request.sessionId)
             .then((session) => {
                 let recipientId = session.uid;
-                let context = request.context;
 
                 return remindersDAO.addReminder(context.time, recipientId, messageSender.getName(), context.task)
-                    .then((success) => {
+                    .then(success => {
                         context.success = true;
                         delete context.fail;
                         return context;
-                    }, (error) => {
+                    }, error => {
                         context.fail = true;
                         delete context.success;
                         return context;
@@ -459,6 +501,7 @@ const actions = {
             });
     },
     clearContext(request) {
+        //console.log(`CLEAR Context`);
         return new Promise((resolve, reject) => resolve({}));
     }
 };
@@ -477,14 +520,17 @@ const witClient = new Wit({
 module.exports.handler = (message, sender, msgSender) => {
     return sessionsDAO.getSessionIdFromUserId(sender)
         .then((session) => {
-
             //console.log(`SESSION before handler: ${JSON.stringify(session)}`);
 
             messageSender = msgSender;
 
             let uid = session.uid;
             let sessionId = session.sessionId;
+            let settings = session.settings;
             let context = session.context;
+
+            // Make sure the context uses this user's chosen timezone
+            context.timezone = settings.timezone;
 
             if (message.content.action === 'text') {
                 // Handle text messages from the user
@@ -512,16 +558,45 @@ module.exports.handler = (message, sender, msgSender) => {
                 //console.log(`POSTBACK: ${JSON.stringify(payload)}`);
 
                 if (payload.METHOD === "GET_STARTED") {
-                    console.log('GET STARTED');
                     // User selected the 'Get Started' button on first conversation initiation
-                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName()).then(()=> {
-                        return actions.sendHelpMessage(session)
-                            .then((success) => {
-                                console.log(`CONVERSATION INITIATED with ${sessionId}`);
-                            }, (error) => {
-                                console.log(`ERROR sending help message on GET_STARTED: ${error}`);
-                            });
-                    });
+
+                    let welcomeMsg = "Hi! Think of me as your personal shopping assistant.";
+
+                    return subscriptionsDAO.addUserSubscription(uid, messageSender.getName())
+                        .then(() => messageSender.sendTextMessage(uid, welcomeMsg))
+                        .then(() => actions.sendHelpMessage(session))
+                        .then((success) => {
+                            console.log(`CONVERSATION INITIATED with ${sessionId}`);
+                        }, (error) => {
+                            console.log(`ERROR starting conversation with ${sessionId}: ${error}`);
+                        });
+
+                } else if (payload.METHOD === 'SEND_EXAMPLES') {
+                    // User has asked to see reminders for a feature displayed in the help message
+                    let msg = '';
+                    if (payload.type === 'search') {
+
+                        msg += "I can help you find and purchase items on Amazon.";
+                        msg += " Try saying...\n\n";
+                        msg += "• I want to buy something\n";
+                        msg += "• Can you find Ocarina of Time?";
+
+                    } else if (payload.type === 'recommend') {
+
+                        msg += "Once you've purchased a few items, try asking for a recommendation like this:\n\n";
+                        msg += "• Can you recommend something?\n";
+                        msg += "• Recommend a book\n\n";
+                        msg += "I'll try to use what I've learned about you to filter search results for you personally."
+                        
+                    } else if (payload.type === 'reminder') {
+
+                        msg += "You can ask me to remind you to do something at a specific time.";
+                        msg += " Say something like...\n\n";
+                        msg += "• Remind me to buy textbooks tomorrow afternoon\n";
+                        msg += "• Can you remind me to buy a gift for mom at 6pm?";   
+                    }
+
+                    return messageSender.sendTextMessage(uid, msg);
 
                 } else if (payload.METHOD === "SELECT_VARIATIONS") {
                     // User pressed "Select Options" button after getting search results
@@ -701,7 +776,58 @@ module.exports.handler = (message, sender, msgSender) => {
                                 });
                         });
 
-                } else {
+                } else if (payload.METHOD === "SELECT_TIMEZONE") {
+
+                    return messageSender.sendTextMessage(uid, `Currently your timezone is: ${settings.timezone}`)
+                        .then(() => {
+                            return messageSender.sendTimezones(uid);
+                        });
+                }
+                else if (payload.METHOD === "SET_TIMEZONE") {
+                    settings.timezone = payload.TIMEZONE_VALUE;
+                    return sessionsDAO.updateSettings(uid, settings).then(updatedSettings => {
+                        return messageSender.sendTextMessage(uid, `Updated timezone to ${updatedSettings.timezone}`);
+                    });
+                }
+                else if (payload.METHOD === "SET_SUGGESTIONS_ON") {
+                    settings.sendSuggestions = true;
+                    return sessionsDAO.updateSettings(uid, settings).then(success => {
+                        return messageSender.sendTextMessage(uid, 'Turned suggestions on.');
+                    });
+                }
+                else if (payload.METHOD === "SET_SUGGESTIONS_OFF") {
+                    settings.sendSuggestions = false;
+                    return sessionsDAO.updateSettings(uid, settings).then(success => {
+                        return messageSender.sendTextMessage(uid, 'Turned suggestions off.');
+                    });
+                }
+                else if (payload.METHOD === "VIEW_REMINDERS") {
+
+                    return prepareReminders(uid, settings.timezone).then(reminders => {
+                        if (reminders.length > 0) {
+                            let msg = 'Here are your current reminders:';
+                            return messageSender.sendTextMessage(uid, msg)
+                                .then(messageSender.displayReminders(uid, reminders));
+                        } else {
+                            return messageSender.sendTextMessage(uid, 'You have no reminders!');
+                        }
+                    });
+                }
+                else if (payload.METHOD === "DELETE_REMINDER") {
+                    let date = payload.DATE;
+                    let id = payload.ID;
+
+                    return remindersDAO.removeReminder(date, id)
+                        .then(() => messageSender.sendTextMessage(uid, 'Deleted reminder'))
+                        .then(() => prepareReminders(uid, settings.timezone))
+                        .then(reminders => {
+                            if (reminders.length > 0)
+                                return messageSender.displayReminders(uid, reminders);
+                            else
+                                return messageSender.sendTextMessage(uid, 'You have no more reminders');
+                        });
+                }
+                else {
                     console.log(`Unsupported postback method: ${payload.METHOD}`);
                 }
 
@@ -710,4 +836,33 @@ module.exports.handler = (message, sender, msgSender) => {
         }, (error) => {
             console.log(`ERROR retrieving session from database: ${error}`);
         });
+};
+
+/**
+ * Find reminders for a user and add info needed to display them
+ * 
+ * @param uid User id
+ * @param timezone Timezone string for this user
+ * 
+ * @returns Array of reminders each with a 'message', 'datestring', and 'payload'
+ *          that represent the task, time, and required button response respectively
+ */
+let prepareReminders = function (uid, timezone) {
+    return remindersDAO.getRemindersForUser(uid).then(reminders => {
+
+        reminders.forEach((reminder) => {
+            reminder.datestring = moment(reminder.date).tz(timezone).format('ddd MMM Do, YYYY [at] h:mm a z');
+            reminder.payload = {
+                METHOD: "DELETE_REMINDER",
+                DATE: reminder.date,
+                ID: reminder.id
+            };
+        });
+
+        reminders.sort((a, b) => {
+            return a.date - b.date;
+        });
+
+        return reminders;
+    });
 };
