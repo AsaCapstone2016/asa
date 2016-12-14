@@ -4,7 +4,7 @@ var subscriptionsDAO = require('./../core/database').subscriptionsDAO;
 
 var fetch = require('node-fetch');
 var aws = require('aws-sdk');
-const notificationInterval = 7;
+const notificationInterval = 14;
 
 module.exports.scheduler = function (event, context, callback) {
 

@@ -33,7 +33,7 @@ docClient.scan(purchaseParams).promise().then((data)=> {
                 let params = {
                     TableName: `${tablePrefix}Subscriptions`,
                     Item: {
-                        "date": "2016-11-16T21",
+                        "date": "2016-12-18T21",
                         "uid": `fb-${item.uid}`
                     }
                 };
